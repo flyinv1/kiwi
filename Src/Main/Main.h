@@ -1,9 +1,13 @@
 #include <Arduino.h>
 
+// #include "../Controller/Controller.h"
+
 #ifndef KIWI_MAIN
 #define KIWI_MAIN
 
 class Main {
+
+public:
 
     typedef enum {
         state_boot,
@@ -14,39 +18,42 @@ class Main {
         state_abort,
         state_error,
         state_shutdown,
+        state_benchtop,
         num_states
     } StateType;
 
     typedef struct {
         StateType State;
         // main state functions neither take arguments or return a value
-        void (*method)(void);
+        void (Main::*method)(void);
     } StateMachineType;
 
-    StateMachineType StateMachine[] = {
-        { state_boot, sm_boot },
-        { state_standby, sm_standby },
-        { state_calibrate, sm_calibrate },
-        { state_fire, sm_fire },
-        { state_cooldown, sm_cooldown },
-        { state_abort, sm_abort },
-        { state_error, sm_error },
-        { state_shutdown, sm_shutdown },
-    }
+    StateMachineType StateMachine[num_states] = {
+        { state_boot, &Main::sm_boot },
+        { state_standby, &Main::sm_standby },
+        { state_calibrate, &Main::sm_calibrate },
+        { state_fire, &Main::sm_fire },
+        { state_cooldown, &Main::sm_cooldown },
+        { state_abort, &Main::sm_abort },
+        { state_error, &Main::sm_error },
+        { state_shutdown, &Main::sm_shutdown },
+    };
 
-    public : Main();
+    Main();
 
     void init();
 
     void run()
     {
         if (state < num_states) {
-            (*StateMachine[state].method)();
+            // (*StateMachine[state].method)();
         };
     }
 
 private:
     StateType state = state_boot;
+
+    // Controller controller;
 
     void sm_boot();
 

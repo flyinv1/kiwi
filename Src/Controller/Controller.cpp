@@ -1,17 +1,21 @@
-#include "controller.h"
+#include "Controller.h"
 
 #include <Arduino.h>
-#include <Roboclaw.h>
 
-#include "./Estimator/estimator.h"
+// #include "src/Libraries/RoboClaw/RoboClaw.h"
 
-Controller::Controller() {
+#include "../Estimator/Estimator.h"
 
-uint8_t * ptr = nullptr;
+// Controller::Controller() {
 
+// };
 
-};
+// Controller::init()
+// {
+//     _estimator.init();
+//     _initializeRunValve();
+// };
 
-Controller::init() {
-
-};
+// Controller::main()
+// {
+// }
