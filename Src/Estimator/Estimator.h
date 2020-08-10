@@ -9,33 +9,37 @@
 
 class Estimator {
 
-    // enum typedef {
-    //     mode_pressure,
-    //     mode_thrust,
-    //     mode_fused_thrust,
-    //     num_modes
-    // } ModeType;
-
-    // typedef struct {
-    //     ModeType mode;
-    //     void (*method)(void);
-    // } StateMachineType;
-
-    // StateMachineType StateMachine[] = {
-    //     { mode_pressure, sm_pressure },
-    //     { mode_thrust, sm_thrust },
-    //     { mode_fused_thrust, sm_fused_thrust }
-    // };
-
 public:
+    typedef enum {
+        mode_pressure,
+        mode_thrust,
+        mode_fused_thrust,
+        mode_standby,
+        num_modes
+    } ModeType;
+
+    typedef struct {
+        ModeType mode;
+        void (Estimator::*method)(void);
+    } StateMachineType;
+
+    StateMachineType StateMachine[num_modes] = {
+        { mode_pressure, &Estimator::sm_pressure },
+        { mode_thrust, &Estimator::sm_thrust },
+        { mode_fused_thrust, &Estimator::sm_fused_thrust },
+        { mode_standby, &Estimator::sm_standby }
+    };
+
+    ModeType mode = mode_standby;
+
     // ADC* adc = new ADC();
     // uint8_t pressure_buffer_size = 128;
 
-    // Estimator();
+    Estimator();
 
-    // void init();
+    void init();
 
-    // void main();
+    void main();
 
 private:
     // // pressure transmitter pins
@@ -61,13 +65,15 @@ private:
     // const long LOADCELL_OFFSET = 50682624;
     // const long LOADCELL_DIVIDER = 5895655;
 
-    // void sm_pressure(void);
+    void sm_pressure(void);
 
-    // void sm_thrust(void);
+    void sm_thrust(void);
 
-    // void sm_fused_thrust(void);
+    void sm_fused_thrust(void);
 
-    // void adc_isr(void);
+    void sm_standby(void);
+
+    void adc_isr(void);
 };
 
 #endif

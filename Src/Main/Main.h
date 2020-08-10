@@ -24,7 +24,6 @@ public:
 
     typedef struct {
         StateType State;
-        // main state functions neither take arguments or return a value
         void (Main::*method)(void);
     } StateMachineType;
 

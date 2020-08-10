@@ -9,60 +9,45 @@
 
 class Controller {
 
-    // enum typedef {
-    //     mode_safe,
-    //     mode_closed,
-    //     mode_open
-    // } ModeType;
+    typedef enum {
+        mode_safe,
+        mode_closed,
+        mode_open,
+        num_modes
+    } ModeType;
 
-    // typedef struct {
-    //     ModeType type;
-    //     void (*method)(void);
-    // } StateMachineType;
+    typedef struct {
+        ModeType type;
+        void (Controller::*method)(void);
+    } StateMachineType;
 
-    // StateMachineType StateMachine[num_states] = {
-    //     { mode_closed, sm_closed },
-    //     { mode_open, sm_open }
-    // };
+    StateMachineType StateMachine[num_modes] = {
+        { mode_closed, &Controller::sm_closed },
+        { mode_open, &Controller::sm_open }
+    };
 
 public:
-    // Controller();
+    Controller();
 
-    // void init();
+    void init();
 
-    // void main();
+    void main();
 
 private:
     //     // RoboClaw _throttle_valve;
-    //     Estimator _estimator;
+    Estimator _estimator;
 
-    //     int _run_valve_pin = 0;
+    int _run_valve_pin = 0;
 
-    //     void sm_closed(void)
-    //     {
-    //         // closed loop control
-    //     }
+    void sm_closed(void);
 
-    //     void sm_open(void)
-    //     {
-    //         // open loop control
-    //     }
+    void sm_open(void);
 
-    //     void _initializeRunValve(void)
-    //     {
-    //         pinMode(_run_valve_pin, OUTPUT);
-    //         digitalWrite(_run_valve_pin, LOW);
-    //     }
+    void _initializeRunValve(void);
 
-    //     void _openRunValve(void)
-    //     {
-    //         digitalWrite(_run_valve_pin, HIGH);
-    //     }
+    void _openRunValve(void);
 
-    //     void _closeRunValve(void)
-    //     {
-    //         digitalWrite(_run_valve_pin, LOW);
-    //     }
+    void _closeRunValve(void);
 };
 
 #endif
