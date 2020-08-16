@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <HX711.h>
 #include <IntervalTimer.h>
+#include <PacketSerial.h>
 
 #include "../KiwiGPIO.h"
 // #include "../Libraries/ADC/ADC.h"
