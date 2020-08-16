@@ -1,4 +1,4 @@
-#include "src/Main/Main.h"
+#include "./src/Main/Main.h"
 
 // Main main = Main();
 
