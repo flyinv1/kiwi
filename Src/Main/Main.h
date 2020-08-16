@@ -8,7 +8,6 @@
 class Main {
 
 public:
-
     typedef enum {
         state_boot,
         state_standby,

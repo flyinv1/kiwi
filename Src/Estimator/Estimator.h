@@ -1,20 +1,22 @@
+#include <ADC.h>
 #include <Arduino.h>
+#include <HX711.h>
 #include <IntervalTimer.h>
 
+#include "../KiwiGPIO.h"
 // #include "../Libraries/ADC/ADC.h"
-// #include "../Libraries/HX711/HX711.h"
 
 #ifndef KIWI_ESTIMATOR
 #define KIWI_ESTIMATOR
+
+#define ADC_BUFFER_LENGTH 128
 
 class Estimator {
 
 public:
     typedef enum {
-        mode_pressure,
-        mode_thrust,
-        mode_fused_thrust,
         mode_standby,
+        mode_sample,
         num_modes
     } ModeType;
 
@@ -24,16 +26,33 @@ public:
     } StateMachineType;
 
     StateMachineType StateMachine[num_modes] = {
-        { mode_pressure, &Estimator::sm_pressure },
-        { mode_thrust, &Estimator::sm_thrust },
-        { mode_fused_thrust, &Estimator::sm_fused_thrust },
-        { mode_standby, &Estimator::sm_standby }
+        { mode_standby, &Estimator::sm_standby },
+        { mode_sample, &Estimator::sm_sample }
+    };
+
+    enum {
+        num_transitions = 2;
+    };
+
+    typedef struct {
+        ModeType prev;
+        ModeType next;
+        void (Estimator::*transitionMethod)(void);
+    } StateMachineTransition;
+
+    StateMachineTransition TransitionTable[num_transitions] = {
+        { mode_standby, mode_sample, &Estimator::sm_standby_to_sample },
+        { mode_sample, mode_standby, &Estimator::sm_sample_to_standby }
     };
 
     ModeType mode = mode_standby;
 
-    // ADC* adc = new ADC();
-    // uint8_t pressure_buffer_size = 128;
+    ADC* adc = new ADC();
+
+    IntervalTimer timer;
+
+    // only one instance of Estimator, use a singleton for easy isr
+    static Estimator* estimator;
 
     Estimator();
 
@@ -41,39 +60,64 @@ public:
 
     void main();
 
-private:
-    // // pressure transmitter pins
-    // const int _pressure_pin_0 = 0;
-    // const int _pressure_pin_1 = 0;
+    void setState();
 
-    // // HX711 load cell amplifier pins
-    // const int _lc_propellant_pin_sda = 0;
-    // const int _lc_propellant_pin_sck = 0;
-    // const int _lc_thrust_pin_sda = 0;
-    // const int _lc_thrust_pin_sck = 0;
+private:
+    // pressure transmitter pins
+    // const int _pressure_pin_0 = analog_pressure_0;
+    // const int _pressure_pin_1 = analog_pressure_1;
+
+    // the estimator produces a real time estimate of thrust, chamber pressure,
+    // and injector pressure regardless of the mode, as well as fusing the two to provide a robust
+    // estimate of engine performance.
+    float chamber_pressure;
+    float injector_pressure;
+    float thrust;
+
+    // keep track of time elapsed over each loop
+    int dt;
+    int t_last;
+
+    typedef struct {
+        int16_t x_offset;
+        int16_t y_offset;
+        int16_t slope;
+    } PressureCalibration;
+
+    const PressureCalibration _pressure_0 {
+        0,
+        0,
+        0,
+    };
+
+    const PressureCalibration _pressure_1 {
+        0,
+        0,
+        0
+    };
 
     // // write buffer for pressure transmitter ADC data
-    // uint8_t _pressure_index_0 = 0;
-    // uint8_t _pressure_index_1 = 0;
-    // uint16_t _pressure_buffer_0[_pressure_buffer_size];
-    // uint16_t _pressure_buffer_1[_pressure_buffer_size];
+    uint8_t _pressure_index_0 = 0;
+    uint8_t _pressure_index_1 = 0;
+    uint16_t _pressure_buffer_0[ADC_BUFFER_LENGTH];
+    uint16_t _pressure_buffer_1[ADC_BUFFER_LENGTH];
 
-    // HX711 lc_propellant;
-    // HX711 lc_thrust;
+    int sampleInterval = 1;
+
+    HX711 lc_propellant;
+    HX711 lc_thrust;
 
     // // load cell adjustments (https://github.com/bogde/HX711)
     // const long LOADCELL_OFFSET = 50682624;
     // const long LOADCELL_DIVIDER = 5895655;
 
-    void sm_pressure(void);
-
-    void sm_thrust(void);
-
-    void sm_fused_thrust(void);
-
     void sm_standby(void);
 
-    void adc_isr(void);
+    void sm_sample(void);
+
+    static void adc_timer_callback(void);
+
+    static void adc_isr(void);
 };
 
 #endif

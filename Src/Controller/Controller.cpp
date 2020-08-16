@@ -2,9 +2,9 @@
 
 #include <Arduino.h>
 
-// #include "src/Libraries/RoboClaw/RoboClaw.h"
-
 #include "../Estimator/Estimator.h"
+#include "../KiwiGPIO.h"
+#include "../Libraries/RoboClaw/RoboClaw.h"
 
 Controller::Controller() {
 
@@ -30,16 +30,16 @@ void Controller::sm_open(void)
 
 void Controller::_initializeRunValve(void)
 {
-    pinMode(_run_valve_pin, OUTPUT);
-    digitalWrite(_run_valve_pin, LOW);
+    pinMode(pin_run_valve, OUTPUT);
+    digitalWrite(pin_run_valve, LOW);
 }
 
 void Controller::_openRunValve(void)
 {
-    digitalWrite(_run_valve_pin, HIGH);
+    digitalWrite(pin_run_valve, HIGH);
 }
 
 void Controller::_closeRunValve(void)
 {
-    digitalWrite(_run_valve_pin, LOW);
+    digitalWrite(pin_run_valve, LOW);
 }

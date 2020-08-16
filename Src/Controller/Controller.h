@@ -1,8 +1,8 @@
 #include <Arduino.h>
 
-// #include "src/Libraries/RoboClaw/RoboClaw.h"
-
 #include "../Estimator/Estimator.h"
+#include "../KiwiGPIO.h"
+#include "../Libraries/RoboClaw/RoboClaw.h"
 
 #ifndef KIWI_CONTROLLER
 #define KIWI_CONTROLLER
@@ -36,8 +36,6 @@ public:
 private:
     //     // RoboClaw _throttle_valve;
     Estimator _estimator;
-
-    int _run_valve_pin = 0;
 
     void sm_closed(void);
 
