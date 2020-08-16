@@ -82,13 +82,13 @@ void Estimator::sm_sample()
         for (uint8_t i = 0; i < _pressure_index_0; i++) {
             pressure_0 += _pressure_buffer_0[i];
         }
-        float f_pressure_0 = float(pressure_0) / (_pressure_index_0 + 1);
+        float f_pressure_0 = (float)pressure_0 / (_pressure_index_0 + 1);
         _pressure_index_0 = 0;
 
         for (uint8_t i = 0; i < _pressure_index_1; i++) {
             pressure_1 += _pressure_buffer_1[i];
         }
-        float f_pressure_1 = float(pressure_1) / (_pressure_index_1 + 1);
+        float f_pressure_1 = (float)pressure_1 / (_pressure_index_1 + 1);
         _pressure_index_1 = 0;
     }
 }

@@ -31,13 +31,13 @@ public:
     };
 
     enum {
-        num_transitions = 2;
+        num_transitions = 2
     };
 
     typedef struct {
         ModeType prev;
         ModeType next;
-        void (Estimator::*transitionMethod)(void);
+        void (Estimator::*method)(void);
     } StateMachineTransition;
 
     StateMachineTransition TransitionTable[num_transitions] = {
@@ -60,7 +60,7 @@ public:
 
     void main();
 
-    void setState();
+    void setState(ModeType new_mode);
 
 private:
     // pressure transmitter pins
@@ -114,6 +114,10 @@ private:
     void sm_standby(void);
 
     void sm_sample(void);
+
+    void sm_standby_to_sample(void);
+
+    void sm_sample_to_standby(void);
 
     static void adc_timer_callback(void);
 
