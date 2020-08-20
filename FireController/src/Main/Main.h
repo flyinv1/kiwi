@@ -1,5 +1,6 @@
 #include <Arduino.h>
 
+#include "../Gateway/Gateway.h"
 // #include "../Controller/Controller.h"
 
 #ifndef KIWI_MAIN
@@ -36,6 +37,8 @@ public:
         { state_error, &Main::sm_error },
         { state_shutdown, &Main::sm_shutdown },
     };
+
+    Gateway gateway;
 
     Main();
 

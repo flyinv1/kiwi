@@ -34,7 +34,7 @@ public:
     void main();
 
 private:
-    //     // RoboClaw _throttle_valve;
+    // RoboClaw _throttle_valve;
     Estimator _estimator;
 
     void sm_closed(void);

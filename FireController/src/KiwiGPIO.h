@@ -11,4 +11,8 @@ enum KIWI_IO {
     pin_run_valve = 0,
 };
 
+enum KIWI_API {
+
+}
+
 #endif

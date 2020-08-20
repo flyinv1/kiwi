@@ -6,14 +6,14 @@
 
 Main::Main()
 {
-
 }
 
 void Main::init()
 {
-
+    Serial.begin(115200);
+    gateway.init(&Serial);
 }
 
-void Main::sm_boot() {
-    
+void Main::sm_boot()
+{
 }
