@@ -1,1 +1,4 @@
 .clang-format
+.env
+.DS_Store
+.vscode

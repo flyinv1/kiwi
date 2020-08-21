@@ -18,7 +18,7 @@ public:
     typedef enum {
         mode_standby,
         mode_sample,
-        num_modes
+        num_modes,
     } ModeType;
 
     typedef struct {
@@ -31,8 +31,8 @@ public:
         { mode_sample, &Estimator::sm_sample }
     };
 
-    enum {
-        num_transitions = 2
+    enum TRANSITIONS {
+        num_transitions = 2,
     };
 
     typedef struct {
@@ -64,10 +64,6 @@ public:
     void setState(ModeType new_mode);
 
 private:
-    // pressure transmitter pins
-    // const int _pressure_pin_0 = analog_pressure_0;
-    // const int _pressure_pin_1 = analog_pressure_1;
-
     // the estimator produces a real time estimate of thrust, chamber pressure,
     // and injector pressure regardless of the mode, as well as fusing the two to provide a robust
     // estimate of engine performance.
@@ -79,23 +75,23 @@ private:
     int dt;
     int t_last;
 
-    typedef struct {
-        int16_t x_offset;
-        int16_t y_offset;
-        int16_t slope;
-    } PressureCalibration;
+    // typedef struct {
+    //     int16_t x_offset;
+    //     int16_t y_offset;
+    //     int16_t slope;
+    // } PressureCalibration;
 
-    const PressureCalibration _pressure_0 {
-        0,
-        0,
-        0,
-    };
+    // const PressureCalibration pressure_0_cal = {
+    //     0,
+    //     0,
+    //     0,
+    // };
 
-    const PressureCalibration _pressure_1 {
-        0,
-        0,
-        0
-    };
+    // const PressureCalibration pressure_1_cal = {
+    //     0,
+    //     0,
+    //     0
+    // };
 
     // // write buffer for pressure transmitter ADC data
     uint8_t _pressure_index_0 = 0;

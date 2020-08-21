@@ -9,20 +9,11 @@
 
 class Gateway {
 
-    enum INDICES {
-        ID_INDEX = 0,
-        LEN_INDEX = 1,
-        CRC_INDEX = 2
-    };
-
-    typedef struct
-    {
-        uint16_t id;
-        void (*method)(uint8_t* buffer, size_t len);
-    } Callback;
-
 public:
-    PacketSerial_<COBS> packet;
+    typedef struct {
+        uint16_t id;
+        void (*method)(const uint8_t* buffer, size_t len);
+    } Callback;
 
     Gateway();
 
@@ -30,18 +21,27 @@ public:
 
     void setStream(Stream* stream);
 
-    void registerMethod(uint8_t id, void (*onMessage)(uint8_t* buffer, size_t len));
+    void registerMethod(uint8_t id, void (*onMessage)(const uint8_t* buffer, size_t len));
 
     void unregisterMethod(uint8_t id);
 
     void update();
 
 private:
-    Gateway::Callback api[NUM_METHODS];
+    enum INDICES {
+        ID_INDEX,
+        LEN_INDEX,
+        CRC_INDEX,
+        flag_indices,
+    };
 
-    void onPacket(const uint8_t* buffer, size_t size);
+    Callback api[NUM_METHODS];
 
-    uint8_t crc8(uint8_t* buffer, size_t len);
+    PacketSerial_<COBS> packet;
+
+    void onPacket(const uint8_t* buffer, size_t len);
+
+    uint8_t crc8(const uint8_t* buffer, size_t len);
 };
 
 #endif
