@@ -1,7 +1,7 @@
 #include <ADC.h>
 #include <Arduino.h>
-#include <HX711.h>
 #include <IntervalTimer.h>
+#include <NBHX711.h>
 #include <PacketSerial.h>
 
 #include "../KiwiGPIO.h"
@@ -11,6 +11,18 @@
 #define KIWI_ESTIMATOR
 
 #define ADC_BUFFER_LENGTH 128
+#define CALIBRATION_INTERVAL_MS 100
+#define CALIBRATION_SAMPLES 20
+
+#define HX711_HIST_BUFF 24
+#define HX711_GAIN 64
+
+/*
+    these constants are derived experimentally to scale the load cell output to the
+    appropriate full scale measurement.
+*/
+#define LC_THRUST_SCALE 7000
+#define LC_PROPELLANT_SCALE 3000
 
 class Estimator {
 
@@ -52,7 +64,6 @@ public:
 
     IntervalTimer timer;
 
-    // only one instance of Estimator, use a singleton for easy isr
     static Estimator* estimator;
 
     Estimator();
@@ -62,6 +73,8 @@ public:
     void main();
 
     void setState(ModeType new_mode);
+
+    void calibrateAll();
 
 private:
     // the estimator produces a real time estimate of thrust, chamber pressure,
@@ -75,38 +88,18 @@ private:
     int dt;
     int t_last;
 
-    // typedef struct {
-    //     int16_t x_offset;
-    //     int16_t y_offset;
-    //     int16_t slope;
-    // } PressureCalibration;
-
-    // const PressureCalibration pressure_0_cal = {
-    //     0,
-    //     0,
-    //     0,
-    // };
-
-    // const PressureCalibration pressure_1_cal = {
-    //     0,
-    //     0,
-    //     0
-    // };
+    int calibrationTimer = 0;
 
     // // write buffer for pressure transmitter ADC data
-    uint8_t _pressure_index_0 = 0;
-    uint8_t _pressure_index_1 = 0;
+    size_t _pressure_index_0 = 0;
+    size_t _pressure_index_1 = 0;
     uint16_t _pressure_buffer_0[ADC_BUFFER_LENGTH];
     uint16_t _pressure_buffer_1[ADC_BUFFER_LENGTH];
 
     int sampleInterval = 1;
 
-    HX711 lc_propellant;
-    HX711 lc_thrust;
-
-    // // load cell adjustments (https://github.com/bogde/HX711)
-    // const long LOADCELL_OFFSET = 50682624;
-    // const long LOADCELL_DIVIDER = 5895655;
+    NBHX711 lc_propellant(pin_lc_propellant_sda, pin_lc_sck, HX711_HIST_BUFF, HX711_GAIN);
+    NBHX711 lc_thrust(pin_lc_thrust_sda, pin_lc_sck, HX711_HIST_BUFF, HX711_GAIN);
 
     void sm_standby(void);
 
@@ -115,6 +108,8 @@ private:
     void sm_standby_to_sample(void);
 
     void sm_sample_to_standby(void);
+
+    float sample_pressure(uint16_t* buffer, size_t length);
 
     static void adc_timer_callback(void);
 

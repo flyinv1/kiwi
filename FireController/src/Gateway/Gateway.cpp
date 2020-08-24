@@ -7,15 +7,11 @@ Gateway::Gateway()
 void Gateway::init(Stream* stream)
 {
     setStream(stream);
-
-    packet.setPacketHandler([&](const uint8_t* buffer, size_t len) {
-        Serial.write(0);
-    });
 }
 
 void Gateway::setStream(Stream* stream)
 {
-    packet.setStream(stream);
+    encoder.setStream(stream);
 }
 
 void Gateway::registerMethod(uint8_t id, void (*onMessage)(const uint8_t* buffer, size_t len))
@@ -27,35 +23,22 @@ void Gateway::registerMethod(uint8_t id, void (*onMessage)(const uint8_t* buffer
     api[id] = callback;
 }
 
-void Gateway::unregisterMethod(uint8_t id)
-{
-}
-
 void Gateway::update()
 {
-    packet.update();
-    if (packet.overflow()) {
-        return;
-    }
-}
+    encoder.read();
 
-void Gateway::onPacket(const uint8_t* buffer, size_t len)
-{
-    // Validate the packet checksum
-    uint8_t crc = crc8(buffer, len);
-    uint8_t packet_crc = buffer[CRC_INDEX];
-
-    // if invalid, discard the packet and return
-    if (packet_crc != crc) {
-        return;
+    if (encoder.overflow()) {
+        encoder.flush();
     }
 
-    // get the packet API id and call the registered function
-    uint8_t packet_id = buffer[ID_INDEX];
-    api[packet_id].method(buffer + flag_indices, len - flag_indices);
-}
+    if (encoder.packetAvailable()) {
 
-uint8_t Gateway::crc8(const uint8_t* buffer, size_t len)
-{
-    return 0;
+        uint8_t* buffer = nullptr;
+        size_t len = encoder.packet(buffer);
+
+        uint8_t packet_id = buffer[ID_INDEX];
+        api[packet_id].method(buffer + flag_indices, len - flag_indices);
+
+        encoder.flush();
+    }
 }

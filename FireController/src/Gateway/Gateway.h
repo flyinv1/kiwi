@@ -1,5 +1,6 @@
 #include <Arduino.h>
-#include <PacketSerial.h>
+
+#include "../BinaryPacket/BinaryPacket.h"
 
 #ifndef KIWI_GATEWAY
 #define KIWI_GATEWAY
@@ -11,7 +12,7 @@ class Gateway {
 
 public:
     typedef struct {
-        uint16_t id;
+        uint8_t id;
         void (*method)(const uint8_t* buffer, size_t len);
     } Callback;
 
@@ -23,25 +24,19 @@ public:
 
     void registerMethod(uint8_t id, void (*onMessage)(const uint8_t* buffer, size_t len));
 
-    void unregisterMethod(uint8_t id);
-
     void update();
 
 private:
     enum INDICES {
-        ID_INDEX,
-        LEN_INDEX,
-        CRC_INDEX,
-        flag_indices,
+        ID_INDEX = 0,
+        CRC_INDEX = 1,
+        LEN_INDEX = 2,
+        flag_indices = 3,
     };
 
     Callback api[NUM_METHODS];
 
-    PacketSerial_<COBS> packet;
-
-    void onPacket(const uint8_t* buffer, size_t len);
-
-    uint8_t crc8(const uint8_t* buffer, size_t len);
+    BinaryPacket encoder;
 };
 
 #endif

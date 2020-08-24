@@ -38,7 +38,7 @@ public:
         { state_shutdown, &Main::sm_shutdown },
     };
 
-    Gateway gateway;
+    Gateway gateway();
 
     Main();
 
@@ -47,14 +47,14 @@ public:
     void run()
     {
         if (state < num_states) {
-            // (*StateMachine[state].method)();
+            (*StateMachine[state].method)();
         };
     }
 
 private:
     StateType state = state_boot;
 
-    // Controller controller;
+    Controller controller(gateway);
 
     void sm_boot();
 

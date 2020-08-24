@@ -3,6 +3,7 @@
 #include <ADC.h>
 #include <Arduino.h>
 #include <IntervalTimer.h>
+#include <NBHX711.h>
 // #include "../Libraries/HX711/HX711.h"
 
 Estimator::Estimator()
@@ -33,8 +34,10 @@ void Estimator::init()
     adc->adc0->enableInterrupts(adc_isr);
 
     // initialize load cell amps
-    lc_propellant.begin(pin_lc_propellant_sda, pin_lc_propellant_sck);
-    lc_thrust.begin(pin_lc_thrust_sda, pin_lc_thrust_sck);
+    lc_thrust.begin();
+    lc_propellant.begin();
+
+    lc_thrust.setScale();
 
     // start timing loop
     t_last = micros();
@@ -72,25 +75,26 @@ void Estimator::sm_standby()
 
 void Estimator::sm_sample()
 {
+    // Sample pressure ADC buffers
+    float pressure_0 = sample_pressure(_pressure_buffer_0, _pressure_index_0);
+    float pressure_1 = sample_pressure(_pressure_buffer_0, _pressure_index_1);
 
-    uint16_t pressure_0;
-    uint16_t pressure_1;
-
-    if (_pressure_index_0 > 0 && _pressure_index_1 > 0) {
-
-        // flush read buffer for each set of pressure transmitter data;
-        for (uint8_t i = 0; i < _pressure_index_0; i++) {
-            pressure_0 += _pressure_buffer_0[i];
-        }
-        float f_pressure_0 = (float)pressure_0 / (_pressure_index_0 + 1);
-        _pressure_index_0 = 0;
-
-        for (uint8_t i = 0; i < _pressure_index_1; i++) {
-            pressure_1 += _pressure_buffer_1[i];
-        }
-        float f_pressure_1 = (float)pressure_1 / (_pressure_index_1 + 1);
-        _pressure_index_1 = 0;
+    // Sample load cells
+    if (lc_thrust.update()) {
+        lc_thrust.getUnits(0);
     }
+    if (lc_propellant.update()) {
+        lc_propellant.getUnits(0);
+    }
+}
+
+float Estimator::sample_pressure(uint16_t* buffer, size_t len)
+{
+    uint16_t p;
+    for (uint8_t i = 0; i < len; i++) {
+        p += buffer[i];
+    }
+    return (float)p / (float)len;
 }
 
 void Estimator::adc_timer_callback(void)
