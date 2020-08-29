@@ -1,7 +1,6 @@
 const { app, ipcMain } = require('electron');
 const path = require('path');
-const { APP } = require('./API/keys');
-const ApplicationManager = require('./ApplicationManager/ApplicationManager');
+const ApplicationManager = require('./ApplicationManager');
 
 const webPreferences = {
     allowRunningInsecureContent: false,
