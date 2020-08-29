@@ -10,10 +10,11 @@ const App = () => {
     const clientStatus = useClientStatus()
     const test = useTopic('test');
 
-    console.log(clientStatus, test);
+    console.log(clientStatus, test.payload, test.status, test.topic);
 
     return(
         <div>
+            
             <ConfigurationPanel />
             <ControlPanel />
         </div>
