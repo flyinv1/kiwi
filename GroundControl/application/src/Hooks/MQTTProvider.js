@@ -19,7 +19,7 @@ const MQTTProvider = ({ config, children }) => {
 
     useEffect(() => {
 
-        let mqttClient = window.kiwi.mqtt.connect(config);
+        let mqttClient = window.kiwi.mqttConnectClient(config);
         setClient(mqttClient);
         mqttClient.on('connect', () => setStatus('connected'));
         mqttClient.on('reconnect', () => setStatus('reconnecting'));

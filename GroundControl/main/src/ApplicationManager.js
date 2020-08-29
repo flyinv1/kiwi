@@ -7,8 +7,8 @@ function ApplicationManager() {
 
     const launch = () => {
         window = new BrowserWindow({
-            width: 800,
-            height: 1080,
+            width: 1200,
+            height: 800,
             webPreferences: {
                 ...this.webPreferences
             }
