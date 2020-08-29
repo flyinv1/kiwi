@@ -1,16 +1,17 @@
 #include <ADC.h>
 
+#define ADC_V_REF 3.292
+#define ADC_MAX 1024
+
 int run_pin = 20;
 
 int adc_0_pin = 19;
 int adc_1_pin = 18;
 
-//ADC* adc = new ADC();
+ADC* adc = new ADC();
 
 long sample_timer = 0;
-int sample_interval = 5; // ms
-int samples = 10;
-int ct = 0;
+int sample_interval = 100; // us
 
 long p0;
 long p1;
@@ -27,29 +28,37 @@ void setup()
     pinMode(adc_0_pin, INPUT);
     pinMode(adc_1_pin, INPUT);
 
-//    adc->adc0->setAveraging(16);
-//
-//    adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::MED_HIGH_SPEED);
-//    adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::MED_SPEED);
-//    adc->adc0->setResolution(12);
+    adc->adc0->setAveraging(16);
+    adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::MED_HIGH_SPEED);
+    adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::MED_SPEED);
+    adc->adc0->setResolution(12);
 
-    sample_timer = millis();
+    analogReadRes(10);
+    analogReadAveraging(10);
+
+    sample_timer = micros();
 }
 
 void loop()
 {
-    if (millis() - sample_timer > sample_interval) {
-        p0 += analogRead(adc_0_pin);
-        p1 += analogRead(adc_1_pin);
-        if (ct++ > samples) {
-          Serial.print((float)p0 / samples);
-          Serial.print(' ');
-          Serial.println((float)p1 / samples);
-          p0 = 0;
-          p1 = 0;
-          ct = 0;
-        }
-        sample_timer = millis();
+    if (micros() - sample_timer > sample_interval) {
+        p0 = adc->adc0->analogRead(adc_0_pin);
+        p1 = adc->adc0->analogRead(adc_1_pin);
+//        p0 = analogRead(adc_0_pin);
+//        p1 = analogRead(adc_1_pin);
+        Serial.print((float)p0);
+        Serial.print(' ');
+        Serial.print((float)p1);
+        Serial.print(' ');
+        Serial.print(current(p0));
+        Serial.print(' ');
+        Serial.print(current(p1));
+        Serial.print(' ');
+        Serial.print(pressure(p0));
+        Serial.print(' ');
+        Serial.print(pressure(p1));
+        Serial.println();
+        sample_timer = micros();
     }
 
     while (Serial.available()) {
@@ -57,5 +66,15 @@ void loop()
         digitalWrite(run_pin, !open);
         open = !open;
     }
-    delay(1);
+}
+
+float pressure(long p) {
+  float v = (float)p / ADC_MAX * ADC_V_REF;
+  float i = (v) / 124 * 1000;
+  return (i - 4) / 16 * 1000;
+}
+
+float current(long reading) {
+  float v = (float)reading / ADC_MAX * ADC_V_REF;
+  return v / 124 * 1000;
 }

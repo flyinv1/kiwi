@@ -1,7 +1,7 @@
 const { app, ipcMain } = require('electron');
 const path = require('path');
-const { APP, WORKSPACE } = require('./keys');
-const ApplicationManager = require('./ApplicationManager');
+const { APP } = require('./API/keys');
+const ApplicationManager = require('./ApplicationManager/ApplicationManager');
 
 const webPreferences = {
     allowRunningInsecureContent: false,
@@ -26,3 +26,4 @@ app.on('will-finish-launching', applicationManager.onWillFinishLaunching);
 app.on('window-all-closed', applicationManager.onWindowAllClosed);
 app.on('activate', applicationManager.onActivate);
 app.on('before-quit', applicationManager.onBeforeQuit);
+// ipcMain.on()

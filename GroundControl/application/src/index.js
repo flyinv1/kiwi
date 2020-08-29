@@ -1,17 +1,21 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import App from './Views/App/App';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
+import MQTTClient from './Store/mqtt';
+import MQTTProvider from './Hooks/MQTTProvider';
+import { app } from './Store/reducer';
 import './index.css';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
+
+const config = {
+  host: '192.168.1.10',
+  port: 1883
+}
 
 ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+    <MQTTProvider config={config}>
+      <App/>
+    </MQTTProvider>,
   document.getElementById('root')
 );
-
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();

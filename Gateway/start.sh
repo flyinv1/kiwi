@@ -8,12 +8,10 @@ CONFIG=$(pwd)/server.conf
 echo "Starting KIWI Gateway Controller"
 
 # Start MQTT Broker
-mosquitto -c $CONFIG
+mosquitto -c $CONFIG -d
 
-if python3 $(pwd)/main.py
-then
-    echo 'python?'
-fi
+# Start main python script
+python3 $(pwd)/main.py
 
 
 

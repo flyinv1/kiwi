@@ -7,14 +7,24 @@ function ApplicationManager() {
 
     const launch = () => {
         window = new BrowserWindow({
+            width: 800,
+            height: 1080,
+            webPreferences: {
+                ...this.webPreferences
+            }
         });
+        window.loadURL('http://localhost:3000/index.html')
     }
 
-    this.onReady = async () => {
-
+    this.onReady = async (event) => {
+        launch();
     }
 
     this.onWillFinishLaunching = async () => {
+
+    }
+
+    this.onWindowAllClosed = async () => {
 
     }
 
@@ -35,3 +45,5 @@ function ApplicationManager() {
     }
 
 }
+
+module.exports = ApplicationManager
