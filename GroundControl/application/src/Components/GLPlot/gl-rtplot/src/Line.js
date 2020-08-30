@@ -1,8 +1,8 @@
 import CoreObject from './Core/CoreObject';
+import OBJECT from './Core/Objects';
 
 class Line extends CoreObject {
 	color;
-	isLine = true;
 	close = false;
 
 	constructor(color, points) {
@@ -10,8 +10,7 @@ class Line extends CoreObject {
 		this.color = color;
 		this.buffer = new Float32Array(2 * points);
 		this.bufferSize = points;
-		this.scale = { x: 1, y: 1 };
-		this.origin = { x: 0, y: 0 };
+		this.type = OBJECT.LINE
 	}
 
 	setX = (i, x) => {

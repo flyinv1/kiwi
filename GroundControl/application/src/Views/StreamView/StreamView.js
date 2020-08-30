@@ -18,7 +18,7 @@ const StreamView = (props) => {
                 buffer={[0, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3]}
                 config={{
                     points: 20,
-                    streams: 5,
+                    streams: 1,
                     axes: true,
                     duration: 0
                 }}
@@ -26,10 +26,6 @@ const StreamView = (props) => {
                 contextAttributes={{
                     antialias: true,
                     alpha: true
-                }}
-                layout={{
-                    scale: 1,
-                    pixelRatio: 1,
                 }}
             />
         </div>

@@ -9,12 +9,6 @@ const defaultConfig = {
     duration: 0
 };
 
-const defaultLayout = {
-    scale: 1,
-    pixelRatio: 1,
-    maintainAspect: false
-};
-
 const defaultContextAttributes = {
     antialias: true,
     alpha: true
@@ -22,7 +16,6 @@ const defaultContextAttributes = {
 
 const GLPlot = ({ 
     config = defaultConfig,
-    layout = defaultLayout,
     contextAttributes = defaultContextAttributes,
     buffer = [],
     isLive = true,
@@ -50,8 +43,6 @@ const GLPlot = ({
                 alpha: contextAttributes?.alpha || true
             });
 
-            plot.renderer.setPixelRatio(2);
-
             console.log(plot);
 
             if (config.axes) {
@@ -62,6 +53,8 @@ const GLPlot = ({
 
                 plot.attachAxes(axes);
             }
+
+            plot.setLimits(-2, 2, 0, 2);
 
             glplot.current = plot;
 
@@ -87,11 +80,9 @@ const GLPlot = ({
                 for (let i = 0; i < config.streams; i++) {
                     let colors = Themes.palette.midnight;
                     let line = new Line(Color.fromHex(colors[i % (colors.length - 1)], 1.0), config.points + 1);
-                    line.fill(0, dx, 0);
+                    line.fill(-1, dx, 0.5);
                     plot.addStream(line);
                 }
-                console.log("should render...")
-                plot.render();
                 glplot.current = plot;
             }
         },
@@ -109,7 +100,7 @@ const GLPlot = ({
         () => {
             // Update plot size
             if (glplot.current) {
-                glplot.current.renderer.setSize(width, height);
+                // glplot.current.renderer.setSize(width, height);
             }
         },
         [ width, height ]
@@ -117,34 +108,9 @@ const GLPlot = ({
 
     useEffect(
         () => {
-            if (glplot.current) {
-                glplot.current.renderer.maintainAspect = layout.maintainAspect;
-            }
-        },
-        [ layout.maintainAspect ]
-    );
-
-    useEffect(
-        () => {
             // Update plot color values
         },
         [ colors ]
-    );
-
-    useEffect(
-        () => {
-            glplot.current.renderer.setPixelRatio(layout.pixelRatio);
-        },
-        [ layout.pixelRatio ]
-    );
-
-    useEffect(
-        () => {
-            if (glplot.current && layout.scale) {
-                glplot.current.setScale(layout.scale, layout.scale);
-            }
-        },
-        [ layout.scale ]
     );
 
     useEffect(

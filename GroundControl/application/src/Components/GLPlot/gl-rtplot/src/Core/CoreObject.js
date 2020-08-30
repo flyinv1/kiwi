@@ -1,3 +1,5 @@
+import OBJECT from './Color'
+
 class CoreObject {
 	_program = 0;
 	_vbuffer = 0;
@@ -6,27 +8,11 @@ class CoreObject {
 	bufferSize = 0;
 	renderable = true;
 	name = null;
+	type = OBJECT.CORE;
 
 	constructor() {
-		let _origin = {
-			x: 0,
-			y: 0
-		};
-
-		let _scale = {
-			x: 1,
-			y: 1
-		};
-
-		this.setScale = (scale) => {
-			_scale = scale;
-		};
-		this.scale = () => _scale;
-
-		this.setOrigin = (origin) => {
-			_origin = origin;
-		};
-		this.origin = () => _origin;
+		this.scale = { x: 1, y: 1 };
+		this.origin = { x: 0, y: 0};
 	}
 
 	dispose() {
