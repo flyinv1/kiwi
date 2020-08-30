@@ -1,0 +1,15 @@
+.canvas {
+    width: 100%;
+    height: 100%;
+    // border: 1px solid var(--border-medium);
+    box-sizing: border-box;
+    object-fit: contain;
+}
+
+.aspectTrue {
+    object-fit: contain;
+}
+
+.aspectFalse {
+    object-fit: fill;
+}

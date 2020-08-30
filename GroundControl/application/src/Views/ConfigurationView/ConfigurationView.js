@@ -1,10 +1,10 @@
 import React from 'react';
 
-const ConfigurationPanel = ({client}) => {
+const ConfigurationView = ({client}) => {
     return(
         <div>
         </div>
     )
 }
 
-export default ConfigurationPanel
+export default ConfigurationView

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const ControlPanel = ({client}) => {
+const ControlView = ({client}) => {
 
     return (
         <div>
@@ -10,4 +10,4 @@ const ControlPanel = ({client}) => {
 
 }
 
-export default ControlPanel;
+export default ControlView;

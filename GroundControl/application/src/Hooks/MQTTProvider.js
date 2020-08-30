@@ -36,7 +36,7 @@ const MQTTProvider = ({ config, children }) => {
             client.end();
         }
 
-    }, [])
+    }, [ ])
 
     return(
         <MQTTContext.Provider value={{
