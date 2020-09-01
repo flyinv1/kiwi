@@ -1,13 +1,12 @@
 import CoreObject from './Core/CoreObject';
 import OBJECT from './Core/Objects';
+import Color from './Core/Color';
 
 class Line extends CoreObject {
-	color;
-	close = false;
 
-	constructor(color, points) {
+	constructor(points) {
 		super();
-		this.color = color;
+		this.color = new Color(0, 0, 0, 1.0);
 		this.buffer = new Float32Array(2 * points);
 		this.bufferSize = points;
 		this.type = OBJECT.LINE
@@ -17,17 +16,13 @@ class Line extends CoreObject {
 		this.buffer[i * 2] = x;
 	};
 
-	setY = (i, x) => {
-		this.buffer[i * 2 + 1] = x;
+	setY = (i, y) => {
+		this.buffer[i * 2 + 1] = y;
 	};
 
 	getX = (i) => this.buffer[i * 2];
 
 	getY = (i) => this.buffer[i * 2 + 1];
-
-	linspace(x0, dx) {
-		for (let i = 0; i < this.bufferSize; i++) this.setX(i, x0 + i * dx);
-	}
 
 	fillY(y) {
 		for (let i = 0; i < this.bufferSize; i++) this.setY(i, y);

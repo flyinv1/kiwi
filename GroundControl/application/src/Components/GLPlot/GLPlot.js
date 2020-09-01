@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Plot, { Color, Line, Themes, Axes } from './gl-rtplot';
 import styles from './GLPlot.module.scss';
+import StreamLine from './gl-rtplot/src/StreamLine';
+
+const delta = 16;
 
 const defaultConfig = {
     points: 10,
@@ -38,23 +41,25 @@ const GLPlot = ({
      */
     useEffect(
         () => {
+
             let plot = new Plot(canvas.current, {
                 antialias: contextAttributes?.antialias || false,
                 alpha: contextAttributes?.alpha || true
             });
 
-            console.log(plot);
-
             if (config.axes) {
-                let majorColor = new Color(0.85, 0.85, 0.85, 1.0);
-                let minorColor = new Color(0.95, 0.95, 0.95, 1.0);
 
                 let axes = new Axes(majorColor);
+                axes.grid(10, 10, 1, 1);
 
-                plot.attachAxes(axes);
+                plot.addAxes(axes);
             }
 
-            plot.setLimits(-2, 2, 0, 2);
+            plot.setLimits(-10 , 60, -2, 2);
+
+            plot.addSeries('test', new StreamLine(60, 3600));
+            plot.addSeries('test0', new StreamLine(60, 3600));
+
 
             glplot.current = plot;
 
@@ -74,15 +79,10 @@ const GLPlot = ({
 
     useEffect(
         () => {
-            let dx = 1 / config.points;
             if (glplot.current) {
                 let plot = glplot.current;
-                for (let i = 0; i < config.streams; i++) {
-                    let colors = Themes.palette.midnight;
-                    let line = new Line(Color.fromHex(colors[i % (colors.length - 1)], 1.0), config.points + 1);
-                    line.fill(-1, dx, 0.5);
-                    plot.addStream(line);
-                }
+                let colors = Themes.palette.midnight;
+
                 glplot.current = plot;
             }
         },
@@ -118,22 +118,22 @@ const GLPlot = ({
             live.current = isLive;
 
             const animateFrame = (t) => {
-                let dt = t - _t.current;
 
-                let intervals = Math.floor(dt / _dt.current);
-                let remainder = dt % _dt.current;
+                if (t - _t.current > delta) {
 
-                if (glplot.current && dt >= _dt.current) {
-                    glplot.current.lines.map((line, i) => {
-                        for (let j = 0; j < intervals; j++) {
-                            line.push(_buffer.current.slice(i, i + 1));
-                        }
-                    });
-                    glplot.current.render();
-                    _t.current = t - remainder;
+                    glplot.current.series['test'].shiftIn(new Float32Array([Math.sin(t / 300)]), t);
+                    glplot.current.series['test0'].shiftIn(new Float32Array([Math.sin(t / 300 + 1)]), t);
+
+                    _t.current = t;
+
+                } else {
+                    glplot.current.series['test'].update(t);
+                    glplot.current.series['test0'].update(t);
                 }
 
-                // glplot.current.render();
+                glplot.current.render();
+
+                // glplot.current.series['test'].update(t);
 
                 // animate frame code
                 if (live.current) requestAnimationFrame(animateFrame);

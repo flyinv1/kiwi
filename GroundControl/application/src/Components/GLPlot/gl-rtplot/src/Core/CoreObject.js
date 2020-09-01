@@ -6,7 +6,7 @@ class CoreObject {
 	_coord = 0;
 	buffer = [];
 	bufferSize = 0;
-	renderable = true;
+	render = true;
 	name = null;
 	type = OBJECT.CORE;
 

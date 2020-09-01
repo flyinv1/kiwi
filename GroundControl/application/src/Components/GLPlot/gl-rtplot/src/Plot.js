@@ -1,4 +1,6 @@
-import Renderer from './Renderer';
+import Renderer from './Renderer/Renderer';
+import StreamLine from './StreamLine';
+import Line from './Line';
 
 /**
  * @param {HTMLCanvasElement} canvas
@@ -8,6 +10,7 @@ import Renderer from './Renderer';
 
 function Plot(canvas, properties) {
     let _axes = null;
+
     let _limits = {
         xmin: -1,
         xmax: 1,
@@ -20,10 +23,16 @@ function Plot(canvas, properties) {
         ...properties
     });
 
-    this.lines = [];
-
+    this.lines = []
+    this.series = {};
     this.renderer = renderer;
+
     this.renderer.resize();
+
+    this.addSeries = (name, series) => {
+        this.series[name] = this.renderer.add(series);
+        _computeLimits();
+    }
 
     this.addStream = (line) => {
         line = this.renderer.add(line);
@@ -41,7 +50,7 @@ function Plot(canvas, properties) {
 
     this.resize = () => {};
 
-    this.attachAxes = (axes) => {
+    this.addAxes = (axes) => {
         _axes = axes;
         _axes.x.line = this.renderer.add(_axes.x.line);
         _axes.y.line = this.renderer.add(_axes.y.line);
@@ -76,28 +85,29 @@ function Plot(canvas, properties) {
     }
 
     this.render = () => {
-        if (_axes) {
-            this.renderer.render(_axes.x.line);
-            this.renderer.render(_axes.y.line);
+        this.renderer.render(_axes);
+        for (let series of Object.values(this.series)) {
+            this.renderer.render(series);
         }
-        this.lines.map((line) => {
-            this.renderer.render(line);
-        });
     };
 
     this.dispose = () => {
         this.lines = [];
+        this.lines.map((line) => line.dispose());
         this.renderer.disposeContext();
     };
 
     let _computeLimits = () => {
 
         const { xmin, xmax, ymin, ymax } = _limits;
-        console.log(xmin, xmax, ymin, ymax);
+
+        // The line shader computes the origin before scaling to fit the clipped region
+        // Therefore the origin is scaled to the plot space - not the clip space
+        // E.x. for x limits [0, 20], the origin offset is 10, not 0.5
 
         const _origin = {
-            x: 2 * xmin / (xmax - xmin) + 1,
-            y: 2 * ymin / (ymax - xmin) + 1
+            x: xmin + (xmax - xmin) / 2,
+            y: ymin + (ymax - ymin) / 2
         }
 
         const _scale = {
@@ -105,20 +115,16 @@ function Plot(canvas, properties) {
             y: 2 / (ymax - ymin)
         }
             
-        if (_axes) {
+        if (_axes) _axes.setLimits(_limits, _origin, _scale);
 
-            _axes.x.line.buffer = new Float32Array([xmin, 0, xmax, 0]);
-            _axes.y.line.buffer = new Float32Array([0, ymin, 0, ymax]);
-
-            _axes.x.line.origin = _origin;
-            _axes.y.line.origin = _origin;
-            _axes.x.line.scale = { x: 1, y: 1 };
-            _axes.y.line.scale = { x: 1, y: 1 };
-        }
- 
         this.lines.map((line) => {
             line.origin = _origin;
             line.scale = _scale;
+        })
+
+        Object.values(this.series).map(series => {
+            series.origin = _origin;
+            series.scale = _scale;
         })
     }
 

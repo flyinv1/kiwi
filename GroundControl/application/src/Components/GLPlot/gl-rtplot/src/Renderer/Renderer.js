@@ -1,5 +1,4 @@
-import { LineShader } from './Shaders';
-import OBJECT from './Core/Objects';
+import OBJECT from '../Core/Objects';
 
 export default function Renderer(parameters) {
 
@@ -106,22 +105,27 @@ export default function Renderer(parameters) {
     };
 
     this.render = (object) => {
+        if (object.render) {
 
-        _gl.useProgram(object.program);
+            _gl.useProgram(object.program);
 
-        _gl.uniformMatrix2fv(
-            _gl.getUniformLocation(object.program, 'u_scale'),
-            false,
-            new Float32Array([ object.scale.x, 0, 0, object.scale.y ])
-        );
+            _gl.uniformMatrix2fv(
+                _gl.getUniformLocation(object.program, 'u_scale'),
+                false,
+                new Float32Array([ object.scale.x, 0, 0, object.scale.y ])
+            );
 
-        _gl.uniform2fv(
-            _gl.getUniformLocation(object.program, 'u_origin'),
-            new Float32Array([ object.origin.x, object.origin.y ])
-        );
+            _gl.uniform2fv(
+                _gl.getUniformLocation(object.program, 'u_origin'),
+                new Float32Array([ object.origin.x, object.origin.y ])
+            );
 
-        if (object.type === OBJECT.LINE) {
-            _renderLine(object);
+            if (object.type === OBJECT.LINE) {
+                _renderLine(object);
+            }
+        }
+        if (object.children) {
+            object.children.map((child) => this.render(child));
         }
     };
 
@@ -146,7 +150,11 @@ export default function Renderer(parameters) {
             uniform vec2 u_origin;
 
             void main(void) {
-                gl_Position = vec4(u_scale * uv, 0.0, 1.0);
+                gl_Position = vec4(
+                    u_scale * (uv - u_origin),
+                    0.0, 
+                    1.0
+                );
             }
         `
         );

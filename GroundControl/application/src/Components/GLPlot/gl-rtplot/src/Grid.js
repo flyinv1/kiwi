@@ -1,56 +1,73 @@
 import Line from './Line';
+import Color from './Core/Color';
 
-/**
- * 
- * @param {Color} majorColor 
- * @param {Color} minorColor 
- * @param {Number} [xIntervals = 10] xIntervals 
- * @param {Number} [yIntervals = 10] yIntervals 
- * @param {Number} [xMajorIntervals = 0] xMajorIntervals 
- * @param {Number} [yMajorIntervals = 0] yMajorIntervals
- */
-function Grid(majorColor, minorColor, xIntervals = 10, yIntervals = 10, xMajorInterval = 0, yMajorInterval = 0) {
-    this.static = true;
-    this.enabled = true;
+class Grid {
 
-    this.x = {
-        intervals: xIntervals,
-        majorInterval: xMajorInterval,
-        children: []
-    };
+    constructor(xIntervals, yIntervals) {
+        this.majorColor = new Color(0.7, 0.7, 0.7, 1.0);
+        this.minorColor = new Color(0.9, 0.9, 0.9, 1.0);
 
-    this.y = {
-        intervals: xIntervals,
-        majorInterval: yMajorInterval,
-        children: []
-    };
+        this._x = [];
+        this._y = [];
 
-    this.setXInterval = (intervals, majorInterval) => {
-        this.x.majorInterval = majorInterval;
-        this.x.interals = intervals;
-        this.x.children = [];
-        for (let i = -intervals; i < intervals + 1; i++) {
-            let color = i % majorInterval === 0 && majorInterval > 0 ? majorColor : minorColor;
-            let line = new Line(color, 2);
-            line.buffer = new Float32Array([ i / intervals, -1, i / intervals, 1 ]);
-            this.x.children.push(line);
+        for (let i = 0; i < xIntervals + 1; i++) {
+            let line = new Line(2);
+            line.color = this.majorColor;
+            line.buffer = new Float32Array([ i / xIntervals, -1, i / xIntervals, 1 ]);
+            this._x.push(line);
         }
-    };
 
-    this.setYInterval = (intervals, majorInterval) => {
-        this.y.majorInterval = majorInterval;
-        this.y.interals = intervals;
-        this.y.children = [];
-        for (let i = -intervals; i < intervals + 1; i++) {
-            let color = i % majorInterval === 0 && majorInterval > 0 ? majorColor : minorColor;
-            let line = new Line(color, 2);
-            line.buffer = new Float32Array([ -1, i / intervals, 1, i / intervals ]);
-            this.y.children.push(line);
+        for (let i = 0; i < yIntervals + 1; i++) {
+            let line = new Line(2);
+            line.color = this.majorColor;
+            line.buffer = new Float32Array([-1, i / intervals, 1, i / intervals]);
+            this._y.push(line);
         }
-    };
+    }
 
-    this.setXInterval(xIntervals, xMajorInterval);
-    this.setYInterval(yIntervals, yMajorInterval);
+    setMinorIntervals(xMinorIntervals, yMinorIntervals) {
+        for (let i = 0; i < xMinorIntervals + 1; i++) {
+            let line = new Line(2);
+            line.color = this.minorColor;
+            line.buffer = new Float32Array([ i / xMinorIntervals, -1, i / xMinorIntervals, 1 ]);
+            this._x.push(line);
+        }
+        for (let i = 0; i < yMinorIntervals + 1; i++) {
+            let line = new Line(2);
+            line.color = this.minorColor;
+            line.buffer = new Float32Array([ -1,  i / yMinorIntervals, 1, i / yMinorIntervals ]);
+            this._x.push(line);
+        }
+    }
+
+    setLimits(xmin, xmax, ymin, ymax) {
+
+        const _delta = {
+            x: xmax - xmin,
+            y: ymax - ymin
+        };
+
+        const _origin = {
+            x: xmin + _delta.x / 2,
+            y: ymin + _delta.y / 2
+        };
+
+        const _scale = {
+            x: 2 / _delta.x,
+            y: 2 / _delta.y
+        }
+
+        this._x.map(line => {
+            line.scale = _scale
+            line.origin = origin
+        });
+
+        this._y.map(line => {
+            line.scale = _scale
+            line.origin = _origin
+        })
+
+    }
 }
 
 export default Grid;
