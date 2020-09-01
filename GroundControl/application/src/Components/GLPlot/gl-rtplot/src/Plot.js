@@ -1,6 +1,7 @@
 import Renderer from './Renderer/Renderer';
 import StreamLine from './StreamLine';
 import Line from './Line';
+import { limits } from './Core/Limits';
 
 /**
  * @param {HTMLCanvasElement} canvas
@@ -10,6 +11,7 @@ import Line from './Line';
 
 function Plot(canvas, properties) {
     let _axes = null;
+    let _grid = null;
 
     let _limits = {
         xmin: -1,
@@ -23,7 +25,7 @@ function Plot(canvas, properties) {
         ...properties
     });
 
-    this.lines = []
+
     this.series = {};
     this.renderer = renderer;
 
@@ -34,27 +36,21 @@ function Plot(canvas, properties) {
         _computeLimits();
     }
 
-    this.addStream = (line) => {
-        line = this.renderer.add(line);
-        this.lines.push(line);
-        _computeLimits();
-    };
-
-    this.addStreams = (lines) => {
-        lines.map((line) => {
-            line = this.renderer.add(line);
-        })
-        this.lines = [...this.lines, ...lines];
-        _computeLimits();
-    }
-
     this.resize = () => {};
 
-    this.addAxes = (axes) => {
+    this.setAxes = (axes) => {
         _axes = axes;
-        _axes.x.line = this.renderer.add(_axes.x.line);
-        _axes.y.line = this.renderer.add(_axes.y.line);
+        _axes.x.line = this.renderer.add(_axes.x);
+        _axes.y.line = this.renderer.add(_axes.y);
+        _axes.setLimits(_limits.xmin, _limits.xmax, _limits.ymin, _limits.ymax);
     };
+
+    this.setGrid = (grid) => {
+        _grid = grid;
+        _grid._x.map(line => this.renderer.add(line));
+        _grid._y.map(line => this.renderer.add(line));
+        _grid.setLimits(_limits.xmin, _limits.xmax, _limits.ymin, _limits.ymax);
+    }
 
     this.setXLimit = (xmin, xmax) => {
         _limits = {
@@ -85,15 +81,20 @@ function Plot(canvas, properties) {
     }
 
     this.render = () => {
-        this.renderer.render(_axes);
+        if (_axes) {
+            this.renderer.render(_axes.x);
+            this.renderer.render(_axes.y);
+        }
+        if (_grid) {
+            _grid._x.map(line => { this.renderer.render(line) })
+            _grid._y.map(line => { this.renderer.render(line) })
+        }
         for (let series of Object.values(this.series)) {
             this.renderer.render(series);
         }
     };
 
     this.dispose = () => {
-        this.lines = [];
-        this.lines.map((line) => line.dispose());
         this.renderer.disposeContext();
     };
 
@@ -105,22 +106,10 @@ function Plot(canvas, properties) {
         // Therefore the origin is scaled to the plot space - not the clip space
         // E.x. for x limits [0, 20], the origin offset is 10, not 0.5
 
-        const _origin = {
-            x: xmin + (xmax - xmin) / 2,
-            y: ymin + (ymax - ymin) / 2
-        }
+        _axes.setLimits(xmin, xmax, ymin, ymax);
+        _grid.setLimits(xmin, xmax, ymin, ymax);
 
-        const _scale = {
-            x: 2 / (xmax - xmin),
-            y: 2 / (ymax - ymin)
-        }
-            
-        if (_axes) _axes.setLimits(_limits, _origin, _scale);
-
-        this.lines.map((line) => {
-            line.origin = _origin;
-            line.scale = _scale;
-        })
+        const { _origin, _scale } = limits(xmin, xmax, ymin, ymax);
 
         Object.values(this.series).map(series => {
             series.origin = _origin;

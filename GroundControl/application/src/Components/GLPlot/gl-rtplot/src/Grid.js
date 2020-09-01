@@ -20,7 +20,7 @@ class Grid {
         for (let i = 0; i < yIntervals + 1; i++) {
             let line = new Line(2);
             line.color = this.majorColor;
-            line.buffer = new Float32Array([-1, i / intervals, 1, i / intervals]);
+            line.buffer = new Float32Array([-1, i / yIntervals, 1, i / yIntervals]);
             this._y.push(line);
         }
     }
@@ -40,7 +40,7 @@ class Grid {
         }
     }
 
-    setLimits(xmin, xmax, ymin, ymax) {
+    setLimits({xmin, xmax, ymin, ymax}) {
 
         const _delta = {
             x: xmax - xmin,
@@ -59,7 +59,7 @@ class Grid {
 
         this._x.map(line => {
             line.scale = _scale
-            line.origin = origin
+            line.origin = _origin
         });
 
         this._y.map(line => {

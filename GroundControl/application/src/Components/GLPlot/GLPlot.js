@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Plot, { Color, Line, Themes, Axes } from './gl-rtplot';
+import Plot, { StreamLine, Color, Line, Themes, Axes, Grid } from './gl-rtplot';
 import styles from './GLPlot.module.scss';
-import StreamLine from './gl-rtplot/src/StreamLine';
 
 const delta = 16;
 
@@ -47,19 +46,22 @@ const GLPlot = ({
                 alpha: contextAttributes?.alpha || true
             });
 
-            if (config.axes) {
+            let axes = new Axes();
+            let grid = new Grid(10, 10);
 
-                let axes = new Axes(majorColor);
-                axes.grid(10, 10, 1, 1);
+            plot.setAxes(axes);
+            plot.setGrid(grid);
 
-                plot.addAxes(axes);
-            }
+            plot.setLimits(-2, 30, -10, 10);
 
-            plot.setLimits(-10 , 60, -2, 2);
+            let series1 = new StreamLine(30, 3600);
+            series1.color = Color.fromHex(Themes.palette.slate[0]);
 
-            plot.addSeries('test', new StreamLine(60, 3600));
-            plot.addSeries('test0', new StreamLine(60, 3600));
+            let series2 = new StreamLine(30, 3600);
+            series2.color = Color.fromHex(Themes.palette.slate[1]);
 
+            plot.addSeries('test', series1);
+            plot.addSeries('test0', series2);
 
             glplot.current = plot;
 

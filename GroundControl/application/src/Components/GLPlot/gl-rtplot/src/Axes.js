@@ -1,5 +1,6 @@
 import Line from './Line';
 import Color from './Core/Color';
+import { limits } from './Core/Limits';
 
 export default class Axes {
 
@@ -14,6 +15,17 @@ export default class Axes {
 
         this.x.buffer = new Float32Array([-1, 0, 1, 0]);
         this.y.buffer = new Float32Array([0, -1, 0, 1]);
+    }
+
+    setLimits(xmin, xmax, ymin, ymax) {
+
+        const { _scale, _origin } = limits(xmin, xmax, ymin, ymax);
+
+        this.x.scale = _scale;
+        this.x.origin = _origin;
+
+        this.y.scale = _scale;
+        this.y.origin = _origin;
     }
 
     setColor(color) {
