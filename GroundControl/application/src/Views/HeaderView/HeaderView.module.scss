@@ -17,7 +17,7 @@
 .statusIndicator {
     padding: 4px 8px;
     position: absolute;
-    right: 4px;
+    left: 4px;
     border-radius: var(--radius);
     color: white;
     text-transform: capitalize;
@@ -28,6 +28,18 @@
     background-color: var(--positive-l);
 }
 
-.closed {
-
+.reconnecting {
+    color: var(--text-placeholder);
+    background-color: var(--fill-m);
 }
+
+.closed {
+    color: var(--negative);
+    background-color: var(--negative-l);
+}
+
+.offline {
+    color: var(--negative);
+    background-color: var(--negative-l);
+}
+

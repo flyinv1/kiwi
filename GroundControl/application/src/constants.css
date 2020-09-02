@@ -9,12 +9,13 @@
     --height-l: 3.0em;
     --height: 1.8em;
 
-    --text-placeholder: #8d8d8d;
     --label-ultralight: #cfcfcf;
     --label-light: #8d8d8d;
     --label: #9a9a9a;
     --label-dark: #5f5f5f;
+    
     --text-disabled: #bbbbbb;
+    --text-placeholder: #8d8d8d;
 
     --fill-ul: #fafafa;
     --fill-l: #f4f4f4;
@@ -26,6 +27,8 @@
 
     --positive: #4185F0;
     --positive-l: #E2F0FF;
+    --negative: #db4f37;
+    --negative-l: #f3dcd9;
 
     --b-xs: 0.3rem;
     --b-s: 0.5rem;

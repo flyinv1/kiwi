@@ -14,13 +14,14 @@ const StatusIndicator = ({status}) => {
 
     const statusStyle = {
         'connected': styles.connected,
+        'reconnecting': styles.reconnecting,
         'closed': styles.closed,
-        '': null
+        'offline': styles.offline
     }
 
     return(
         <div className={[statusStyle[status] || '', styles.statusIndicator].join(' ')}>
-            {status}
+            {`MQTT: ${status}`}
         </div>
     )
 }
