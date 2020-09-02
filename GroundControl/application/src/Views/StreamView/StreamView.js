@@ -31,12 +31,6 @@ const config = {
             color: Color.fromHex(Themes.palette.umber[0]),
             duration: 10,
             points: 3600,
-        },
-        pressure_1: {
-            name: 'pressure1',
-            color: Color.fromHex(Themes.palette.umber[1]),
-            duration: 10,
-            points: 3600
         }
     }
 }
@@ -44,16 +38,12 @@ const config = {
 const StreamView = (props) => {
 
     const testTopic = useTopic('test');
-    const testTopic2 = useTopic('test2');
-    const testTopic3 = useTopic('test3');
-    const testTopic4 = useTopic('test4');
 
     const pressureData = useMemo(() => {
         return {
             pressure_0: new Float32Array([Number(testTopic.payload) || 0]),
-            pressure_1: new Float32Array([-1 * Number(testTopic2.payload) + Math.random() || 0])
         }
-    }, [ testTopic, testTopic2, testTopic3, testTopic4 ])
+    }, [ testTopic ])
 
     return(
         <div>
