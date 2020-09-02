@@ -18,7 +18,6 @@ const App = () => {
             <div className={styles.contentContainer}>
                 <StreamView/>
                 <ConfigurationView/>
-                <ControlView/>
             </div>
         </div>
     )

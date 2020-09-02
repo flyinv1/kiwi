@@ -7,8 +7,8 @@ const Input = ({label, units, children, short = false, ...props}) => {
             <span className={styles.label}>{label}</span>
             <div 
                 className={short ? styles.col : styles.row}>
-                <span className={styles.units}>{units}</span>
                 {children}
+                <span className={styles.units}>{units}</span>
             </div>
         </div>
     )

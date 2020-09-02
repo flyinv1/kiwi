@@ -9,6 +9,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-user-select: none;
   /* -webkit-app-region: drag */
   font-size: 1.0rem;
   height: 100vh;

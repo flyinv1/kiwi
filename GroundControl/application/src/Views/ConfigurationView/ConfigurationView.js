@@ -7,19 +7,25 @@ const ConfigurationView = () => {
 
     const publish = usePublishJSON()
 
+    const [ daqRate, setdaqRate ] = useState(0); 
     const [ controlMode, setControlMode ] = useState(-1);
     const [ engineMode, setEngineMode ] = useState(-1);
     const [ runDuration, setRunDuration ] = useState(0);
     const [ igniterVoltage, setIgniterVoltage ] = useState(0);
-    const [ preIgnitionDuration, setPreIgnitionDuration ] = useState(0)
+    const [ preIgnitionDuration, setPreIgnitionDuration ] = useState(0);
+    const [ ignitionDuration, setIgnitionDuration ] = useState(0);
 
     return(
         <div className={styles.container}>
             <Input label={'DAQ Rate'} units={'Hz'}>
                 <NumInput 
                     placeholder={0}
-                    onChange={() => {}}
-                    onSubmit={() => {}}
+                    value={daqRate}
+                    onChange={setdaqRate}
+                    onSubmit={value => {
+                        setdaqRate(value);
+                        const _published = publish('run/daqrate', value);
+                    }}
                 />
             </Input>
             {/* <Input label={'Subsample'} units={''}>
@@ -63,7 +69,7 @@ const ConfigurationView = () => {
                     }}
                 />
             </Input>
-            { (engineMode === 1) && 
+            { (engineMode === 1) && <>
                 <Input label={'Igniter Voltage'}>
                     <NumInput
                         placeholder={0}
@@ -75,8 +81,6 @@ const ConfigurationView = () => {
                         }}
                     />
                 </Input>
-            }
-            { (engineMode === 1) &&
                 <Input label={'Pre-Ignition'}>
                     <NumInput
                         placeholder={0}
@@ -84,18 +88,22 @@ const ConfigurationView = () => {
                         onChange={setPreIgnitionDuration}
                         onSubmit={value => {
                             setPreIgnitionDuration(value);
-                            const _published = publish('run/igniter/pre', value);
+                            const _published = publish('run/igniter/preburn', value);
                         }}
                     />
                 </Input>
-            }
-            <Input label={'Ignition Duration'}>
-                <NumInput
-                    placeholder={0}
-                    onChange={() => {}}
-                    onSubmit={() => {}}
-                />
-            </Input>
+                <Input label={'Ignition Duration'}>
+                    <NumInput
+                        placeholder={0}
+                        value={ignitionDuration}
+                        onChange={setIgnitionDuration}
+                        onSubmit={value => {
+                            setIgnitionDuration(value);
+                            const _published = publish('run/igniter/duration', value);
+                        }}
+                    />
+                </Input>
+            </> }
         </div>
     )
 }
