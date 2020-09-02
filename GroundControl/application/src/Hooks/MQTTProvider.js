@@ -2,11 +2,12 @@ import React, { useEffect, useState, createContext, useContext, useMemo, useCall
 
 const MQTTContext = createContext();
 
+
 const MQTTProvider = ({ config, children }) => {
 
     const [ status, setStatus ] = useState('offline')
     const [ client, setClient ] = useState(null);
-    const [ topics, setTopics ] = useState([]);
+    const [ topics, setTopics ] = useState({});
 
     const updateTopic = useCallback(({ topic, message }) => {
 
@@ -43,7 +44,7 @@ const MQTTProvider = ({ config, children }) => {
         <MQTTContext.Provider value={{
             status,
             client,
-            topics,
+            topics
         }}>
             {children}
         </MQTTContext.Provider>

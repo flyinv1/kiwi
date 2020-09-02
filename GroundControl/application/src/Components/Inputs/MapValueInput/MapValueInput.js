@@ -2,26 +2,45 @@ import React, { useState } from 'react';
 import styles from './MapValueInput.module.scss';
 import NumInput from '../NumInput/NumInput';
 
-const MapValueInput = ({valueMap, setMap, keyLabel, valueLabel}) => {
+const MapValueInput = ({valueMap, setMapValue, setMap, keyLabel, valueLabel}) => {
 
     const [ newRowKey, setNewRowKey ] = useState('');
     const [ newRowValue, setNewRowValue ] = useState('');
 
+    const [ editingRowIndex, setEditingRowIndex ] = useState('');
+    const [ editingRowKey, setEditingRowKey ] = useState('');
+    const [ editingRowValue, setEditingRowValue ] = useState('');
+
     const addMapRow = () => {
-        if (!isNaN(newRowValue) && !isNaN(newRowValue)) {
-            console.log('yes');
+        if (newRowValue !== '' && newRowValue !== '') {
+            console.log(newRowKey);
             setNewRowKey('');
             setNewRowValue('');
-            setMap(newRowKey, newRowValue)
+            setMapValue(newRowKey, newRowValue)
         }
     }
 
-    const updateMapKey = (key) => {
-        console.log(key);
+    const updateMapKey = (key, newKey) => {
+        let _map = valueMap;
+        if (key !== newKey && newKey !== '') {
+            _map.set(newKey, _map.get(key));
+            _map.delete(key);
+            setMap(_map);
+        } else {
+            if (newKey === '') {
+                _map.delete(key);
+                setMap(_map);
+            }
+        }
+        setEditingRowIndex(-1);
     }
 
     const updateMapValue = (key, value) => {
-
+        console.log(editingRowValue, value)
+        if (value !== '') {
+            setMapValue(key, value);
+        }
+        setEditingRowIndex(-1);
     }
 
     return (
@@ -32,22 +51,29 @@ const MapValueInput = ({valueMap, setMap, keyLabel, valueLabel}) => {
             </div>
             {
                 Array.from(valueMap.keys()).map((key, i) => { 
-                    console.log(key)
                     return (
                         <div className={styles.row} key={key}>
                             <NumInput
                                 className={styles.keyInput}
-                                onChange={() => {}}
-                                onSubmit={updateMapKey}
-                                value={key}
+                                onChange={value => {
+                                    setEditingRowIndex(i);
+                                    setEditingRowKey(value);
+                                    setEditingRowValue(valueMap.get(key));
+                                }}
+                                onSubmit={value => updateMapKey(key, value)}
+                                value={(i === editingRowIndex) ? editingRowKey : key}
                                 width={96}
                                 // className={styles.row}
                             />
                             <NumInput
                                 className={styles.valueInput}
-                                onChange={() => {}}
+                                onChange={value => {
+                                    setEditingRowIndex(i);
+                                    setEditingRowKey(key);
+                                    setEditingRowValue(value)
+                                }}
                                 onSubmit={value => updateMapValue(key, value)}
-                                value={valueMap.get(key)}
+                                value={(i === editingRowIndex) ? editingRowValue : valueMap.get(key)}
                                 width={96}
                                 // className={styles.row}
                             />

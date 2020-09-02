@@ -117,7 +117,7 @@ const GLPlot = ({
                     _dataAvailable.current = false;
                 } else {
                     Object.values(glplot.current.series).map(series => {
-                        series.update(t);
+                        if (series) series.shiftIn(new Float32Array([0]), t);
                     })
                 }
 

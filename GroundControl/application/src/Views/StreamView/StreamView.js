@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import GLPlot from '../../Components/GLPlot/GLPlot';
-import { useTopic } from '../../Hooks/MQTTProvider';
+import { useTopic, useClientStatus } from '../../Hooks/MQTTProvider';
 import styles from './StreamView.module.scss';
 import { Color, Themes } from '../../Components/GLPlot/gl-rtplot';
 
@@ -35,6 +35,7 @@ const config = {
 const StreamView = (props) => {
 
     const testTopic = useTopic('test');
+    const connected = useClientStatus();
 
     const pressureData = useMemo(() => {
         return {
@@ -48,7 +49,7 @@ const StreamView = (props) => {
                 className={styles.plot}
                 newData={pressureData}
                 configuration={config}
-                animate={true}
+                animate={connected}
             />
         </div>
     )
