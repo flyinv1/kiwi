@@ -1,0 +1,34 @@
+.container {
+    width: var(--input-s);
+    height: var(--input-s);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    border: 1px solid var(--border-m);
+    border-radius: var(--radius);
+    outline: none;
+}
+
+.container:focus:not(.on) {
+    border-color: var(--border-m);
+    background-color: var(--fill-lm);
+}
+
+.check {
+    width: var(--input-xs);
+    height: var(--input-xs);
+    * {
+        stroke: transparent;
+    }
+}
+
+.on {
+    background-color: var(--positive);
+    border: none;
+    .check {
+        * {
+            stroke: white;
+        }
+    }
+}

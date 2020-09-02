@@ -4,6 +4,8 @@ import ConfigurationView from '../ConfigurationView/ConfigurationView';
 import ControlView from '../ControlView/ControlView';
 import { useTopic, useClientStatus } from '../../Hooks/MQTTProvider';
 import StreamView from '../StreamView/StreamView';
+import HeaderView from '../HeaderView/HeaderView';
+import styles from './App.module.scss';
 
 
 const App = () => {
@@ -11,11 +13,13 @@ const App = () => {
     const { status } = useClientStatus();
     
     return(
-        <div>
-            { status }
-            <ConfigurationView />
-            <ControlView/>
-            <StreamView/>
+        <div className={styles.appContainer}>
+            <HeaderView status={status}/>
+            <div className={styles.contentContainer}>
+                <StreamView/>
+                <ConfigurationView/>
+                <ControlView/>
+            </div>
         </div>
     )
 }

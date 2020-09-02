@@ -1,0 +1,13 @@
+.appContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.contentContainer {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: stretch;
+    flex-grow: 1;
+}

@@ -1,0 +1,38 @@
+.target {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.sectionTarget {
+    @extend .target;
+    justify-content: space-between;
+    background-color: var(--fill-ul);
+    border-bottom: 1px solid var(--border-l);
+    padding: 0 var(--b);
+    height: var(--height-l);
+    font-weight: 500;
+}
+
+.subsectionTarget {
+    @extend .target;
+    justify-content: flex-start;
+    background-color: var(--white);
+    border-top: 1px solid var(--border-l);
+    border-bottom: 1px solid var(--border-l);
+    padding: var(--b);
+    font-weight: 500;
+
+    .arrow {
+        margin-right: var(--b);
+    }
+}
+
+.header {
+    height: var(--b);
+}
+
+.footer {
+    height: var(--b);
+    border-bottom: 1px solid var(--border-l);
+}

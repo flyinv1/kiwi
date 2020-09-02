@@ -1,0 +1,58 @@
+:root {
+    --border-d: #d8d8d8;
+    --border-m: #e5e5e5;
+    --border-l: #efefef;
+    --border-ul: #f8f8f8;
+
+    --height-s: 1.5em;
+    --height-m: 2.4em;
+    --height-l: 3.0em;
+    --height: 1.8em;
+
+    --text-placeholder: #8d8d8d;
+    --label-ultralight: #cfcfcf;
+    --label-light: #8d8d8d;
+    --label: #9a9a9a;
+    --label-dark: #5f5f5f;
+    --text-disabled: #bbbbbb;
+
+    --fill-ul: #fafafa;
+    --fill-l: #f4f4f4;
+    --fill-lm: #f8f8f8;
+    --fill-m: #efefef;
+    --fill-h: #f8f8f8;
+
+    --fill-disabled: #f8f8f8;
+
+    --positive: #4185F0;
+    --positive-l: #E2F0FF;
+
+    --b-xs: 0.3rem;
+    --b-s: 0.5rem;
+    --b: 0.6rem;
+    --b-m: 0.8rem;
+    --b-l: 1.0rem;
+    --b-xl: 1.4rem;
+    --b-xxl: 2.5rem;
+
+    --f-xs: 0.4rem;
+    --f-ss: 0.6rem;
+    --f-s: 0.8rem;
+    --f: 1.0rem;
+    --f-m: 1.2rem;
+    --f-l: 1.4rem;
+    --f-xl: 1.6rem;
+
+    --input-xs: 0.8rem;
+    --input-s: 1.2rem;
+    --height: 1.8rem;
+    --height-input-row: calc(var(--height) * 1.5);
+    --height-m: 2.4rem;
+    --height-l: 3.0rem;
+
+    --radius: 4px;
+
+    --box-shadow-color: rgba(0, 0, 0, 0.08);
+    --box-shadow: 0 3px 5px var(--box-shadow-color);
+    --box-shadow-light: 0 0 8px var(--box-shadow-color);
+}

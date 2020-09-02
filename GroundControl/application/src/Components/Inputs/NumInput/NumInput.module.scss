@@ -1,0 +1,24 @@
+.input {
+    background-color: var(--fill-l);
+    box-shadow: none;
+    outline: none;
+    border: 1px solid var(--border-l);
+    height: var(--height);
+    padding: 0 var(--b-s);
+    font-size: var(--f);
+    border-radius: var(--radius);
+    box-sizing: border-box;
+}
+
+.input::-webkit-inner-spin-button {
+    display: none;
+}
+
+.invalid {
+
+}
+
+.disabled {
+    border-color: var(--border-ul);
+    color: var(--placeholder);
+}

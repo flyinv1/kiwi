@@ -1,0 +1,98 @@
+.container {
+    min-width: var(--height);
+    min-height: var(--height);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+}
+
+.primary {
+    background-color: var(--positive);
+    color: white;
+}
+
+.secondary {
+    background-color: var(--fill-m);
+    color: var(--placeholder);
+}
+
+.destructive {
+    background-color: white;
+    color: var(--red);
+}
+
+.textButton {
+    min-width: var(--height);
+    min-height: var(--height);
+    color: var(--positive);
+    border: none;
+    outline: none;
+    font-size: var(--f);
+    background-color: transparent;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+}
+
+.textButton:disabled {
+    color: var(--label);
+}
+
+.primary,
+.secondary,
+.destructive {
+    border: 1px solid var(--border-m);
+    flex-grow: 1;
+    justify-content: center;
+
+    p {
+        box-sizing: border-box;
+        padding: 0 var(--b);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+}
+
+.iconButton {
+    border: 1px solid var(--border-m);
+    width: var(--height);
+    height: var(--height);
+
+    justify-content: center;
+    align-items: center;
+
+    svg {
+        width: calc(var(--height) / 1.4);
+        height: calc(var(--height) / 1.4);
+
+        box-sizing: border-box;
+        * {
+            stroke: var(--border-d);
+        }
+    }
+}
+
+.iconButtonOn {
+    svg {
+        * {
+            stroke: var(--positive);
+        }
+    }
+}
+
+.positive {
+    color: white;
+    background-color: var(--positive);
+}
+
+.small {
+    padding: var(--b-s);
+}
+
+.disabled {
+    background-color: var(--fill-disabled);
+    color: var(--text-disabled);
+}

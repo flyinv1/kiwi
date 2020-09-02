@@ -1,0 +1,33 @@
+.container {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: var(--height-m);
+    background-color: var(--fill-l);
+    border-bottom: 1px solid var(--border-m);
+}
+
+.title {
+    font-weight: 400;
+}
+
+.statusIndicator {
+    padding: 4px 8px;
+    position: absolute;
+    right: 4px;
+    border-radius: var(--radius);
+    color: white;
+    text-transform: capitalize;
+}
+
+.connected {
+    color: var(--positive);
+    background-color: var(--positive-l);
+}
+
+.closed {
+
+}

@@ -20,10 +20,7 @@ const config = {
             xInterval: 1,
             yInterval: 0.1,
         },
-        // axes: {
-        //     color: Color.fromHex(Themes.palette.slate[3])
-        // },
-        axes: false
+        axes: true
     },
     series: {
         pressure_0: {
@@ -46,7 +43,7 @@ const StreamView = (props) => {
     }, [ testTopic ])
 
     return(
-        <div>
+        <div className={styles.container}>
             <GLPlot
                 className={styles.plot}
                 newData={pressureData}

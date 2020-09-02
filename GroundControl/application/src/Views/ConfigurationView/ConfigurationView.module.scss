@@ -1,0 +1,9 @@
+.container {
+    border-left: 1px solid var(--border-l);
+    flex-shrink: 0;
+    flex-basis: 25vw;
+}
+
+.dropdown {
+    width: 128px;
+}
