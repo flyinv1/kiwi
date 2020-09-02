@@ -5,7 +5,7 @@ import { limits } from './Core/Limits';
 export default class Axes {
 
     constructor() {
-        this.color = new Color(0.7, 0.7, 0.7, 1.0);
+        this.color = new Color(0.6, 0.6, 0.6, 1.0);
 
         this.x = new Line(2)
         this.y = new Line(2)
@@ -19,13 +19,28 @@ export default class Axes {
 
     setLimits(xmin, xmax, ymin, ymax) {
 
-        const { _scale, _origin } = limits(xmin, xmax, ymin, ymax);
+        const { scale, origin } = limits(xmin, xmax, ymin, ymax);
 
-        this.x.scale = _scale;
-        this.x.origin = _origin;
+        this.x.color = this.color;
+        this.x.scale = scale;
+        this.x.origin = origin;
+        this.x.buffer = new Float32Array([ xmin, 0, xmax, 0 ]);
 
-        this.y.scale = _scale;
-        this.y.origin = _origin;
+        this.y.color = this.color;
+        this.y.scale = scale;
+        this.y.origin = origin;
+        this.y.buffer = new Float32Array([ 0, ymin, 0, ymax ]);
+
+    }
+
+    setScale(scale) {
+        this.x.scale = scale;
+        this.y.scale = scale;
+    }
+
+    setOrigin(origin) {
+        this.x.origin = origin;
+        this.y.origin = origin;
     }
 
     setColor(color) {

@@ -7,7 +7,7 @@ export default function Renderer(parameters) {
 
     let _attributes = {
         antialias: parameters.antialias !== undefined ? parameters.antialias : true,
-        alpha: parameters.alpha !== undefined ? parameters.alpha : false,
+        alpha: parameters.alpha !== undefined ? parameters.alpha : true,
         powerPreference: parameters.powerPreference !== undefined ? parameters.powerPreference : 'default',
         premultipliedAlpha: parameters.premultipliedAlpha !== undefined ? parameters.premultipliedAlpha : true,
         depth: parameters.depth !== undefined ? parameters.depth : false

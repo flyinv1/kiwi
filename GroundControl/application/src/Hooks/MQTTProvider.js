@@ -9,6 +9,7 @@ const MQTTProvider = ({ config, children }) => {
     const [ topics, setTopics ] = useState([]);
 
     const updateTopic = useCallback(({ topic, message }) => {
+
         setTopics(prevTopics => {
             return {
                 ...prevTopics,
@@ -36,7 +37,7 @@ const MQTTProvider = ({ config, children }) => {
             client.end();
         }
 
-    }, [ ])
+    }, [ config ])
 
     return(
         <MQTTContext.Provider value={{

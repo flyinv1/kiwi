@@ -5,18 +5,18 @@ export const limits = (xmin, xmax, ymin, ymax) => {
         y: ymax - ymin
     };
 
-    const _scale = {
+    const scale = {
         x: 2 / _delta.x,
         y: 2 / _delta.y
     }
 
-    const _origin = {
+    const origin = {
         x: xmin + _delta.x / 2,
         y: ymin + _delta.y / 2,
     }
 
     return({
-        _scale,
-        _origin
+        scale,
+        origin
     })
 }

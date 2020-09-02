@@ -9,7 +9,7 @@ import StreamView from '../StreamView/StreamView';
 const App = () => {
 
     const { status } = useClientStatus();
-
+    
     return(
         <div>
             { status }

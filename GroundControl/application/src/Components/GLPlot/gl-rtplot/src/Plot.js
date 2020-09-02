@@ -33,23 +33,21 @@ function Plot(canvas, properties) {
 
     this.addSeries = (name, series) => {
         this.series[name] = this.renderer.add(series);
-        _computeLimits();
+        this.layout();
     }
 
-    this.resize = () => {};
+    this.resize = () => {
+        this.renderer.resize();
+    };
 
     this.setAxes = (axes) => {
         _axes = axes;
-        _axes.x.line = this.renderer.add(_axes.x);
-        _axes.y.line = this.renderer.add(_axes.y);
-        _axes.setLimits(_limits.xmin, _limits.xmax, _limits.ymin, _limits.ymax);
+        this.layout();
     };
 
     this.setGrid = (grid) => {
         _grid = grid;
-        _grid._x.map(line => this.renderer.add(line));
-        _grid._y.map(line => this.renderer.add(line));
-        _grid.setLimits(_limits.xmin, _limits.xmax, _limits.ymin, _limits.ymax);
+        this.layout();
     }
 
     this.setXLimit = (xmin, xmax) => {
@@ -58,7 +56,7 @@ function Plot(canvas, properties) {
             xmin: xmin,
             xmax: xmax
         }
-        _computeLimits();
+        this.layout();
     };
 
     this.setYLimit = (ymin, ymax) => {
@@ -67,7 +65,7 @@ function Plot(canvas, properties) {
             ymin: ymin,
             ymax: ymax
         }
-        _computeLimits();
+        this.layout();
     }
 
     this.setLimits = (xmin, xmax, ymin, ymax) => {
@@ -77,17 +75,17 @@ function Plot(canvas, properties) {
             ymin: ymin,
             ymax: ymax,
         };
-        _computeLimits();
+        this.layout();
     }
 
     this.render = () => {
-        if (_axes) {
-            this.renderer.render(_axes.x);
-            this.renderer.render(_axes.y);
-        }
         if (_grid) {
             _grid._x.map(line => { this.renderer.render(line) })
             _grid._y.map(line => { this.renderer.render(line) })
+        }
+        if (_axes) {
+            this.renderer.render(_axes.x);
+            this.renderer.render(_axes.y);
         }
         for (let series of Object.values(this.series)) {
             this.renderer.render(series);
@@ -95,25 +93,28 @@ function Plot(canvas, properties) {
     };
 
     this.dispose = () => {
-        this.renderer.disposeContext();
+        // this.renderer.disposeContext();
     };
 
-    let _computeLimits = () => {
-
+    this.layout = () => {
         const { xmin, xmax, ymin, ymax } = _limits;
+        const { origin, scale } = limits(xmin, xmax, ymin, ymax);
 
-        // The line shader computes the origin before scaling to fit the clipped region
-        // Therefore the origin is scaled to the plot space - not the clip space
-        // E.x. for x limits [0, 20], the origin offset is 10, not 0.5
+        if (_axes) {
+            _axes.setLimits(xmin, xmax, ymin, ymax);
+            _axes.x.line = this.renderer.add(_axes.x);
+            _axes.y.line = this.renderer.add(_axes.y);
+        }
 
-        _axes.setLimits(xmin, xmax, ymin, ymax);
-        _grid.setLimits(xmin, xmax, ymin, ymax);
-
-        const { _origin, _scale } = limits(xmin, xmax, ymin, ymax);
+        if (_grid) {
+            _grid.setLimits(xmin, xmax, ymin, ymax);
+            _grid._x.map(line => this.renderer.add(line));
+            _grid._y.map(line => this.renderer.add(line));
+        }
 
         Object.values(this.series).map(series => {
-            series.origin = _origin;
-            series.scale = _scale;
+            series.origin = origin;
+            series.scale = scale;
         })
     }
 

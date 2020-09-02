@@ -1,39 +1,24 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Plot, { StreamLine, Color, Line, Themes, Axes, Grid } from './gl-rtplot';
 import styles from './GLPlot.module.scss';
 
-const delta = 16;
-
-const defaultConfig = {
-    points: 10,
-    streams: 1,
-    axes: true,
-    duration: 0
-};
-
-const defaultContextAttributes = {
-    antialias: true,
-    alpha: true
-}
+const delta = 1;
 
 const GLPlot = ({ 
-    config = defaultConfig,
-    contextAttributes = defaultContextAttributes,
-    buffer = [],
-    isLive = true,
+    className,
+    animate = false,
+    newData,
+    configuration,
     width,
-    height,
-    colors,
-    className
+    height
  }) => {
+
     let canvas = useRef();
     let glplot = useRef(null);
 
-    // Utilized during animate frame
-    let _buffer = useRef([]);
-    let _t = useRef(0);
-    let _dt = useRef(16.67);
-    let live = useRef(true);
+    let _newData = useRef();
+    let _dataAvailable = useRef(false);
+    let _animate = useRef(false);
 
     /**
      * Plot initialization effect, requires context attributes and grid
@@ -41,27 +26,56 @@ const GLPlot = ({
     useEffect(
         () => {
 
-            let plot = new Plot(canvas.current, {
-                antialias: contextAttributes?.antialias || false,
-                alpha: contextAttributes?.alpha || true
-            });
+            const { contextAttributes } = configuration;
 
-            let axes = new Axes();
-            let grid = new Grid(10, 10);
+            let plot = new Plot(canvas.current, contextAttributes);
 
-            plot.setAxes(axes);
-            plot.setGrid(grid);
+            if (configuration?.layout?.axes) {
+                let axes = new Axes();
+                axes.color = configuration?.layout?.axes?.color || new Color(0.75, 0.75, 0.75, 1.0);
+                plot.setAxes(axes);
+            };
 
-            plot.setLimits(-2, 30, -10, 10);
+            if (configuration?.layout?.grid) {
+                let grid = new Grid(
+                    configuration?.layout?.grid?.xInterval || 1,
+                    configuration?.layout?.grid?.yInterval || 1
+                );
+                grid.majorColor = configuration?.layout.grid?.color || new Color(0.85, 0.85, 0.85, 1.0);
+                plot.setGrid(grid);
+            }
 
-            let series1 = new StreamLine(30, 3600);
-            series1.color = Color.fromHex(Themes.palette.slate[0]);
+            plot.setLimits(
+                configuration?.layout?.limits?.xmin || 0,
+                configuration?.layout?.limits?.xmax || 10,
+                configuration?.layout?.limits?.ymin || -5,
+                configuration?.layout?.limits?.ymax || 5,
+            );
 
-            let series2 = new StreamLine(30, 3600);
-            series2.color = Color.fromHex(Themes.palette.slate[1]);
+            if (!configuration?.series) {
+                console.warn('GLPlot: no series specified');
+            }
 
-            plot.addSeries('test', series1);
-            plot.addSeries('test0', series2);
+            Object.keys(configuration?.series || {}).map(key => {
+                const series = configuration.series[key];
+                if (series) {
+
+                    let streamline = new StreamLine(
+                        series?.duration || 30,
+                        series?.points || 200
+                    );
+
+                    // TODO:: Improve default color options
+                    streamline.color = series?.color || new Color(0.5, 0.5, 0.5, 1.0);
+
+                    plot.addSeries(
+                        key,
+                        streamline,
+                    )
+                }
+            })
+
+            plot.render();
 
             glplot.current = plot;
 
@@ -69,40 +83,20 @@ const GLPlot = ({
                 glplot.current.dispose();
             };
         },
-        [ contextAttributes.antialias, contextAttributes.alpha, config.axes ]
+        [ configuration ]
     );
 
-    useEffect(
-        () => {
-            _buffer.current = buffer;
-        },
-        [ buffer ]
-    );
-
-    useEffect(
-        () => {
-            if (glplot.current) {
-                let plot = glplot.current;
-                let colors = Themes.palette.midnight;
-
-                glplot.current = plot;
-            }
-        },
-        [ config.streams, config.points ]
-    );
-
-    useEffect(
-        () => {
-            _dt.current = config.duration / config.points;
-        },
-        [ config.points, config.duration ]
-    );
+    useEffect(() => {
+        _newData.current = newData;
+        _dataAvailable.current = true;
+        
+    }, [ newData ])
 
     useEffect(
         () => {
             // Update plot size
             if (glplot.current) {
-                // glplot.current.renderer.setSize(width, height);
+                glplot.current.resize();
             }
         },
         [ width, height ]
@@ -110,67 +104,57 @@ const GLPlot = ({
 
     useEffect(
         () => {
-            // Update plot color values
-        },
-        [ colors ]
-    );
 
-    useEffect(
-        () => {
-            live.current = isLive;
+            _animate.current = animate;
 
             const animateFrame = (t) => {
 
-                if (t - _t.current > delta) {
-
-                    glplot.current.series['test'].shiftIn(new Float32Array([Math.sin(t / 300)]), t);
-                    glplot.current.series['test0'].shiftIn(new Float32Array([Math.sin(t / 300 + 1)]), t);
-
-                    _t.current = t;
-
+                if (_dataAvailable.current) {
+                    Object.keys(_newData.current).map(key => {
+                        const series = glplot.current.series?.[key];
+                        if (series) series.shiftIn(_newData.current[key], t)
+                    })
+                    _dataAvailable.current = false;
                 } else {
-                    glplot.current.series['test'].update(t);
-                    glplot.current.series['test0'].update(t);
+                    Object.values(glplot.current.series).map(series => {
+                        series.update(t);
+                    })
                 }
 
                 glplot.current.render();
 
-                // glplot.current.series['test'].update(t);
-
                 // animate frame code
-                if (live.current) requestAnimationFrame(animateFrame);
+                if (_animate.current) requestAnimationFrame(animateFrame);
             };
-            
-            if (isLive) animateFrame(0);
+
+            if (animate) animateFrame(0);
         },
-        [ isLive ]
+        [ animate ]
     );
 
     return (
-        <div className={className}>
+        <div className={[styles.container, className].join(' ')}>
+            { configuration?.layout?.axes && 
+                <>
+                    <div className={styles.x_axes}>
+                        <div>{configuration?.layout?.limits?.xmin || '0'}</div>
+                        <div>{configuration?.layout?.limits?.xmax || ''}</div>
+                    </div>
+                    <div className={styles.y_axes}>
+                        <div>{configuration?.layout?.limits?.ymin || '0'}</div>
+                        <div>{(configuration?.layout?.limits?.ymax + configuration?.layout?.limits?.ymin) / 2}</div>
+                        <div>{configuration?.layout?.limits?.ymax || ''}</div>
+                    </div>
+                </>
+            }
             <canvas
                 ref={canvas}
-                width={width || 300}
-                height={height || 300}
+                width={width}
+                height={height}
                 className={[ styles.canvas ].join(' ')}
             />
         </div>
     );
-};
-
-GLPlot.propTypes = {
-    // config: PropTypes.objectOf({
-    //     scale: PropTypes.objectOf({
-    //         x: PropTypes.number,
-    //         y: PropTypes.number
-    //     })
-    // }),
-    // streams: PropTypes.number.isRequired,
-    // points: PropTypes.number.isRequired,
-    // duration: PropTypes.number.isRequired,
-    // colors: PropTypes.array,
-    // width: PropTypes.number,
-    // height: PropTypes.number
 };
 
 export default GLPlot;
