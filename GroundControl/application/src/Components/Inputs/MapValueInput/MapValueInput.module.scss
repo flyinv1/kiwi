@@ -1,0 +1,48 @@
+.container {
+    background-color: var(--fill-l);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    border: 1px solid var(--border-m);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.headerRow {
+    border-bottom: 1px solid var(--border-m);
+    display: flex;
+    align-items: center;
+    justify-content: stretch;
+    color: var(--label);
+
+    div:first-child {
+        background-color: var(--fill-ul);
+        width: 96px;
+        border-right: 1px solid var(--border-m);
+        box-sizing: border-box;
+        padding: var(--b-xs);
+    }
+
+    div:last-child {
+        padding: var(--b-xs);
+    }
+}
+
+.row:not(:last-child) {
+    border-bottom: 1px solid var(--border-m);
+}
+
+.keyInput {
+    background-color: var(--fill-ul);
+    border: none;
+    border-radius: 0;
+    border-right: 1px solid var(--border-m);
+    flex-shrink: 0;
+}
+
+.valueInput {
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    flex-grow: 1;
+}

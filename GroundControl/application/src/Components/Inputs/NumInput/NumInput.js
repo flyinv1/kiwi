@@ -3,7 +3,7 @@ import styles from './NumInput.module.scss';
 
 const enterKeyCode = 13;
 
-const NumInput = ({value, onChange, onSubmit, valid, disabled = false, int, width, ...props}) => {
+const NumInput = ({value, onChange, onSubmit, valid, disabled = false, int, width, className, ...props}) => {
     
     return (
         <input 
@@ -23,6 +23,7 @@ const NumInput = ({value, onChange, onSubmit, valid, disabled = false, int, widt
             //     onSubmit(e.target.value);
             // }}
             className={[
+                className,
                 styles.input,
                 !valid && styles.invalid,
                 disabled && styles.disabled

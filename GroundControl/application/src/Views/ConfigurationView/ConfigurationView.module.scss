@@ -1,10 +1,51 @@
 .container {
     border-left: 1px solid var(--border-l);
     flex-shrink: 0;
-    flex-basis: 256px;
-    padding: var(--b);
+    flex-basis: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    border-bottom: 1px solid var(--border-l);
+    padding: var(--b-l) var(--b);
+    background-color: var(--fill-ul);
+}
+
+.form {
+    padding: var(--b-l);
 }
 
 .dropdown {
     width: 128px;
+}
+
+.keyframeContainer {
+    margin-top: var(--b-xl);
+}
+
+.keyframeLabel {
+    margin-bottom: var(--b);
+}
+
+.buttonContainer {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: space-between;
+    justify-self: flex-end;
+    padding: var(--b-l);
+}
+
+.safeButtonContainer {
+    // margin-top: var(--b-xl);
+}
+
+.runButtonContainer {
+    // margin-top: var(--b-xl);
+
+    .cancel {
+        margin-bottom: var(--b);
+    }
+
 }
