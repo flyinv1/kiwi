@@ -3,6 +3,7 @@ import GLPlot from '../../Components/GLPlot/GLPlot';
 import { useTopic, useClientStatus } from '../../Hooks/MQTTProvider';
 import styles from './StreamView.module.scss';
 import { Color, Themes } from '../../Components/GLPlot/gl-rtplot';
+import PressureStream from './Streams/PressureStream';
 
 const config = {
     contextAttributes: {
@@ -32,7 +33,7 @@ const config = {
     }
 }
 
-const StreamView = (props) => {
+const StreamView = () => {
 
     const testTopic = useTopic('test');
     const connected = useClientStatus();
@@ -45,6 +46,7 @@ const StreamView = (props) => {
 
     return(
         <div className={styles.container}>
+            <PressureStream/>
             <GLPlot
                 className={styles.plot}
                 newData={pressureData}

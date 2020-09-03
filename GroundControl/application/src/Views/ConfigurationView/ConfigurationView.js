@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import styles from './ConfigurationView.module.scss';
 import { Input, NumInput, Checkbox, Dropdown, DropdownSelect, ActivePanel } from '../../Components';
-import { useTopic, usePublishJSON } from '../../Hooks/MQTTProvider';
+import { useTopic, usePublishJSON, useClientStatus } from '../../Hooks/MQTTProvider';
 import MapValueInput from '../../Components/Inputs/MapValueInput/MapValueInput';
 import { PrimaryButton, DestructiveButton } from '../../Components/Button/Button';
 import { MQTT } from 'mqttKeys.js'
@@ -10,7 +10,6 @@ const ConfigurationView = () => {
 
     const publish = usePublishJSON()
 
-    const [ daqRate, setdaqRate ] = useState(0); 
     const [ controlMode, setControlMode ] = useState(-1);
     const [ engineMode, setEngineMode ] = useState(-1);
     const [ runDuration, setRunDuration ] = useState(0);
@@ -18,17 +17,18 @@ const ConfigurationView = () => {
     const [ preIgnitionDuration, setPreIgnitionDuration ] = useState(0);
     const [ ignitionDuration, setIgnitionDuration ] = useState(0);
 
-    // const [ validConfiguration, setValidConfiguration ] = useState(false);
-
     const [ isArmed, setIsArmed ] = useState(false);
     const [ isRunning, setIsRunning ] = useState(false);
 
     const [ keyframeMap, setKeyFrameMap ] = useState(new Map());
 
-    const testStatusTopic = useTopic(MQTT.run.start);
+    const clientStatus = useClientStatus();
 
-    const publishKeyFrameMap = (map) => {
-        
+    const publishKeyFrameMap = () => {
+        let _map = keyframeMap;
+        let _arr = Array.from(_map);
+        let _numArr = _arr.map(_subarr => [Number(_subarr[0]), Number(_subarr[1])]);
+        publish(MQTT.run.keyframes, _numArr);
     }
 
     const updateKeyframeMapValue = (key, value) => {
@@ -47,6 +47,10 @@ const ConfigurationView = () => {
         setKeyFrameMap(_sortedMap);
     }
 
+    useEffect(() => {
+        publishKeyFrameMap();
+    }, [ keyframeMap ])
+
     const validConfiguration = useMemo(() => {
         let _valid = false;
         if (engineMode === 0) {
@@ -61,8 +65,6 @@ const ConfigurationView = () => {
                 [...keyframeMap].length > 0
             )
         }
-        console.log('test', _valid);
-        // setValidConfiguration(_valid);
         return (_valid);
     }, [ 
         controlMode,
@@ -83,17 +85,13 @@ const ConfigurationView = () => {
             window.removeEventListener('keypress', windowListener)
         })
     }, [isRunning])
-
-    useEffect(() => {
-        // console.log('test: ', testStatusTopic)
-    }, [testStatusTopic])
     
     return(
         <div className={styles.container}>
             <div className={styles.header}>
                 Test Configuration
             </div>
-            <ActivePanel className={styles.form} disabled={isArmed}>
+            <ActivePanel className={styles.form} disabled={isArmed || clientStatus.status !== 'connected'}>
                 {/* <Input label={'DAQ Rate'} units={'Hz'}>
                     <NumInput 
                         placeholder={0}
@@ -141,7 +139,7 @@ const ConfigurationView = () => {
                         onChange={setRunDuration}
                         onSubmit={value => {
                             setRunDuration(value);
-                            const _published = publish(MQTT.run.duration, value);
+                            const _published = publish(MQTT.run.duration, Number(value));
                         }}
                     />
                 </Input>
@@ -153,7 +151,7 @@ const ConfigurationView = () => {
                             onChange={setIgniterVoltage}
                             onSubmit={value => {
                                 setIgniterVoltage(value);
-                                const _published = publish(MQTT.run.igniter.voltage, value);
+                                const _published = publish(MQTT.run.igniter.voltage, Number(value));
                             }}
                         />
                     </Input>
@@ -164,7 +162,7 @@ const ConfigurationView = () => {
                             onChange={setPreIgnitionDuration}
                             onSubmit={value => {
                                 setPreIgnitionDuration(value);
-                                const _published = publish(MQTT.run.igniter.preburn, value);
+                                const _published = publish(MQTT.run.igniter.preburn, Number(value));
                             }}
                         />
                     </Input>
@@ -175,7 +173,7 @@ const ConfigurationView = () => {
                             onChange={setIgnitionDuration}
                             onSubmit={value => {
                                 setIgnitionDuration(value);
-                                const _published = publish(MQTT.run.igniter.duration, value);
+                                const _published = publish(MQTT.run.igniter.duration, Number(value));
                             }}
                         />
                     </Input>

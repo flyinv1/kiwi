@@ -14,13 +14,15 @@ const MapValueInput = ({valueMap, setMapValue, setMap, keyLabel, valueLabel}) =>
     const addMapRow = () => {
         if (newRowValue !== '' && newRowValue !== '') {
             console.log(newRowKey);
+            setMapValue(newRowKey, newRowValue)
             setNewRowKey('');
             setNewRowValue('');
-            setMapValue(newRowKey, newRowValue)
         }
     }
 
     const updateMapKey = (key, newKey) => {
+        console.log(typeof(newKey))
+
         let _map = valueMap;
         if (key !== newKey && newKey !== '') {
             _map.set(newKey, _map.get(key));

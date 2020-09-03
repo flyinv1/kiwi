@@ -9,8 +9,12 @@ export const MQTT = {
             preburn: 'run/igniter/preburn',
             duration: 'run/igniter/duration',
         },
+        keyframes: 'run/keyframes',
         arm: 'run/arm',
         start: 'run/start',
         status: 'run/status',
+    },
+    telemetry: {
+        buffer: 'telemetry/buffer'
     }
 }
