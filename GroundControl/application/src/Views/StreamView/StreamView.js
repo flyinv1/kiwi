@@ -7,13 +7,18 @@ import {
     PressureStream,
     ThrustStream,
     MassStream,
-    VoltageStream
+    VoltageStream,
+    ThrottleStream
 } from './Streams';
 import { MQTT } from 'mqttKeys.js';
 
 const StreamView = () => {
 
     const bufferTopic = useTopic(MQTT.telemetry.buffer);
+
+    const armedTopic = useTopic(MQTT.run.arm);
+
+    // const [ shouldAnimate, setShouldAnimate ] = useState(false);
 
     const buffer = useMemo(() => {
         let _databuffer
@@ -22,34 +27,51 @@ const StreamView = () => {
         } catch(err) {}
         return {
             pressure: _databuffer?.slice(0, 2),
-            thrust: _databuffer?.slice(2, 3),
-            mass: _databuffer?.slice(3, 4),
-            voltage: _databuffer?.slice(4, 5),
+            thrust: _databuffer?.[2],
+            mass: _databuffer?.[3],
+            voltage: _databuffer?.[4],
+            throttle: _databuffer?.[5]
         }
     }, [bufferTopic])
+
+    const shouldAnimate = useMemo(() => {
+        // console.log(armedTopic)
+        let _armed
+        try {
+            _armed = JSON.parse(armedTopic.payload);
+        } catch(err) {
+            _armed = (armedTopic.payload)
+        }
+        console.log(Boolean(_armed));
+        return Boolean(_armed);
+    }, [armedTopic.payload])
 
     return(
         <div className={styles.container}>
             <div className={styles.top}>
                 <div className={styles.left}>
                     <ThrustStream 
-                        animate={true}
+                        animate={shouldAnimate}
                         newData={buffer.thrust}
                     />
                     <MassStream 
-                        animate={true}
+                        animate={shouldAnimate}
                         newData={buffer.mass}
                     />
                 </div>
                 <PressureStream 
-                    animate={true}
+                    animate={shouldAnimate}
                     newData={buffer.pressure}
                 />
             </div>
             <div className={styles.bottom}>
                 <VoltageStream 
-                    animate={true}
+                    animate={shouldAnimate}
                     newData={buffer.voltage}
+                />
+                <ThrottleStream
+                    animate={shouldAnimate}
+                    newData={buffer.throttle}
                 />
             </div>
         </div>

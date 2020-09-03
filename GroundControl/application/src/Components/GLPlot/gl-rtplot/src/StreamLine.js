@@ -10,8 +10,10 @@ class StreamLine extends Line {
         this.duration = duration;
         this.time = 0;
 
+        this.fill(0, 0, 0);
+
         // Populate the vector with 0's
-        this.fill(0, duration / points, 0);
+        // this.fill(0, duration / points, 0);
     }
     
     /**

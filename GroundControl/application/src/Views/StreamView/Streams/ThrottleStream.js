@@ -15,40 +15,41 @@ const configuration = {
             xmin: 0,
             xmax: 5,
             ymin: 0,
-            ymax: 1000
+            ymax: 100
         },
         grid: {
             xInterval: 0.5,
-            yInterval: 100
+            yInterval: 10
         },
         axes: true
     },
     series: {
-        voltage: {
-            id: 'voltage',
-            name: 'Voltage',
-            color: Color.fromHex(Themes.palette.slate[0]),
+        throttle: {
+            id: 'throttle',
+            name: 'Throttle',
+            color: Color.fromHex(Themes.palette.umber[2]),
             duration: 5,
             points: 300
         },
     }
 }
 
-const PressureStream = ({animate, newData}) => {
+const ThrottleStream = ({animate, newData}) => {
+
     const streamData = useMemo(() => {
         return {
-            voltage: newData || 0,
+            throttle: newData || 0,
         }
     }, [newData])
 
     return(
         <div className={styles.container}>
             <div className={styles.header}>
-                <h3>Voltage</h3>
-                <span>V</span>
+                <h3>Throttle</h3>
+                <span>%</span>
             </div>
             <GLPlot
-                className={styles.voltagePlot}
+                className={styles.throttlePlot}
                 configuration={configuration}
                 animate={animate}
                 newData={streamData}
@@ -57,4 +58,4 @@ const PressureStream = ({animate, newData}) => {
     )
 }
 
-export default PressureStream;
+export default ThrottleStream;

@@ -37,11 +37,10 @@ const configuration = {
 const MassStream = ({animate, newData}) => {
 
     const streamData = useMemo(() => {
-        let _data = newData || [0, 0];
         return {
-            mass: _data[0],
+            mass: newData || 0,
         }
-    }, newData)
+    }, [newData])
 
     return(
         <div className={styles.container}>
