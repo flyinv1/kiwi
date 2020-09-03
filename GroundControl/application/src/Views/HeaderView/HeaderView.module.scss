@@ -8,6 +8,7 @@
     height: var(--height-m);
     background-color: var(--fill-l);
     border-bottom: 1px solid var(--border-m);
+    flex-shrink: 0;
 }
 
 .title {

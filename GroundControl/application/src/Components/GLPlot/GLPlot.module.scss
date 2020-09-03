@@ -5,6 +5,7 @@
     flex-direction: row;
     padding: 24px;
     box-sizing: content-box;
+    padding-left: 48px;
 }
 
 .canvas {
@@ -17,7 +18,7 @@
 
 .x_axes {
     bottom: 0;
-    left: 18px;
+    left: 36px;
     right: 18px;
     height: 24px;
     position: absolute;
@@ -33,9 +34,9 @@
     left: 0;
     bottom: 18px;
     top: 18px;
-    width: 24px;
+    width: 36px;
     position: absolute;
-    text-align: center;
+    text-align: right;
     display: flex;
     flex-direction: column-reverse;
     justify-content: space-between;

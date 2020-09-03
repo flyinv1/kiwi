@@ -38,6 +38,7 @@ function Plot(canvas, properties) {
 
     this.resize = () => {
         this.renderer.resize();
+        this.render();
     };
 
     this.setAxes = (axes) => {

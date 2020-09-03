@@ -1,8 +1,6 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useLayoutEffect } from 'react';
 import Plot, { StreamLine, Color, Line, Themes, Axes, Grid } from './gl-rtplot';
 import styles from './GLPlot.module.scss';
-
-const delta = 1;
 
 const GLPlot = ({ 
     className,
@@ -102,6 +100,11 @@ const GLPlot = ({
         [ width, height ]
     );
 
+    useLayoutEffect(() => {
+        console.log('layout', configuration.series);
+        if (glplot.current) glplot.current.resize();
+    })
+
     useEffect(
         () => {
 
@@ -109,7 +112,7 @@ const GLPlot = ({
 
             const animateFrame = (t) => {
 
-                if (_dataAvailable.current) {
+                if (_dataAvailable.current && _newData.current) {
                     Object.keys(_newData.current).map(key => {
                         const series = glplot.current.series?.[key];
                         if (series) series.shiftIn(_newData.current[key], t)

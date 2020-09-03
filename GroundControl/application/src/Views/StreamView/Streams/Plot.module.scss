@@ -1,0 +1,53 @@
+.container {
+    // margin: var(--b-l);
+}
+
+h2 {
+    margin-bottom: var(--b-s);
+}
+
+
+h3 {
+    margin-bottom: var(--b-m);
+}
+
+.plotContainer {
+    background-color: var(--fill-ul);
+    border-radius: var(--radius);
+}
+
+.header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pressurePlot {
+    @extend .plotContainer;
+    // width: 625px;
+    // height: 420px;
+    height: 100%;
+    max-height: 50vh;
+}
+
+.thrustPlot {
+    @extend .plotContainer;
+    // width: 300px;
+    // height: 175px;
+    height: 20vh;
+}
+
+.massPlot {
+    @extend .plotContainer;
+    // width: 300px;
+    // height: 175px;
+    height: 20vh;
+}
+
+.voltagePlot {
+    @extend .plotContainer;
+    // width: 300px;
+    // height: 175px;
+    height: 20vh;
+}

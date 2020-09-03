@@ -15,48 +15,41 @@ const configuration = {
             xmin: 0,
             xmax: 5,
             ymin: 0,
-            ymax: 1000
+            ymax: 60
         },
         grid: {
             xInterval: 0.5,
-            yInterval: 100
+            yInterval: 5
         },
         axes: true
     },
     series: {
-        pressure0: {
-            id: 'pressure0',
-            name: 'Pressure 0',
+        thrust: {
+            id: 'thrust',
+            name: 'Thrust',
             color: Color.fromHex(Themes.palette.slate[0]),
-            duration: 5,
-            points: 300
-        },
-        pressure1: {
-            id: 'pressure1',
-            name: 'Pressure 1',
-            color: Color.fromHex(Themes.palette.slate[1]),
             duration: 5,
             points: 300
         },
     }
 }
 
-const PressureStream = ({animate}) => {
+const ThrustStream = ({animate}) => {
 
     const data = useTopic(MQTT.telemetry.buffer)
 
-    const pressure = useMemo(() => {
+    const thrust = useMemo(() => {
 
     }, [data.payload])
 
     return(
         <div className={styles.container}>
             <div className={styles.header}>
-                <h2>Pressure</h2>
-                <span>PSI</span>
+                <h3>Thrust</h3>
+                <span>N</span>
             </div>
             <GLPlot
-                className={styles.pressurePlot}
+                className={styles.thrustPlot}
                 configuration={configuration}
                 animate={animate}
                 newData={null}
@@ -65,4 +58,4 @@ const PressureStream = ({animate}) => {
     )
 }
 
-export default PressureStream;
+export default ThrustStream;

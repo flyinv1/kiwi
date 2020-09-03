@@ -24,17 +24,10 @@ const configuration = {
         axes: true
     },
     series: {
-        pressure0: {
-            id: 'pressure0',
-            name: 'Pressure 0',
+        voltage: {
+            id: 'voltage',
+            name: 'Voltage',
             color: Color.fromHex(Themes.palette.slate[0]),
-            duration: 5,
-            points: 300
-        },
-        pressure1: {
-            id: 'pressure1',
-            name: 'Pressure 1',
-            color: Color.fromHex(Themes.palette.slate[1]),
             duration: 5,
             points: 300
         },
@@ -45,18 +38,15 @@ const PressureStream = ({animate}) => {
 
     const data = useTopic(MQTT.telemetry.buffer)
 
-    const pressure = useMemo(() => {
+    const voltage = useMemo(() => {
 
     }, [data.payload])
 
     return(
         <div className={styles.container}>
-            <div className={styles.header}>
-                <h2>Pressure</h2>
-                <span>PSI</span>
-            </div>
+            <h3>Voltage</h3>
             <GLPlot
-                className={styles.pressurePlot}
+                className={styles.voltagePlot}
                 configuration={configuration}
                 animate={animate}
                 newData={null}
