@@ -19,7 +19,7 @@ const configuration = {
         },
         grid: {
             xInterval: 5,
-            yInterval: 1
+            yInterval: 2
         },
         axes: true
     },
@@ -34,13 +34,14 @@ const configuration = {
     }
 }
 
-const MassStream = ({animate}) => {
+const MassStream = ({animate, newData}) => {
 
-    const data = useTopic(MQTT.telemetry.buffer)
-
-    const mass = useMemo(() => {
-
-    }, [data.payload])
+    const streamData = useMemo(() => {
+        let _data = newData || [0, 0];
+        return {
+            mass: _data[0],
+        }
+    }, newData)
 
     return(
         <div className={styles.container}>
@@ -52,7 +53,7 @@ const MassStream = ({animate}) => {
                 className={styles.massPlot}
                 configuration={configuration}
                 animate={animate}
-                newData={null}
+                newData={streamData}
             />
         </div>
     )

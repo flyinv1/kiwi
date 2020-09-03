@@ -78,6 +78,7 @@ const ConfigurationView = () => {
 
     useEffect(() => {
         const windowListener = (e) => {
+            const _published = publish(MQTT.run.start, false);
             setIsRunning(false);
         }
         window.addEventListener('keypress', windowListener);
@@ -195,8 +196,8 @@ const ConfigurationView = () => {
                         disabled={!validConfiguration}
                         loading={false}
                         onClick={() => {
+                            const _published = publish(MQTT.run.arm, !isArmed);
                             setIsArmed(_armed => !_armed)
-                            const _published = publish(MQTT.run.arm, 1);
                         }}
                     >
                         { isArmed ? 'Disarm Engine' : 'Arm Engine' }
@@ -209,8 +210,8 @@ const ConfigurationView = () => {
                     <DestructiveButton
                         disabled={!isArmed || isRunning}
                         onClick={() => {
+                            const _published = publish(MQTT.run.start, true);
                             setIsRunning(true);
-                            const _published = publish(MQTT.run.start, 1);
                         }}
                     >
                         Run Test

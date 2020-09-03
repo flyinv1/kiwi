@@ -34,13 +34,13 @@ const configuration = {
     }
 }
 
-const ThrustStream = ({animate}) => {
+const ThrustStream = ({animate, newData}) => {
 
-    const data = useTopic(MQTT.telemetry.buffer)
-
-    const thrust = useMemo(() => {
-
-    }, [data.payload])
+    const bufferData = useMemo(() => {
+        return { 
+            thrust: newData
+        }
+    }, [newData])
 
     return(
         <div className={styles.container}>
@@ -52,7 +52,7 @@ const ThrustStream = ({animate}) => {
                 className={styles.thrustPlot}
                 configuration={configuration}
                 animate={animate}
-                newData={null}
+                newData={bufferData}
             />
         </div>
     )

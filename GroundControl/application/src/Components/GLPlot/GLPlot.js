@@ -87,7 +87,6 @@ const GLPlot = ({
     useEffect(() => {
         _newData.current = newData;
         _dataAvailable.current = true;
-        
     }, [ newData ])
 
     useEffect(
@@ -101,8 +100,9 @@ const GLPlot = ({
     );
 
     useLayoutEffect(() => {
-        console.log('layout', configuration.series);
-        if (glplot.current) glplot.current.resize();
+        if (glplot.current) { 
+            // glplot.current.resize();
+        }
     })
 
     useEffect(
@@ -115,12 +115,16 @@ const GLPlot = ({
                 if (_dataAvailable.current && _newData.current) {
                     Object.keys(_newData.current).map(key => {
                         const series = glplot.current.series?.[key];
-                        if (series) series.shiftIn(_newData.current[key], t)
+                        if (series) series.shiftIn(new Float32Array([_newData.current[key]]), t)
                     })
                     _dataAvailable.current = false;
                 } else {
+                    // series.update(t);
                     Object.values(glplot.current.series).map(series => {
-                        if (series) series.shiftIn(new Float32Array([0]), t);
+                        if (series) {
+                            series.update(t);
+                            // series.shiftIn(new Float32Array([0]), t);
+                        }
                     })
                 }
 

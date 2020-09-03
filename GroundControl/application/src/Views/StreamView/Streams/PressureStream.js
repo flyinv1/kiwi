@@ -27,27 +27,29 @@ const configuration = {
         pressure0: {
             id: 'pressure0',
             name: 'Pressure 0',
-            color: Color.fromHex(Themes.palette.slate[0]),
+            color: Color.fromHex(Themes.palette.umber[0]),
             duration: 5,
             points: 300
         },
         pressure1: {
             id: 'pressure1',
             name: 'Pressure 1',
-            color: Color.fromHex(Themes.palette.slate[1]),
+            color: Color.fromHex(Themes.palette.umber[1]),
             duration: 5,
             points: 300
         },
     }
 }
 
-const PressureStream = ({animate}) => {
+const PressureStream = ({animate, newData}) => {
 
-    const data = useTopic(MQTT.telemetry.buffer)
-
-    const pressure = useMemo(() => {
-
-    }, [data.payload])
+    const streamData = useMemo(() => {
+        let _data = newData || [0, 0];
+        return {
+            pressure0: _data[0],
+            pressure1: _data[1]
+        }
+    }, [newData])
 
     return(
         <div className={styles.container}>
@@ -59,7 +61,7 @@ const PressureStream = ({animate}) => {
                 className={styles.pressurePlot}
                 configuration={configuration}
                 animate={animate}
-                newData={null}
+                newData={streamData}
             />
         </div>
     )
