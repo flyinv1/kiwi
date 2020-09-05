@@ -44,7 +44,9 @@ public:
     };
 
     enum TRANSITIONS {
-        num_transitions = 2,
+        transition_standby_to_sample,
+        transition_sample_to_standby,
+        num_transitions
     };
 
     typedef struct {
@@ -58,6 +60,13 @@ public:
         { mode_sample, mode_standby, &Estimator::sm_sample_to_standby }
     };
 
+    typedef struct {
+        float chamberPressure;
+        float injectorPressure;
+        float upstreamPressure;
+        float thrust;
+    } EngineState;
+
     ModeType mode = mode_standby;
 
     ADC* adc = new ADC();
@@ -68,7 +77,7 @@ public:
 
     Estimator();
 
-    void init();
+    void init(&RoboClaw _throttle);
 
     void main();
 
@@ -77,9 +86,9 @@ public:
     void calibrateAll();
 
 private:
-    // the estimator produces a real time estimate of thrust, chamber pressure,
-    // and injector pressure regardless of the mode, as well as fusing the two to provide a robust
-    // estimate of engine performance.
+    /* 
+        the estimator produces a real time estimate of thrust, chamber pressure, and injector pressure regardless of the mode, as well as fusing the two to provide a robust estimate of engine performance.
+    */
     float chamber_pressure;
     float injector_pressure;
     float thrust;

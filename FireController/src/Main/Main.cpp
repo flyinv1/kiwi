@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-// #include "../Controller/Controller.h"
+#include "./Controller/Controller.h"
 
 Main::Main()
 {
@@ -12,8 +12,4 @@ void Main::init()
 {
     Serial.begin(115200);
     gateway.init(&Serial);
-}
-
-void Main::sm_boot()
-{
 }

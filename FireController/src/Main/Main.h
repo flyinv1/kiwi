@@ -10,15 +10,12 @@ class Main {
 
 public:
     typedef enum {
-        state_boot,
-        state_standby,
-        state_calibrate,
-        state_fire,
-        state_cooldown,
-        state_abort,
+        state_init,
+        state_standby_disconnected,
+        state_standby_connected,
+        state_armed,
+        state_running,
         state_error,
-        state_shutdown,
-        state_benchtop,
         num_states
     } StateType;
 
@@ -28,14 +25,12 @@ public:
     } StateMachineType;
 
     StateMachineType StateMachine[num_states] = {
-        { state_boot, &Main::sm_boot },
-        { state_standby, &Main::sm_standby },
-        { state_calibrate, &Main::sm_calibrate },
-        { state_fire, &Main::sm_fire },
-        { state_cooldown, &Main::sm_cooldown },
-        { state_abort, &Main::sm_abort },
-        { state_error, &Main::sm_error },
-        { state_shutdown, &Main::sm_shutdown },
+        { state_standby_init, &Main::sm_init },
+        { state_standby_disconnected, &Main::sm_standby_disconnected },
+        { state_standby_connected, &Main::sm_standby_connected },
+        { state_armed, &Main::sm_armed },
+        { state_running, &Main::sm_running },
+        { state_error, &Main::sm_error }
     };
 
     Gateway gateway();
@@ -44,7 +39,7 @@ public:
 
     void init();
 
-    void run()
+    void loop()
     {
         if (state < num_states) {
             (*StateMachine[state].method)();
@@ -54,7 +49,7 @@ public:
 private:
     StateType state = state_boot;
 
-    Controller controller(gateway);
+    Controller controller();
 
     void sm_boot();
 

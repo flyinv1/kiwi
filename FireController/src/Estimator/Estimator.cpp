@@ -14,7 +14,10 @@ void Estimator::init()
 {
     Estimator::estimator = this;
 
-    // initialize ADC pressure measurement
+    /* 
+        Initialize ADC pressure measurement. 
+        Pressure measuremnts are updated at fixed time intervals via timer interrupts. Data is shifted in to the estimator's pressure buffers if available.
+    */
 
     // enable analog pins for input
     pinMode(pin_pressure_0, INPUT);
