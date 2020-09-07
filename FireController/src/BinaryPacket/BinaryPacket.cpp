@@ -7,7 +7,7 @@ BinaryPacket::BinaryPacket()
     _stream = nullptr;
 }
 
-BinaryPacket::~BinaryPacket() {}
+BinaryPacket::~BinaryPacket() { }
 
 void BinaryPacket::read()
 {
@@ -59,8 +59,9 @@ void BinaryPacket::send()
 
 size_t BinaryPacket::packet(uint8_t* buffer)
 {
-    buffer = _readBuffer;
-    return _readBufferIndex;
+    // Offset the buffer by one byte to remove crc
+    buffer = _readBuffer + 1;
+    return _readBufferIndex - 1;
 }
 
 void BinaryPacket::flush()
@@ -70,13 +71,13 @@ void BinaryPacket::flush()
 
 void BinaryPacket::flushWriteBuffer()
 {
-    _writeBufferIndex = 0;
+    _writeBufferIndex = 1;
     _writeBuffer[0] = 0;
 }
 
 bool BinaryPacket::write(uint8_t* buffer, size_t length)
 {
-    if (_writeBufferIndex + length > 255) {
+    if (_writeBufferIndex + length > 254) {
         return false;
     }
     for (uint8_t i = 0; i < length; i++) {
@@ -160,4 +161,80 @@ uint8_t BinaryPacket::crc8(uint8_t* buffer, size_t length)
     }
 
     return crc;
+}
+
+size_t readFloatBuffer(uint8_t* buffer, size_t len, float* output)
+{
+    size_t outputLength = ((len / 4) % 4 == 0) ? (len / 4) : len - len % 4;
+    for (int i = 0; i < outputLength; i++) {
+        union {
+            byte b[4];
+            float v;
+        } f;
+        for (int j = 0; j < 4; j++) {
+            f.b[i + j] = buffer[i + j];
+        }
+        output[i] = f.v;
+    }
+    return outputLength;
+}
+
+float readFloat(uint8_t* buffer, size_t len, bool bendian = false)
+{
+    union {
+        byte b[4];
+        float v;
+    } f;
+    for (int i = 0; i < 4; i++) {
+        f.b[i] = buffer[i];
+    }
+    return f.v;
+}
+
+size_t readInt32Buffer(uint8_t* buffer, size_t len, int32_t* output)
+{
+    size_t outputLength = ((len / 4) % 4 == 0) ? (len / 4) : len - len % 4;
+    for (int i = 0; i < outputLength; i++) {
+        union {
+            byte b[4];
+            int32_t v;
+        } out;
+        for (int j = 0; j < 4; j++) {
+            out.b[i + j] = buffer[i + j];
+        }
+        output[i] = out.v;
+    }
+    return outputLength;
+}
+
+int32_t readInt32(uint8_t* buffer, size_t len, bool bendian = false)
+{
+    if (len == 4) {
+        union {
+            byte b[4];
+            int32_t v;
+        } out;
+        for (int i = 0; i < 4; i++) {
+            out.b[i] = buffer[i];
+        }
+        return out.v;
+    } else {
+        return 0;
+    }
+}
+
+uint32_t readUInt32(uint8_t* buffer, size_t len, bool bendian = false)
+{
+    if (len == 4) {
+        union {
+            byte b[4];
+            uint32_t v;
+        } out;
+        for (int i = 0; i < 4; i++) {
+            out.b[i] = buffer[i];
+        }
+        return out.v;
+    } else {
+        return 0;
+    }
 }

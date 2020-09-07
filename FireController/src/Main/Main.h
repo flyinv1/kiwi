@@ -51,6 +51,17 @@ class Main {
         CALLBACKS = 15
     };
 
+    // typedef struct {
+    //     ID id;
+    //     void (Main::*method)(uint8_t id, uint8_t * buffer, size_t len);
+    // } Callback;
+
+    // Callback callbacks[CALLBACKS] = {
+    //     { RUN_ARM }, &Main::_arm,
+    //     { RUN_DISARM }, &Main::_disarm,
+
+    // }
+
 public:
     Main();
 
@@ -59,10 +70,6 @@ public:
     void loop();
 
 private:
-    enum {
-        id_index = 1,
-        flag_indices = 2
-    };
 
     StateType state = state_boot;
 

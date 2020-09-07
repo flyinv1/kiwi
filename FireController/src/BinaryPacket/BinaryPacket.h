@@ -3,6 +3,14 @@
 class BinaryPacket {
 
 public:
+    /* 
+        Packet structure
+        [ CRC, ID, n..., 0x00 ]
+        CRC = 8 bit crc for remainder of packet
+        ID = message ID
+        0x00 = COBS packet delimiter
+    */
+
     BinaryPacket();
 
     ~BinaryPacket();
@@ -26,13 +34,15 @@ public:
     /*
         Helper functions for reading data out of byte arrays
     */
-    size_t readFloatBuffer(uint8_t buffer, size_t len, float* output);
+    size_t readFloatBuffer(uint8_t* buffer, size_t len, float* output);
 
-    float readFloat(uint8_t buffer, bool bendian = false);
+    float readFloat(uint8_t* buffer, size_t len, bool bendian = false);
 
-    size_t readIntBuffer(uint8_t buffer, size_t len, int* output);
+    size_t readInt32Buffer(uint8_t* buffer, size_t len, int32_t* output);
 
-    int readInt(uint8_t* buffer, bool bendian = false);
+    int32_t readInt32(uint8_t* buffer, size_t len, bool bendian = false);
+
+    uint32_t readUInt32(uint8_t* buffer, size_t len, bool bendian = false);
 
 private:
     // Pointer to stream (Serial or SoftSerial instance)
