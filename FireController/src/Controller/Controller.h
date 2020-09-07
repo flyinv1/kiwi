@@ -57,12 +57,14 @@ public:
 
     typedef enum {
         control_mode_open,
-        control_mode_closed
+        control_mode_closed,
+        control_mode_error = 255,
     } ControlMode;
 
     typedef enum {
         engine_mode_cold,
         engine_mode_hot,
+        engine_mode_error = 255,
     } EngineMode;
 
     Controller();
@@ -70,6 +72,10 @@ public:
     void init();
 
     void main();
+
+    ControlMode setControlModeFrom(uint8_t* buffer, size_t len);
+
+    EngineMode setEngineModeFrom(uint8_t* buffer, size_t len);
 
 private:
     /*

@@ -63,25 +63,53 @@ void Main::read()
 void Main::_on(uint8_t id, uint8_t* buffer, size_t len)
 {
     switch (id) {
-    case SYNC:
-        _sync();
-    case default:
+    case RUN_ARM:
+        _arm();
+        break;
+    case RUN_DISARM:
+        _disarm();
+        break;
+    case RUN_START:
+        _start();
+        break;
+    case RUN_STOP:
+        _stop();
+        break;
+    case SET_CONTROLMODE:
+        if (!controller.setControlModeFrom(buffer, len) == Controller::control_mode_open) {
+            // Return error
+        }
+        break;
+    case SET_ENGINEMODE:
+        if (controller.setEngineModeFrom(buffer, len) == Controller::engine_mode_error) {
+            // Return error
+        }
+        break;
+    case SET_RUNDURATION:
+        uint32_t duration = encoder.readInt(buffer, len);
+        _set_run_duration(duration);
+        break;
+    default:
         break;
     }
 }
 
-void Main::_sync()
+void Main::_arm()
 {
 }
 
-void Main::_arm(uint8_t* buffer, size_t len)
+void Main::_disarm()
 {
 }
 
-void Main::_disarm(uint8_t* buffer, size_t len)
+void Main::_start()
 {
 }
 
-void Main::_start(uint8_t* buffer, size_t len)
+void Main::_stop()
+{
+}
+
+void Main::_set_run_duration(uint32_t duration)
 {
 }

@@ -11,7 +11,7 @@ public:
 
     void send();
 
-    void write(uint8_t* buffer, size_t length);
+    bool write(uint8_t* buffer, size_t length);
 
     void setStream(Stream* stream);
 

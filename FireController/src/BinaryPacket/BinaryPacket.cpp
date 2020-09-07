@@ -7,7 +7,7 @@ BinaryPacket::BinaryPacket()
     _stream = nullptr;
 }
 
-BinaryPacket::~BinaryPacket() { }
+BinaryPacket::~BinaryPacket() {}
 
 void BinaryPacket::read()
 {
@@ -74,7 +74,7 @@ void BinaryPacket::flushWriteBuffer()
     _writeBuffer[0] = 0;
 }
 
-void BinaryPacket::write(uint8_t* buffer, size_t length)
+bool BinaryPacket::write(uint8_t* buffer, size_t length)
 {
     if (_writeBufferIndex + length > 255) {
         return false;

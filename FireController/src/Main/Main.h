@@ -87,6 +87,8 @@ private:
     /*
         API METHODS
     */
+    void _on(uint8_t id, uint8_t* buffer, size_t len);
+
     void _arm();
 
     void _disarm();
@@ -97,10 +99,6 @@ private:
 
     void _set_run_duration(uint32_t duration);
 
-    void _set_engine_mode(Controller::EngineMode engineMode);
-
-    void _set_control_mode(Controller::ControlMode controlMode);
-
     void _set_igniter_preburn(uint32_t duration);
 
     void _set_igniter_duration(uint32_t duration);
@@ -109,9 +107,9 @@ private:
 
     void _get_configuration();
 
-    void _run_calibrate_propellant();
+    void _calibrate_propellant();
 
-    void _run_calibrate_thrust();
+    void _calibrate_thrust();
 };
 
 #endif

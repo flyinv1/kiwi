@@ -55,3 +55,7 @@ int Controller::_throttlePositionToInput(float _angle)
 
     return _input;
 }
+
+Controller::ControlMode Controller::setControlModeFrom(uint8_t* buffer, size_t len)
+{
+}
