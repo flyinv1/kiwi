@@ -8,6 +8,12 @@
 
 Estimator::Estimator()
 {
+    // lc_propellant = NBHX711(pin_lc_propellant_sda, pin_lc_sck, HX711_HIST_BUFF, HX711_GAIN);
+    // lc_thrust = NBHX711(pin_lc_thrust_sda, pin_lc_sck, HX711_HIST_BUFF, HX711_GAIN);
+}
+
+Estimator::~Estimator()
+{
 }
 
 void Estimator::init()
@@ -31,7 +37,7 @@ void Estimator::init()
     // // use low speeds for high impedences
     adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::MED_HIGH_SPEED);
     adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::MED_SPEED);
-    adc->adc0->setResolution(12);
+    adc->adc0->setResolution(10);
 
     // // set interrupt for adc0 when sample is ready
     adc->adc0->enableInterrupts(adc_isr);
@@ -41,6 +47,7 @@ void Estimator::init()
     lc_propellant.begin();
 
     lc_thrust.setScale();
+    lc_propellant.setScale();
 
     // start timing loop
     t_last = micros();
@@ -71,6 +78,10 @@ void Estimator::setState(ModeType new_mode)
     }
 }
 
+void Estimator::getEngineState(EngineState* engineState)
+{
+}
+
 void Estimator::sm_standby()
 {
     // do nothing so far
@@ -79,8 +90,12 @@ void Estimator::sm_standby()
 void Estimator::sm_sample()
 {
     // Sample pressure ADC buffers
-    float pressure_0 = sample_pressure(_pressure_buffer_0, _pressure_index_0);
-    float pressure_1 = sample_pressure(_pressure_buffer_0, _pressure_index_1);
+    float _p_adc0 = sample_pressure_adc(_pressure_buffer_0, _pressure_index_0);
+    float _p_adc1 = sample_pressure_adc(_pressure_buffer_0, _pressure_index_1);
+
+    // Convert adc readings to pressure values
+    float _p0 = compute_pressure(_p_adc0);
+    float _p1 = compute_pressure(_p_adc1);
 
     // Sample load cells
     if (lc_thrust.update()) {
@@ -91,7 +106,7 @@ void Estimator::sm_sample()
     }
 }
 
-float Estimator::sample_pressure(uint16_t* buffer, size_t len)
+float Estimator::sample_pressure_adc(uint16_t* buffer, size_t len)
 {
     uint16_t p;
     for (uint8_t i = 0; i < len; i++) {

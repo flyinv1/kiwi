@@ -1,19 +1,19 @@
 #include "Controller.h"
 
 #include <Arduino.h>
+#include <RoboClaw.h>
 
 #include "../Estimator/Estimator.h"
+#include "../Gateway/Gateway.h"
 #include "../KiwiGPIO.h"
-#include "../Libraries/RoboClaw/RoboClaw.h"
 
-Controller::Controller() {
-
-};
+Controller::Controller() {};
 
 void Controller::init()
 {
     _estimator.init();
     _initializeRunValve();
+    _throttle_valve.begin(MOTOR_BAUD);
 };
 
 void Controller::main()
@@ -47,7 +47,7 @@ void Controller::_closeRunValve(void)
 int Controller::_throttlePositionToInput(float _angle)
 {
     // convert angle input to motor position
-    int _input = THROTTLE_POS_CLOSED - _ceil(_angle / THROTTLE_ANG_OPEN * THROTTLE_POS_CLOSED);
+    int _input = THROTTLE_POS_CLOSED - ceil(_angle / THROTTLE_ANG_OPEN * THROTTLE_POS_CLOSED);
 
     // clamp the input to possible motor position range
     _input = min(THROTTLE_POS_CLOSED, _input);

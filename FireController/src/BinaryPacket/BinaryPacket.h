@@ -23,6 +23,17 @@ public:
 
     void flush();
 
+    /*
+        Helper functions for reading data out of byte arrays
+    */
+    size_t readFloatBuffer(uint8_t buffer, size_t len, float* output);
+
+    float readFloat(uint8_t buffer, bool bendian = false);
+
+    size_t readIntBuffer(uint8_t buffer, size_t len, int* output);
+
+    int readInt(uint8_t* buffer, bool bendian = false);
+
 private:
     // Pointer to stream (Serial or SoftSerial instance)
     Stream* _stream;

@@ -1,8 +1,8 @@
 #include <Arduino.h>
+#include <RoboClaw.h>
 
 #include "../Estimator/Estimator.h"
 #include "../KiwiGPIO.h"
-// #include "../Libraries/RoboClaw/RoboClaw.h"
 
 #ifndef KIWI_CONTROLLER
 #define KIWI_CONTROLLER
@@ -12,7 +12,7 @@
     V_igniter [0 - 1000V] = Input * IGNITER_SCALE + IGNITER_OFFSET
     Input [0 - 255] = (V_igniter - IGNITER_OFFSET ) / IGNITER_SCALE
 */
-#define IGNITER_SCALE 2.8577f
+#define IGNITER_SCALE  2.8577f
 #define IGNITER_OFFSET -12.9516f
 
 /*
@@ -20,12 +20,13 @@
     RoboClaw extends Stream, requires a serial baud rate and target MCU address
     _throttlePercentToInput provides a mapping from 0-90deg to 660-0 using ANG and POS values
 */
-#define MOTOR_ADDRESS 0x80
-#define MOTOR_BAUD 460800
+#define MOTOR_ADDRESS       0x80
+#define MOTOR_BAUD          460800
+#define MOTOR_TIMEOUT       10000
 #define THROTTLE_ANG_CLOSED 0
-#define THROTTLE_ANG_OPEN 90
+#define THROTTLE_ANG_OPEN   90
 #define THROTTLE_POS_CLOSED 660
-#define THROTTLE_POS_OPEN 0
+#define THROTTLE_POS_OPEN   0
 
 /*
     RoboClaw motor control parameters required for position control
@@ -74,7 +75,7 @@ private:
     /*
         Actuator instances
     */
-    RoboClaw _throttle_valve;
+    RoboClaw _throttle_valve = RoboClaw(&Serial4, MOTOR_TIMEOUT);
     Estimator _estimator;
 
     /*
@@ -114,7 +115,7 @@ private:
 
     void _closeRunValve(void);
 
-    void _throttlePositionToInput(float _angle);
+    int _throttlePositionToInput(float _angle);
 };
 
 #endif
