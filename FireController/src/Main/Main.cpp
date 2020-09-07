@@ -14,24 +14,35 @@ void Main::init()
 {
     Serial.begin(115200);
     encoder.setStream(&Serial);
+    controller.init();
 }
 
 void Main::loop()
 {
+    encoder.read();
     if (state < num_states) {
         (this->*StateMachine[state].method)();
     }
 }
 
-void Main::sm_boot()
+void Main::setState(StateType next)
+{
+    if (next < num_states) {
+        for (int i = 0; i < num_transitions; i++) {
+            if (TransitionTable[i].prev == state && TransitionTable[i].next == next) {
+                (this->*TransitionTable[i].method)();
+                break;
+            }
+        }
+        state = next;
+    }
+}
+
+void Main::sm_disconnected()
 {
 }
 
-void Main::sm_standby_disconnected()
-{
-}
-
-void Main::sm_standby_connected()
+void Main::sm_standby()
 {
 }
 
@@ -143,7 +154,7 @@ void Main::_set_igniter_preburn(uint32_t duration)
 {
 }
 
-void Main::_set_targets(int32_t* buffer, size_t len)
+void Main::_set_targets(uint8_t* buffer, size_t len)
 {
 }
 
@@ -155,10 +166,10 @@ void Main::_get_configuration()
 {
 }
 
-void Main::_run_calibrate_load()
+void Main::_calibrate_thrust()
 {
 }
 
-void Main::_run_calibrate_propellant()
+void Main::_calibrate_propellant()
 {
 }

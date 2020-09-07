@@ -2,6 +2,7 @@
 
 #include "../BinaryPacket/BinaryPacket.h"
 #include "../Controller/Controller.h"
+#include "../Target/Target.h"
 
 #ifndef KIWI_MAIN
 #define KIWI_MAIN
@@ -9,9 +10,8 @@
 class Main {
 
     typedef enum {
-        state_boot,
-        state_standby_disconnected,
-        state_standby_connected,
+        state_disconnected,
+        state_standby,
         state_armed,
         state_running,
         state_error,
@@ -24,12 +24,34 @@ class Main {
     } StateMachineType;
 
     StateMachineType StateMachine[num_states] = {
-        { state_boot, &Main::sm_boot },
-        { state_standby_disconnected, &Main::sm_standby_disconnected },
-        { state_standby_connected, &Main::sm_standby_connected },
+        { state_disconnected, &Main::sm_disconnected },
+        { state_standby, &Main::sm_standby },
         { state_armed, &Main::sm_armed },
         { state_running, &Main::sm_running },
         { state_error, &Main::sm_error }
+    };
+
+    enum TRANSITIONS {
+        transition_disconnected_standby,
+        transition_standby_to_armed,
+        transition_armed_to_running,
+        transition_running_to_armed,
+        transition_armed_to_standby,
+        num_transitions
+    };
+
+    typedef struct {
+        StateType prev;
+        StateType next;
+        void (Main::*method)(void);
+    } StateMachineTransition;
+
+    StateMachineTransition TransitionTable[num_transitions] = {
+        { state_disconnected, state_standby, &Main::sm_disconnected_to_standby },
+        { state_standby, state_armed, &Main::sm_standby_to_armed },
+        { state_armed, state_running, &Main::sm_armed_to_running },
+        { state_running, state_armed, &Main::sm_running_to_armed },
+        { state_armed, state_standby, &Main::sm_armed_to_standby },
     };
 
     enum {
@@ -51,17 +73,6 @@ class Main {
         CALLBACKS = 15
     };
 
-    // typedef struct {
-    //     ID id;
-    //     void (Main::*method)(uint8_t id, uint8_t * buffer, size_t len);
-    // } Callback;
-
-    // Callback callbacks[CALLBACKS] = {
-    //     { RUN_ARM }, &Main::_arm,
-    //     { RUN_DISARM }, &Main::_disarm,
-
-    // }
-
 public:
     Main();
 
@@ -69,25 +80,34 @@ public:
 
     void loop();
 
-private:
+    void setState(StateType next);
 
-    StateType state = state_boot;
+private:
+    StateType state = state_disconnected;
 
     BinaryPacket encoder;
 
     Controller controller;
 
-    void sm_boot();
+    void sm_disconnected();
 
-    void sm_standby_disconnected();
-
-    void sm_standby_connected();
+    void sm_standby();
 
     void sm_armed();
 
     void sm_running();
 
     void sm_error();
+
+    void sm_disconnected_to_standby();
+
+    void sm_standby_to_armed();
+
+    void sm_armed_to_running();
+
+    void sm_running_to_armed();
+
+    void sm_armed_to_standby();
 
     void read();
 
@@ -111,6 +131,8 @@ private:
     void _set_igniter_duration(uint32_t duration);
 
     void _set_targets(uint8_t* buffer, size_t len);
+
+    void _get_conn_status();
 
     void _get_configuration();
 
