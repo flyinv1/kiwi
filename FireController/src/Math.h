@@ -1,3 +1,4 @@
+#include <Arduino.h>
 
 template <class type>
 static type clamp(type value, type min, type max)

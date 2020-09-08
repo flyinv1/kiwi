@@ -1,13 +1,13 @@
-#include "./src/Main/Main.h"
+#include "src/Main/Main.h"
 
-// Main main = Main();
+Main main = Main();
 
 void setup()
 {
-    // main.init();
+    main.init();
 }
 
 void loop()
 {
-    // main.run();
+    main.loop();
 }

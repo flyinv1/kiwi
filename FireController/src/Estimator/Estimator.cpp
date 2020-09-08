@@ -115,6 +115,11 @@ float Estimator::sample_pressure_adc(uint16_t* buffer, size_t len)
     return (float)p / (float)len;
 }
 
+float Estimator::compute_pressure(float p)
+{
+    return 0;
+}
+
 void Estimator::adc_timer_callback(void)
 {
     estimator->adc->adc0->startSingleRead(pin_pressure_0);

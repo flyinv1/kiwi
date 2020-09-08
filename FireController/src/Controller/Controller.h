@@ -49,31 +49,63 @@
 
 class Controller {
 
+    typedef bool (Controller::*TransitionMethod)(void);
+    typedef void (Controller::*StateMethod)(void);
+
 public:
     typedef enum {
+        state_safe,
         state_armed,
         state_preburn,
         state_igniting,
         state_firing,
-        state_shutdown
-    }
-
-    typedef enum {
-        state_safe,
-        state_closed,
-        state_open,
+        state_shutdown,
         num_states
     } StateType;
 
     typedef struct {
-        StateType type;
-        void (Controller::*method)(void);
+        StateType state;
+        StateMethod method;
     } StateMachineType;
 
     StateMachineType StateMachine[num_states] = {
-        { state_closed, &Controller::sm_closed },
-        { state_open, &Controller::sm_open },
-        { state_safe, &Controller::sm_safe }
+        { state_safe, &Controller::sm_safe },
+        { state_armed, &Controller::sm_armed },
+        { state_preburn, &Controller::sm_preburn },
+        { state_igniting, &Controller::sm_igniting },
+        { state_firing, &Controller::sm_firing },
+        { state_shutdown, &Controller::sm_shutdown },
+    };
+
+    typedef enum {
+        transition_safe_to_armed,
+        transition_armed_to_preburn,
+        transition_preburn_to_igniting,
+        transition_igniting_to_firing,
+        transition_firing_to_shutdown,
+        transition_igniting_to_shutdown,
+        transition_preburn_to_shutdown,
+        transition_armed_to_safe,
+        transition_shutdown_to_safe,
+        num_transitions
+    } StateTransitions;
+
+    typedef struct {
+        StateType prev;
+        StateType next;
+        TransitionMethod method;
+    } StateMachineTransition;
+
+    StateMachineTransition TransitionTable[num_transitions] = {
+        { state_safe, state_armed, &Controller::smt_safe_to_armed },
+        { state_armed, state_preburn, &Controller::smt_armed_to_preburn },
+        { state_preburn, state_igniting, &Controller::smt_preburn_to_igniting },
+        { state_igniting, state_firing, &Controller::smt_igniting_to_firing },
+        { state_firing, state_shutdown, &Controller::smt_firing_to_shutdown },
+        { state_igniting, state_shutdown, &Controller::smt_igniting_to_shutdown },
+        { state_preburn, state_shutdown, &Controller::smt_preburn_to_shutdown },
+        { state_shutdown, state_safe, &Controller::smt_shutdown_to_safe },
+        { state_armed, state_safe, &Controller::smt_armed_to_safe },
     };
 
     typedef enum {
@@ -94,7 +126,7 @@ public:
 
     void main();
 
-    void setState(StateType next);
+    void beginSequence();
 
     void setTargets(uint8_t* buffer, size_t len);
 
@@ -152,12 +184,6 @@ private:
 
     uint32_t _ignition_voltage = DEFAULT_IGNITION_VOLTAGE;
 
-    void sm_closed(void);
-
-    void sm_open(void);
-
-    void sm_safe(void);
-
     void _initializeRunValve(void);
 
     void _openRunValve(void);
@@ -165,6 +191,36 @@ private:
     void _closeRunValve(void);
 
     int _throttlePositionToInput(float _angle);
+
+    void sm_safe(void);
+
+    void sm_armed(void);
+
+    void sm_preburn(void);
+
+    void sm_igniting(void);
+
+    void sm_firing(void);
+
+    void sm_shutdown(void);
+
+    bool smt_safe_to_armed();
+
+    bool smt_armed_to_preburn();
+
+    bool smt_preburn_to_igniting();
+
+    bool smt_igniting_to_firing();
+
+    bool smt_firing_to_shutdown();
+
+    bool smt_igniting_to_shutdown();
+
+    bool smt_preburn_to_shutdown();
+
+    bool smt_shutdown_to_safe();
+
+    bool smt_armed_to_safe();
 };
 
 #endif

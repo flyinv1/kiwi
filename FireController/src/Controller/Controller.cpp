@@ -25,11 +25,8 @@ void Controller::main()
     }
 }
 
-void Controller::setState(StateType next)
+void Controller::beginSequence()
 {
-    if (next < num_states) {
-        state = next;
-    }
 }
 
 void Controller::setRunDuration(uint32_t duration)
@@ -70,18 +67,24 @@ void Controller::sm_safe(void)
     _estimator.main();
 }
 
-void Controller::sm_closed(void)
+void Controller::sm_armed()
 {
-    /*
-        TODO
-        Closed loop throttle control
-    */
-    _estimator.main();
 }
 
-void Controller::sm_open(void)
+void Controller::sm_preburn()
 {
-    _estimator.main();
+}
+
+void Controller::sm_igniting()
+{
+}
+
+void Controller::sm_firing()
+{
+}
+
+void Controller::sm_shutdown()
+{
 }
 
 void Controller::_initializeRunValve(void)

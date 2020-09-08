@@ -9,6 +9,9 @@
 
 class Main {
 
+    typedef void (Main::*TransitionMethod)(void);
+    typedef void (Main::*StateMethod)(void);
+
     typedef enum {
         state_disconnected,
         state_standby,
@@ -19,8 +22,8 @@ class Main {
     } StateType;
 
     typedef struct {
-        StateType State;
-        void (Main::*method)(void);
+        StateType state;
+        StateMethod method;
     } StateMachineType;
 
     StateMachineType StateMachine[num_states] = {
@@ -43,7 +46,7 @@ class Main {
     typedef struct {
         StateType prev;
         StateType next;
-        void (Main::*method)(void);
+        TransitionMethod method;
     } StateMachineTransition;
 
     StateMachineTransition TransitionTable[num_transitions] = {

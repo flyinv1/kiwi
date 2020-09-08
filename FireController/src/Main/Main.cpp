@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 
+#include "../BinaryPacket/BinaryPacket.h"
 #include "../Controller/Controller.h"
 
 Main::Main()
