@@ -3,9 +3,19 @@
 
 #include "../Estimator/Estimator.h"
 #include "../KiwiGPIO.h"
+#include "../Target/Target.h"
 
 #ifndef KIWI_CONTROLLER
 #define KIWI_CONTROLLER
+
+#define DEFAULT_RUN_DURATION_MS      10000
+#define MAXIMUM_RUN_DURATION_MS      20000
+#define DEFAULT_IGNITION_DURATION_MS 400
+#define MAXIMUM_IGNITION_DURATION_MS 1000
+#define DEFAULT_IGNITION_PREBURN_MS  200
+#define MAXIMUM_IGNITION_PREBURN_MS  1000
+#define DEFAULT_IGNITION_VOLTAGE     300
+#define MAXIMUM_IGNITION_VOLTAGE     600
 
 /*
     Define linear offset and scale for ignition voltage from 8 bit DAC input (pwm approximation)
@@ -35,9 +45,19 @@
 #define THROTTLE_ACC 2000
 #define THROTTLE_VEL 800
 
+#define TARGETS 32
+
 class Controller {
 
 public:
+    typedef enum {
+        state_armed,
+        state_preburn,
+        state_igniting,
+        state_firing,
+        state_shutdown
+    }
+
     typedef enum {
         state_safe,
         state_closed,
@@ -52,18 +72,19 @@ public:
 
     StateMachineType StateMachine[num_states] = {
         { state_closed, &Controller::sm_closed },
-        { state_open, &Controller::sm_open }
+        { state_open, &Controller::sm_open },
+        { state_safe, &Controller::sm_safe }
     };
 
     typedef enum {
-        control_mode_open,
-        control_mode_closed,
+        control_mode_open = 0,
+        control_mode_closed = 1,
         control_mode_error = 255,
     } ControlMode;
 
     typedef enum {
-        engine_mode_cold,
-        engine_mode_hot,
+        engine_mode_cold = 0,
+        engine_mode_hot = 1,
         engine_mode_error = 255,
     } EngineMode;
 
@@ -73,11 +94,29 @@ public:
 
     void main();
 
+    void setState(StateType next);
+
+    void setTargets(uint8_t* buffer, size_t len);
+
+    void setRunDuration(uint32_t duration);
+
+    void setIgnitionDuration(uint32_t duration);
+
+    void setIgnitionPreburn(uint32_t duration);
+
+    void setIgnitionVoltage(uint32_t voltage);
+
     ControlMode setControlModeFrom(uint8_t* buffer, size_t len);
 
     EngineMode setEngineModeFrom(uint8_t* buffer, size_t len);
 
 private:
+    StateType state = state_safe;
+
+    Target _target_buffer[TARGETS];
+    size_t _num_targets;
+    uint32_t _current_target;
+
     /*
         Actuator instances
     */
@@ -94,26 +133,30 @@ private:
     */
     EngineMode _engine_mode = engine_mode_cold;
 
+    /*
+        Run duration defines the maximum duration of the test sequence after T0
+    */
+    uint32_t _run_duration = DEFAULT_RUN_DURATION_MS;
+
     /* 
         Ignition preburn defines the time in ms the igniter burns before starting nitrous flow.
         This allows pyrolized ABS fumes to build up in the chamber and improve ignition reliability.
         The preignition sequence only runs during startup, not during live restarts.
     */
-    long _ignition_preburn = 200;
+    uint32_t _ignition_preburn = DEFAULT_IGNITION_PREBURN_MS;
 
     /*
         Ignition duration defines the time in ms the igniter burns after nitrous flow has begun.
     */
-    long _ignition_duration = 500;
+    uint32_t _ignition_duration = DEFAULT_IGNITION_DURATION_MS;
 
-    /*
-        Run duration defines the maximum duration of the test sequence after T0
-    */
-    long _run_duration = 5000;
+    uint32_t _ignition_voltage = DEFAULT_IGNITION_VOLTAGE;
 
     void sm_closed(void);
 
     void sm_open(void);
+
+    void sm_safe(void);
 
     void _initializeRunValve(void);
 

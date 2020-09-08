@@ -12,8 +12,11 @@ Main::Main()
 
 void Main::init()
 {
+    // Begin serial communications with RPI
     Serial.begin(115200);
     encoder.setStream(&Serial);
+
+    // Initialize the controller to standby mode
     controller.init();
 }
 
@@ -40,10 +43,13 @@ void Main::setState(StateType next)
 
 void Main::sm_disconnected()
 {
+    // Update controller and sensors;
+    controller.main();
 }
 
 void Main::sm_standby()
 {
+    controller.main();
 }
 
 void Main::sm_armed()
@@ -87,35 +93,43 @@ void Main::_on(uint8_t id, uint8_t* buffer, size_t len)
         _stop();
     } break;
     case SET_CONTROLMODE: {
-        if (!controller.setControlModeFrom(buffer, len) == Controller::control_mode_open) {
-            // Return error
+        if (_configurable()) {
+            if (controller.setControlModeFrom(buffer, len) == Controller::control_mode_error) {
+                // Error setting control mode
+            }
         }
     } break;
     case SET_ENGINEMODE: {
-        if (controller.setEngineModeFrom(buffer, len) == Controller::engine_mode_error) {
-            // Return error
+        if (_configurable()) {
+            if (controller.setEngineModeFrom(buffer, len) == Controller::engine_mode_error) {
+                // Error setting engine mode
+            }
         }
     } break;
     case SET_RUNDURATION: {
-        _set_run_duration(encoder.readUInt32(buffer, len));
+        if (_configurable()) {
+            controller.setRunDuration(encoder.readUInt32(buffer, len));
+        }
     } break;
     case SET_IGNITERDURATION: {
-        _set_igniter_duration(encoder.readUInt32(buffer, len));
+        if (_configurable()) {
+            controller.setIgnitionDuration(encoder.readUInt32(buffer, len));
+        }
     } break;
     case SET_IGNITERPREBURN: {
-        _set_igniter_preburn(encoder.readUInt32(buffer, len));
+        if (_configurable()) {
+            controller.setIgnitionPreburn(encoder.readUInt32(buffer, len));
+        }
     } break;
     case SET_TARGETS: {
-        _set_targets(buffer, len);
-    } break;
-    case GET_CONN_STATUS: {
-        _get_conn_status();
+        if (_configurable()) {
+            controller.setTargets(buffer, len);
+        }
     } break;
     case GET_CONFIGURATION: {
         _get_configuration();
     } break;
     case RUN_CALIBRATE_LOAD: {
-
     } break;
     case RUN_CALIBRATE_PROPELLANT: {
 
@@ -142,26 +156,6 @@ void Main::_stop()
 {
 }
 
-void Main::_set_run_duration(uint32_t duration)
-{
-}
-
-void Main::_set_igniter_duration(uint32_t duration)
-{
-}
-
-void Main::_set_igniter_preburn(uint32_t duration)
-{
-}
-
-void Main::_set_targets(uint8_t* buffer, size_t len)
-{
-}
-
-void Main::_get_conn_status()
-{
-}
-
 void Main::_get_configuration()
 {
 }
@@ -172,4 +166,9 @@ void Main::_calibrate_thrust()
 
 void Main::_calibrate_propellant()
 {
+}
+
+bool Main::_configurable()
+{
+    return (state == state_standby);
 }

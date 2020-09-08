@@ -66,11 +66,10 @@ class Main {
         SET_IGNITERPREBURN = 8,
         SET_IGNITERDURATION = 9,
         SET_TARGETS = 10,
-        GET_CONN_STATUS = 11,
-        GET_CONFIGURATION = 12,
-        RUN_CALIBRATE_PROPELLANT = 13,
-        RUN_CALIBRATE_LOAD = 14,
-        CALLBACKS = 15
+        GET_CONFIGURATION = 11,
+        RUN_CALIBRATE_PROPELLANT = 12,
+        RUN_CALIBRATE_LOAD = 13,
+        CALLBACKS = 14
     };
 
 public:
@@ -111,6 +110,8 @@ private:
 
     void read();
 
+    bool _configurable();
+
     /*
         API METHODS
     */
@@ -124,15 +125,7 @@ private:
 
     void _stop();
 
-    void _set_run_duration(uint32_t duration);
-
-    void _set_igniter_preburn(uint32_t duration);
-
-    void _set_igniter_duration(uint32_t duration);
-
     void _set_targets(uint8_t* buffer, size_t len);
-
-    void _get_conn_status();
 
     void _get_configuration();
 
