@@ -18,9 +18,12 @@
 #define DEFAULT_IGNITION_VOLTAGE     300
 #define MAXIMUM_IGNITION_VOLTAGE     600
 
-#define SAFE_PRESSURE_PSI        5   // Safe pressure threshold in psi
-#define OVERPRESSURE_RUN_PSI     850 // Maximum allowable pressure in propellant lines
-#define OVERPRESSURE_CHAMBER_PSI 600 // Maximum allowable pressure in chamber
+#define SAFE_PRESSURE_PSI           5   // Safe pressure threshold in psi
+#define OVERPRESSURE_RUN_PSI        850 // Maximum allowable pressure in propellant lines
+#define OVERPRESSURE_CHAMBER_PSI    600 // Maximum allowable pressure in chamber
+#define SHUTDOWN_DRAIN_INTERVAL     500
+#define SHUTDOWN_MAXIMUM_PERIOD     10000
+#define IGNITION_PRESSURE_THRESHOLD 200
 
 /*
     Define linear offset and scale for ignition voltage from 8 bit DAC input (pwm approximation)
@@ -29,7 +32,6 @@
 */
 #define IGNITER_SCALE          2.8577f
 #define IGNITER_OFFSET         -12.9516f
-#define IGNITER_MAX_VOLTAGE    600
 #define IGNITER_DAC_RESOLUTION 8
 
 /*
@@ -44,13 +46,16 @@
 #define THROTTLE_ANG_OPEN   90
 #define THROTTLE_POS_CLOSED 660
 #define THROTTLE_POS_OPEN   0
+#define THROTTLE_POS_SDN    200
+#define THROTTLE_EQ_DBAND   10
 
 /*
     RoboClaw motor control parameters required for position control
     Acceleration and decceleration rates are the same
 */
-#define THROTTLE_ACC 2000
-#define THROTTLE_VEL 800
+#define THROTTLE_ACC     2000
+#define THROTTLE_VEL     800
+#define THROTTLE_VEL_SDN 220
 
 /**
  *  Define maximum allowable targets, no engine test is planned to allow a large number of target setpoints
@@ -60,7 +65,7 @@
 class Controller {
 
     typedef void (Controller::*StateMethod)(void);
-    typedef void (Controller::*TransitionMethod)(void);
+    typedef bool (Controller::*TransitionMethod)(void);
 
 public:
     typedef enum {
@@ -181,6 +186,7 @@ private:
     EngineData engineState;
 
     StateClock engineClock;
+    StateClock targetClock;
 
     /*
         Targets are described as an array of Target structs:
@@ -192,7 +198,7 @@ private:
     */
     Target _target_buffer[TARGETS];
     size_t _num_targets;
-    uint32_t _current_target;
+    uint32_t _target;
 
     /*
         Run valve is controlled by digital HIGH / LOW
@@ -256,7 +262,7 @@ private:
 
     void initializeIgniter(void);
 
-    void setIgniterOutputVoltage(float voltage);
+    void setIgniterOutputVoltage(uint32_t voltage);
 
     void shutdownIgniter();
 
@@ -278,23 +284,23 @@ private:
 
     void sm_shutdown(void);
 
-    void smt_safe_to_armed(void);
+    bool smt_safe_to_armed(void);
 
-    void smt_armed_to_preburn(void);
+    bool smt_armed_to_preburn(void);
 
-    void smt_preburn_to_igniting(void);
+    bool smt_preburn_to_igniting(void);
 
-    void smt_igniting_to_firing(void);
+    bool smt_igniting_to_firing(void);
 
-    void smt_firing_to_shutdown(void);
+    bool smt_firing_to_shutdown(void);
 
-    void smt_igniting_to_shutdown(void);
+    bool smt_igniting_to_shutdown(void);
 
-    void smt_preburn_to_shutdown(void);
+    bool smt_preburn_to_shutdown(void);
 
-    void smt_shutdown_to_safe(void);
+    bool smt_shutdown_to_safe(void);
 
-    void smt_armed_to_safe(void);
+    bool smt_armed_to_safe(void);
 };
 
 #endif
