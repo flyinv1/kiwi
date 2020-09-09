@@ -30,17 +30,17 @@
 */
 #define LC_THRUST_SCALE           -19347.95f
 #define LC_PROPELLANT_SCALE       -102558.6524f
-#define LC_PROPELLANT_EMPTY_MASS  1.42234f // mass of scale with no load (structure)
-#define LC_PROPELLANT_BOTTLE_MASS 6.82527f // mass of propellant tank
+#define LC_PROPELLANT_EMPTY_MASS  1.422f // mass of scale with no load (structure)
+#define LC_PROPELLANT_BOTTLE_MASS 6.825f // mass of propellant tank
 
 class Estimator {
 
+public:
     typedef enum {
         THROTTLE,
         CHAMBER
     } PressureMode;
 
-public:
     static Estimator* estimator;
 
     Estimator();
@@ -58,6 +58,16 @@ public:
     void tareThrustCell();
 
     void tarePropellantCell();
+
+    float getUpstreamPressure();
+
+    float getDownstreamPressure();
+
+    float getChamberPressure();
+
+    float getThrust();
+
+    float getPropellantMass();
 
     void setPressureMode(PressureMode mode);
 

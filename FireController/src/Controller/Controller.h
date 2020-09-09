@@ -33,7 +33,7 @@
 /*
     Define motor endpoints
     RoboClaw extends Stream, requires a serial baud rate and target MCU address
-    _throttlePercentToInput provides a mapping from 0-90deg to 660-0 using ANG and POS values
+    throttleAngleToEncoder() + throttleEncoderToAngle() provides a mapping from 0-90deg to 660-0 using ANG and POS values
 */
 #define MOTOR_ADDRESS       0x80
 #define MOTOR_BAUD          460800
@@ -50,6 +50,9 @@
 #define THROTTLE_ACC 2000
 #define THROTTLE_VEL 800
 
+/**
+ *  Define maximum allowable targets, no engine test is planned to allow a large number of target setpoints
+ */
 #define TARGETS 32
 
 class Controller {
@@ -135,6 +138,7 @@ public:
         float throttle_position;
         float mission_elapsed_time;
         float state_elapsed_time;
+        float delta_time;
     } EngineData;
 
     Controller();
@@ -142,8 +146,6 @@ public:
     void init();
 
     void main();
-
-    void setState(StateType next_state);
 
     void arm();
 
@@ -163,6 +165,8 @@ public:
 
     void setIgnitionVoltage(uint32_t voltage);
 
+    void tareThrustCell();
+
     ControlMode setControlModeFrom(uint8_t* buffer, size_t len);
 
     EngineMode setEngineModeFrom(uint8_t* buffer, size_t len);
@@ -174,6 +178,8 @@ private:
 
     EngineData data;
 
+    StateClock engineClock;
+
     Target _target_buffer[TARGETS];
     size_t _num_targets;
     uint32_t _current_target;
@@ -181,8 +187,8 @@ private:
     /*
         Actuator instances
     */
-    RoboClaw _throttle_valve = RoboClaw(&Serial4, MOTOR_TIMEOUT);
-    Estimator _estimator;
+    RoboClaw throttle_valve = RoboClaw(&Serial4, MOTOR_TIMEOUT);
+    Estimator estimator;
 
     /*
         Control mode defines whether the thruster operates using an open or closed loop chamber pressure control scheme
@@ -213,13 +219,19 @@ private:
 
     uint32_t _ignition_voltage = DEFAULT_IGNITION_VOLTAGE;
 
-    void _initializeRunValve(void);
+    void setState(StateType next_state);
 
-    void _openRunValve(void);
+    void readEngineState();
 
-    void _closeRunValve(void);
+    void initializeRunValve(void);
 
-    int _throttlePositionToInput(float _angle);
+    void openRunValve(void);
+
+    void closeRunValve(void);
+
+    int throttleAngleToEncoder(float _angle);
+
+    float throttleEncoderToAngle(int position);
 
     void sm_safe(void);
 

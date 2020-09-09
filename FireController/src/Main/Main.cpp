@@ -183,12 +183,13 @@ void Main::_on(uint8_t id, uint8_t* buffer, size_t len)
         }
     } break;
     case GET_CONFIGURATION: {
-        _get_configuration();
+        _getConfiguration();
     } break;
     case RUN_CALIBRATE_LOAD: {
+        controller.tareThrustCell();
     } break;
-    case RUN_CALIBRATE_PROPELLANT: {
-
+    case GET_STATE: {
+        _getState();
     } break;
     default: {
 
@@ -211,7 +212,7 @@ void Main::_stop()
 {
 }
 
-void Main::_get_configuration()
+void Main::_getConfiguration()
 {
 }
 
@@ -226,4 +227,8 @@ void Main::_calibrate_propellant()
 bool Main::_configurable()
 {
     return (state == state_standby);
+}
+
+void Main::_getState()
+{
 }

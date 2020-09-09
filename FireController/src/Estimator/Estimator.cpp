@@ -34,7 +34,7 @@ void Estimator::init()
 
     // // use high speeds for lower impedences
     // // use low speeds for high impedences
-    adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::MED_HIGH_SPEED);
+    adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::MED_SPEED);
     adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::MED_SPEED);
     adc->adc0->setResolution(10);
 
@@ -78,13 +78,13 @@ void Estimator::main(void)
         }
 
         if (lc_thrust.update()) {
-            float _thrust = lc_thrust.getUnits();
+            thrust = lc_thrust.getUnits();
         }
 
         if (lc_propellant.update()) {
             // Offset the bottle mass -> this can't be tared before or during a run since the nitrous bottle will be filled
             // Assume that the scale has been tared when assembled (i.e. under load from the top plate)
-            float _m_propellant = lc_propellant.getUnits() - LC_PROPELLANT_BOTTLE_MASS;
+            m_propellant = lc_propellant.getUnits() - LC_PROPELLANT_BOTTLE_MASS;
         }
     }
 }
@@ -109,6 +109,31 @@ void Estimator::tareThrustCell()
 void Estimator::setPressureMode(PressureMode mode)
 {
     pressureMode = mode;
+}
+
+float Estimator::getUpstreamPressure()
+{
+    return p_upstream;
+}
+
+float Estimator::getDownstreamPressure()
+{
+    return p_downstream;
+}
+
+float Estimator::getChamberPressure()
+{
+    return p_chamber;
+}
+
+float Estimator::getThrust()
+{
+    return thrust;
+}
+
+float Estimator::getPropellantMass()
+{
+    return m_propellant;
 }
 
 void Estimator::sample()

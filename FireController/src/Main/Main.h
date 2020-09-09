@@ -74,7 +74,6 @@ class Main {
         SET_IGNITERDURATION = 9,
         SET_TARGETS = 10,
         GET_CONFIGURATION = 11,
-        RUN_CALIBRATE_PROPELLANT = 12,
         RUN_CALIBRATE_LOAD = 13,
         GET_STATE = 14,
         CALLBACKS = 15
@@ -139,11 +138,13 @@ private:
 
     void _set_targets(uint8_t* buffer, size_t len);
 
-    void _get_configuration();
+    void _getConfiguration();
 
     void _calibrate_propellant();
 
     void _calibrate_thrust();
+
+    void _getState();
 };
 
 #endif
