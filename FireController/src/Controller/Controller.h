@@ -3,6 +3,7 @@
 
 #include "../Estimator/Estimator.h"
 #include "../KiwiGPIO.h"
+#include "../StateClock/StateClock.h"
 #include "../Target/Target.h"
 
 #ifndef KIWI_CONTROLLER
@@ -16,6 +17,10 @@
 #define MAXIMUM_IGNITION_PREBURN_MS  1000
 #define DEFAULT_IGNITION_VOLTAGE     300
 #define MAXIMUM_IGNITION_VOLTAGE     600
+
+#define SAFE_PRESSURE_PSI        5   // Safe pressure threshold in psi
+#define OVERPRESSURE_RUN_PSI     850 // Maximum allowable pressure in propellant lines
+#define OVERPRESSURE_CHAMBER_PSI 600 // Maximum allowable pressure in chamber
 
 /*
     Define linear offset and scale for ignition voltage from 8 bit DAC input (pwm approximation)
@@ -49,8 +54,8 @@
 
 class Controller {
 
-    typedef bool (Controller::*TransitionMethod)(void);
     typedef void (Controller::*StateMethod)(void);
+    typedef void (Controller::*TransitionMethod)(void);
 
 public:
     typedef enum {
@@ -94,9 +99,9 @@ public:
         StateType prev;
         StateType next;
         TransitionMethod method;
-    } StateMachineTransition;
+    } StateMachineTransitionType;
 
-    StateMachineTransition TransitionTable[num_transitions] = {
+    StateMachineTransitionType TransitionTable[num_transitions] = {
         { state_safe, state_armed, &Controller::smt_safe_to_armed },
         { state_armed, state_preburn, &Controller::smt_armed_to_preburn },
         { state_preburn, state_igniting, &Controller::smt_preburn_to_igniting },
@@ -109,9 +114,9 @@ public:
     };
 
     typedef enum {
-        control_mode_open = 0,
-        control_mode_closed = 1,
-        control_mode_error = 255,
+        control_mode_open = 0,    // Open loop control using throttle position (deg)
+        control_mode_closed = 1,  // Closed loop control using chamber pressure feedback
+        control_mode_error = 255, // Error control mode assignment
     } ControlMode;
 
     typedef enum {
@@ -120,13 +125,33 @@ public:
         engine_mode_error = 255,
     } EngineMode;
 
+    typedef struct {
+        float chamber_pressure;
+        float upstream_pressure;
+        float downstream_pressure;
+        float thrust;
+        float propellant_mass;
+        float mass_flow;
+        float throttle_position;
+        float mission_elapsed_time;
+        float state_elapsed_time;
+    } EngineData;
+
     Controller();
 
     void init();
 
     void main();
 
-    void beginSequence();
+    void setState(StateType next_state);
+
+    void arm();
+
+    void disarm();
+
+    void fire();
+
+    void abort();
 
     void setTargets(uint8_t* buffer, size_t len);
 
@@ -142,8 +167,12 @@ public:
 
     EngineMode setEngineModeFrom(uint8_t* buffer, size_t len);
 
+    void getEngineData(EngineData& data);
+
 private:
     StateType state = state_safe;
+
+    EngineData data;
 
     Target _target_buffer[TARGETS];
     size_t _num_targets;
@@ -204,23 +233,23 @@ private:
 
     void sm_shutdown(void);
 
-    bool smt_safe_to_armed();
+    void smt_safe_to_armed(void);
 
-    bool smt_armed_to_preburn();
+    void smt_armed_to_preburn(void);
 
-    bool smt_preburn_to_igniting();
+    void smt_preburn_to_igniting(void);
 
-    bool smt_igniting_to_firing();
+    void smt_igniting_to_firing(void);
 
-    bool smt_firing_to_shutdown();
+    void smt_firing_to_shutdown(void);
 
-    bool smt_igniting_to_shutdown();
+    void smt_igniting_to_shutdown(void);
 
-    bool smt_preburn_to_shutdown();
+    void smt_preburn_to_shutdown(void);
 
-    bool smt_shutdown_to_safe();
+    void smt_shutdown_to_safe(void);
 
-    bool smt_armed_to_safe();
+    void smt_armed_to_safe(void);
 };
 
 #endif

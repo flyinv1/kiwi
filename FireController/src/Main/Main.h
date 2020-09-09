@@ -2,10 +2,14 @@
 
 #include "../BinaryPacket/BinaryPacket.h"
 #include "../Controller/Controller.h"
+#include "../StateClock/StateClock.h"
 #include "../Target/Target.h"
 
 #ifndef KIWI_MAIN
 #define KIWI_MAIN
+
+#define DISCONNECT_INTERVAL_MS 1000
+#define DAQ_INTERVAL_MS        1
 
 class Main {
 
@@ -13,11 +17,11 @@ class Main {
     typedef void (Main::*StateMethod)(void);
 
     typedef enum {
-        state_disconnected,
-        state_standby,
-        state_armed,
-        state_running,
-        state_error,
+        state_disconnected = 0,
+        state_standby = 1,
+        state_armed = 2,
+        state_running = 3,
+        state_error = 4,
         num_states
     } StateType;
 
@@ -50,11 +54,11 @@ class Main {
     } StateMachineTransition;
 
     StateMachineTransition TransitionTable[num_transitions] = {
-        { state_disconnected, state_standby, &Main::sm_disconnected_to_standby },
-        { state_standby, state_armed, &Main::sm_standby_to_armed },
-        { state_armed, state_running, &Main::sm_armed_to_running },
-        { state_running, state_armed, &Main::sm_running_to_armed },
-        { state_armed, state_standby, &Main::sm_armed_to_standby },
+        { state_disconnected, state_standby, &Main::smt_disconnected_to_standby },
+        { state_standby, state_armed, &Main::smt_standby_to_armed },
+        { state_armed, state_running, &Main::smt_armed_to_running },
+        { state_running, state_armed, &Main::smt_running_to_armed },
+        { state_armed, state_standby, &Main::smt_armed_to_standby },
     };
 
     enum {
@@ -72,7 +76,8 @@ class Main {
         GET_CONFIGURATION = 11,
         RUN_CALIBRATE_PROPELLANT = 12,
         RUN_CALIBRATE_LOAD = 13,
-        CALLBACKS = 14
+        GET_STATE = 14,
+        CALLBACKS = 15
     };
 
 public:
@@ -91,6 +96,8 @@ private:
 
     Controller controller;
 
+    StateClock missionClock;
+
     void sm_disconnected();
 
     void sm_standby();
@@ -101,15 +108,15 @@ private:
 
     void sm_error();
 
-    void sm_disconnected_to_standby();
+    void smt_disconnected_to_standby();
 
-    void sm_standby_to_armed();
+    void smt_standby_to_armed();
 
-    void sm_armed_to_running();
+    void smt_armed_to_running();
 
-    void sm_running_to_armed();
+    void smt_running_to_armed();
 
-    void sm_armed_to_standby();
+    void smt_armed_to_standby();
 
     void read();
 
@@ -119,6 +126,8 @@ private:
         API METHODS
     */
     void _on(uint8_t id, uint8_t* buffer, size_t len);
+
+    void _sync();
 
     void _arm();
 

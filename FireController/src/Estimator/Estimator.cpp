@@ -8,8 +8,7 @@
 
 Estimator::Estimator()
 {
-    // lc_propellant = NBHX711(pin_lc_propellant_sda, pin_lc_sck, HX711_HIST_BUFF, HX711_GAIN);
-    // lc_thrust = NBHX711(pin_lc_thrust_sda, pin_lc_sck, HX711_HIST_BUFF, HX711_GAIN);
+    clock = StateClock();
 }
 
 Estimator::~Estimator()
@@ -46,52 +45,77 @@ void Estimator::init()
     lc_thrust.begin();
     lc_propellant.begin();
 
-    lc_thrust.setScale();
-    lc_propellant.setScale();
+    lc_thrust.setScale(LC_THRUST_SCALE);
+    lc_propellant.setScale(LC_PROPELLANT_SCALE);
 
-    // start timing loop
-    t_last = micros();
+    // Enable timer ISR's for adc sampling
+    timer.begin(adc_timer_callback, adc_sample_interval);
 
-    timer.begin(adc_timer_callback, sampleInterval);
+    // Start the estimator clock
+    clock.start();
 }
 
 void Estimator::main(void)
 {
-    int t = micros();
-    dt = t - t_last;
+    clock.tick();
+    if (should_sample) {
+        // retrieve reading average over loop
+        float _p_adc0 = sample_pressure_adc(pressure_buffer_0, pressure_index_0);
+        float _p_adc1 = sample_pressure_adc(pressure_buffer_1, pressure_index_1);
 
-    (this->*StateMachine[mode].method)();
+        // convert readings to pressure
+        float _p0 = compute_pressure(_p_adc0);
+        float _p1 = compute_pressure(_p_adc1);
 
-    t_last = t;
-}
-
-void Estimator::setState(ModeType new_mode)
-{
-    if (new_mode < num_modes) {
-        for (int i = 0; i < num_transitions; i++) {
-            if (TransitionTable[i].prev == mode && TransitionTable[i].next == new_mode) {
-                (this->*TransitionTable[i].method)();
-                break;
-            }
+        if (pressureMode == THROTTLE) {
+            p_upstream = _p0;
+            p_downstream = _p1;
+            p_chamber = 0;
+        } else {
+            p_upstream = 0;
+            p_downstream = _p0;
+            p_chamber = _p1;
         }
-        this->mode = new_mode;
+
+        if (lc_thrust.update()) {
+            float _thrust = lc_thrust.getUnits();
+        }
+
+        if (lc_propellant.update()) {
+            // Offset the bottle mass -> this can't be tared before or during a run since the nitrous bottle will be filled
+            // Assume that the scale has been tared when assembled (i.e. under load from the top plate)
+            float _m_propellant = lc_propellant.getUnits() - LC_PROPELLANT_BOTTLE_MASS;
+        }
     }
 }
 
-void Estimator::getEngineState(EngineState* engineState)
+void Estimator::begin()
 {
+    clock.advance();
+    should_sample = true;
 }
 
-void Estimator::sm_standby()
+void Estimator::stop()
 {
-    // do nothing so far
+    clock.advance();
+    should_sample = false;
 }
 
-void Estimator::sm_sample()
+void Estimator::tareThrustCell()
+{
+    lc_thrust.tare();
+}
+
+void Estimator::setPressureMode(PressureMode mode)
+{
+    pressureMode = mode;
+}
+
+void Estimator::sample()
 {
     // Sample pressure ADC buffers
-    float _p_adc0 = sample_pressure_adc(_pressure_buffer_0, _pressure_index_0);
-    float _p_adc1 = sample_pressure_adc(_pressure_buffer_0, _pressure_index_1);
+    float _p_adc0 = sample_pressure_adc(pressure_buffer_0, pressure_index_0);
+    float _p_adc1 = sample_pressure_adc(pressure_buffer_0, pressure_index_1);
 
     // Convert adc readings to pressure values
     float _p0 = compute_pressure(_p_adc0);
@@ -99,10 +123,10 @@ void Estimator::sm_sample()
 
     // Sample load cells
     if (lc_thrust.update()) {
-        lc_thrust.getUnits(0);
+        lc_thrust.getUnits();
     }
     if (lc_propellant.update()) {
-        lc_propellant.getUnits(0);
+        lc_propellant.getUnits();
     }
 }
 
@@ -117,7 +141,10 @@ float Estimator::sample_pressure_adc(uint16_t* buffer, size_t len)
 
 float Estimator::compute_pressure(float p)
 {
-    return 0;
+    float _voltage = (p / ADC_FULL_SCALE) * ADC_REF_VOLTAGE;
+    float _current = _voltage / ADC_REF_RESISTANCE;
+    float _pressure = (_current - ADC_I_MIN) / ADC_I_MAX * ADC_I_SCALE;
+    return _pressure;
 }
 
 void Estimator::adc_timer_callback(void)
@@ -133,13 +160,21 @@ void Estimator::adc_isr(void)
     uint8_t pin = ADC::sc1a2channelADC0[ADC1_HC0 & 0x1f];
     if (pin == pin_pressure_0) {
         uint16_t adc_val = estimator->adc->adc0->readSingle();
-        if (estimator->_pressure_index_0 < ADC_BUFFER_LENGTH) {
-            estimator->_pressure_buffer_0[estimator->_pressure_index_0++] = adc_val;
+        if (estimator->pressure_index_0 < ADC_BUFFER_LENGTH) {
+            estimator->pressure_buffer_0[estimator->pressure_index_0++] = adc_val;
+        } else {
+            // Clear the buffer and write from beginning
+            // This should be a circular buffer <- low priority since loop is fast
+            estimator->pressure_index_0 = 0;
+            estimator->pressure_buffer_0[estimator->pressure_index_0++] = adc_val;
         }
     } else if (pin == pin_pressure_1) {
         uint16_t adc_val = estimator->adc->adc0->readSingle();
-        if (estimator->_pressure_index_1 < ADC_BUFFER_LENGTH) {
-            estimator->_pressure_buffer_1[estimator->_pressure_index_1++] = adc_val;
+        if (estimator->pressure_index_1 < ADC_BUFFER_LENGTH) {
+            estimator->pressure_buffer_1[estimator->pressure_index_1++] = adc_val;
+        } else {
+            estimator->pressure_index_1 = 0;
+            estimator->pressure_buffer_1[estimator->pressure_index_1++] = adc_val;
         }
     } else {
         // flush the adc

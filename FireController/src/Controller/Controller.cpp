@@ -25,7 +25,31 @@ void Controller::main()
     }
 }
 
-void Controller::beginSequence()
+void Controller::setState(Controller::StateType next_state)
+{
+    if (next_state < num_states) {
+        for (int i = 0; i < num_transitions; i++) {
+            if (TransitionTable[i].prev == state && TransitionTable[i].next == next_state) {
+                (this->*TransitionTable[i].method)();
+                return;
+            }
+        }
+    }
+}
+
+void Controller::arm()
+{
+}
+
+void Controller::disarm()
+{
+}
+
+void Controller::fire()
+{
+}
+
+void Controller::abort()
 {
 }
 
@@ -67,23 +91,67 @@ void Controller::sm_safe(void)
     _estimator.main();
 }
 
-void Controller::sm_armed()
+void Controller::sm_armed(void)
+{
+    // Update estimator and retrieve state
+    _estimator.main();
+}
+
+void Controller::sm_preburn(void)
 {
 }
 
-void Controller::sm_preburn()
+void Controller::sm_igniting(void)
 {
 }
 
-void Controller::sm_igniting()
+void Controller::sm_firing(void)
 {
 }
 
-void Controller::sm_firing()
+void Controller::sm_shutdown(void)
 {
 }
 
-void Controller::sm_shutdown()
+void Controller::smt_safe_to_armed(void)
+{
+    // ensure that run valve is closed
+    // _closeRunValve();
+
+    // ensure that the throttle valve is fully closed
+    // _requestThrottlePosition();
+}
+
+void Controller::smt_armed_to_preburn(void)
+{
+    _openRunValve();
+}
+
+void Controller::smt_preburn_to_igniting(void)
+{
+}
+
+void Controller::smt_igniting_to_firing(void)
+{
+}
+
+void Controller::smt_firing_to_shutdown(void)
+{
+}
+
+void Controller::smt_igniting_to_shutdown(void)
+{
+}
+
+void Controller::smt_preburn_to_shutdown(void)
+{
+}
+
+void Controller::smt_shutdown_to_safe(void)
+{
+}
+
+void Controller::smt_armed_to_safe(void)
 {
 }
 

@@ -2,13 +2,15 @@
 
 #include <Arduino.h>
 
-#include "../BinaryPacket/BinaryPacket.h"
 #include "../Controller/Controller.h"
+#include "../StateClock/StateClock.h"
 
 Main::Main()
 {
     encoder = BinaryPacket();
     controller = Controller();
+    missionClock = StateClock();
+    missionClock.start();
 }
 
 void Main::init()
@@ -23,22 +25,27 @@ void Main::init()
 
 void Main::loop()
 {
-    encoder.read();
+    // Update primary mission clock
+    missionClock.tick();
+
+    // Update encoder serial buffer
+    read();
+
+    // Execute state machine method
     if (state < num_states) {
         (this->*StateMachine[state].method)();
     }
 }
 
-void Main::setState(StateType next)
+void Main::setState(Main::StateType next_state)
 {
-    if (next < num_states) {
+    if (next_state < num_states) {
         for (int i = 0; i < num_transitions; i++) {
-            if (TransitionTable[i].prev == state && TransitionTable[i].next == next) {
+            if (TransitionTable[i].prev == state && TransitionTable[i].next == next_state) {
                 (this->*TransitionTable[i].method)();
-                break;
+                return;
             }
         }
-        state = next;
     }
 }
 
@@ -46,22 +53,67 @@ void Main::sm_disconnected()
 {
     // Update controller and sensors;
     controller.main();
+
+    // If timeout, then send sync byte
+    if (missionClock.state_et() > DISCONNECT_INTERVAL_MS) {
+        size_t length = 1;
+        uint8_t _buffer[length] = { SYNC };
+        bool _overflow = encoder.write(_buffer, length);
+        encoder.send();
+
+        // Reset the mission clock state timer
+        missionClock.advance();
+    }
 }
 
 void Main::sm_standby()
 {
+    // Update controller
     controller.main();
 }
 
 void Main::sm_armed()
 {
+    // Update controller
+    controller.main();
+
+    // Transmit data
 }
 
 void Main::sm_running()
 {
+    // Update controller
+    controller.main();
+
+    // Transmit data
 }
 
 void Main::sm_error()
+{
+    // Update controller
+    controller.main();
+}
+
+/*
+
+*/
+void Main::smt_disconnected_to_standby()
+{
+}
+
+void Main::smt_standby_to_armed()
+{
+}
+
+void Main::smt_armed_to_running()
+{
+}
+
+void Main::smt_running_to_armed()
+{
+}
+
+void Main::smt_armed_to_standby()
 {
 }
 
@@ -81,11 +133,14 @@ void Main::read()
 void Main::_on(uint8_t id, uint8_t* buffer, size_t len)
 {
     switch (id) {
+    case SYNC: {
+        _sync();
+    } break;
     case RUN_ARM: {
-        _arm();
+        controller.arm();
     } break;
     case RUN_DISARM: {
-        _disarm();
+        controller.disarm();
     } break;
     case RUN_START: {
         _start();
@@ -141,11 +196,10 @@ void Main::_on(uint8_t id, uint8_t* buffer, size_t len)
     }
 }
 
-void Main::_arm()
-{
-}
-
-void Main::_disarm()
+/*
+    On a synchronization message from the gateway, the fire controller should respond with a sync message of its own and transition into standby mode.
+*/
+void Main::_sync()
 {
 }
 

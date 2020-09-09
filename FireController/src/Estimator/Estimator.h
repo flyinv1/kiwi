@@ -5,6 +5,7 @@
 #include <PacketSerial.h>
 
 #include "../KiwiGPIO.h"
+#include "../StateClock/StateClock.h"
 
 #ifndef KIWI_ESTIMATOR
 #define KIWI_ESTIMATOR
@@ -27,59 +28,19 @@
     these constants are derived experimentally to scale the load cell output to the
     appropriate full scale measurement.
 */
-#define LC_THRUST_SCALE     7000
-#define LC_PROPELLANT_SCALE 3000
+#define LC_THRUST_SCALE           -19347.95f
+#define LC_PROPELLANT_SCALE       -102558.6524f
+#define LC_PROPELLANT_EMPTY_MASS  1.42234f // mass of scale with no load (structure)
+#define LC_PROPELLANT_BOTTLE_MASS 6.82527f // mass of propellant tank
 
 class Estimator {
 
-public:
     typedef enum {
-        mode_standby,
-        mode_sample,
-        num_modes,
-    } ModeType;
+        THROTTLE,
+        CHAMBER
+    } PressureMode;
 
-    typedef struct {
-        ModeType mode;
-        void (Estimator::*method)(void);
-    } StateMachineType;
-
-    StateMachineType StateMachine[num_modes] = {
-        { mode_standby, &Estimator::sm_standby },
-        { mode_sample, &Estimator::sm_sample }
-    };
-
-    enum TRANSITIONS {
-        transition_standby_to_sample,
-        transition_sample_to_standby,
-        num_transitions
-    };
-
-    typedef struct {
-        ModeType prev;
-        ModeType next;
-        void (Estimator::*method)(void);
-    } StateMachineTransition;
-
-    StateMachineTransition TransitionTable[num_transitions] = {
-        { mode_standby, mode_sample, &Estimator::sm_standby_to_sample },
-        { mode_sample, mode_standby, &Estimator::sm_sample_to_standby }
-    };
-
-    typedef struct {
-        float chamberPressure;
-        float injectorPressure;
-        float upstreamPressure;
-        float thrust;
-        long met;
-    } EngineState;
-
-    ModeType mode = mode_standby;
-
-    ADC* adc = new ADC();
-
-    IntervalTimer timer;
-
+public:
     static Estimator* estimator;
 
     Estimator();
@@ -90,44 +51,47 @@ public:
 
     void main();
 
-    void setState(ModeType new_mode);
+    void begin();
 
-    void getEngineState(EngineState* engineState);
+    void stop();
 
-    void calibrateAll();
+    void tareThrustCell();
+
+    void tarePropellantCell();
+
+    void setPressureMode(PressureMode mode);
 
 private:
+    ADC* adc = new ADC();
+
+    IntervalTimer timer;
     /* 
         the estimator produces a real time estimate of thrust, chamber pressure, and injector pressure regardless of the mode, as well as fusing the two to provide a robust estimate of engine performance.
     */
-    float chamber_pressure;
-    float injector_pressure;
+    float p_upstream;
+    float p_downstream;
+    float p_chamber;
     float thrust;
+    float m_propellant;
 
-    // keep track of time elapsed over each loop
-    int dt;
-    int t_last;
-
-    int calibrationTimer = 0;
+    StateClock clock;
 
     // write buffer for pressure transmitter ADC data
-    size_t _pressure_index_0 = 0;
-    size_t _pressure_index_1 = 0;
-    uint16_t _pressure_buffer_0[ADC_BUFFER_LENGTH];
-    uint16_t _pressure_buffer_1[ADC_BUFFER_LENGTH];
-
-    int sampleInterval = 1;
+    size_t pressure_index_0 = 0;
+    size_t pressure_index_1 = 0;
+    uint16_t pressure_buffer_0[ADC_BUFFER_LENGTH];
+    uint16_t pressure_buffer_1[ADC_BUFFER_LENGTH];
 
     NBHX711 lc_propellant { pin_lc_propellant_sda, pin_lc_sck, HX711_HIST_BUFF, HX711_GAIN };
     NBHX711 lc_thrust { pin_lc_thrust_sda, pin_lc_sck, HX711_HIST_BUFF, HX711_GAIN };
 
-    void sm_standby(void);
+    int adc_sample_interval = 1;
 
-    void sm_sample(void);
+    PressureMode pressureMode;
 
-    void sm_standby_to_sample(void);
+    bool should_sample;
 
-    void sm_sample_to_standby(void);
+    void sample(void);
 
     float sample_pressure_adc(uint16_t* buffer, size_t length);
 
