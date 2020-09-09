@@ -27,8 +27,10 @@
     V_igniter [0 - 1000V] = Input * IGNITER_SCALE + IGNITER_OFFSET
     Input [0 - 255] = (V_igniter - IGNITER_OFFSET ) / IGNITER_SCALE
 */
-#define IGNITER_SCALE  2.8577f
-#define IGNITER_OFFSET -12.9516f
+#define IGNITER_SCALE          2.8577f
+#define IGNITER_OFFSET         -12.9516f
+#define IGNITER_MAX_VOLTAGE    600
+#define IGNITER_DAC_RESOLUTION 8
 
 /*
     Define motor endpoints
@@ -117,15 +119,15 @@ public:
     };
 
     typedef enum {
-        control_mode_open = 0,    // Open loop control using throttle position (deg)
-        control_mode_closed = 1,  // Closed loop control using chamber pressure feedback
-        control_mode_error = 255, // Error control mode assignment
+        CONTROL_MODE_OPEN = 0,    // Open loop control using throttle position (deg)
+        CONTROL_MODE_CLOSED = 1,  // Closed loop control using chamber pressure feedback
+        CONTROL_MODE_ERROR = 255, // Error control mode assignment
     } ControlMode;
 
     typedef enum {
-        engine_mode_cold = 0,
-        engine_mode_hot = 1,
-        engine_mode_error = 255,
+        ENGINE_MODE_COLD = 0,
+        ENGINE_MODE_HOT = 1,
+        ENGINE_MODE_ERROR = 255,
     } EngineMode;
 
     typedef struct {
@@ -171,34 +173,57 @@ public:
 
     EngineMode setEngineModeFrom(uint8_t* buffer, size_t len);
 
-    void getEngineData(EngineData& data);
+    void getEngineData(EngineData* data);
 
 private:
     StateType state = state_safe;
 
-    EngineData data;
+    EngineData engineState;
 
     StateClock engineClock;
 
+    /*
+        Targets are described as an array of Target structs:
+        { 
+            uint32_t time;
+            uint32_t value;
+        }
+        Where `time` describes the time (in ms) at which to transition to the next value. The target value depends on the current engine mode, hot will use chamber pressure, while cold will set throttle position.
+    */
     Target _target_buffer[TARGETS];
     size_t _num_targets;
     uint32_t _current_target;
 
     /*
-        Actuator instances
+        Run valve is controlled by digital HIGH / LOW
+    */
+    bool runValveOpen = false;
+
+    /*
+        Igniter is controlled by pwm digital signal
+    */
+    bool igniterActive = false;
+    uint8_t igniterOutput = 0;
+
+    /*
+        RoboClaw provides a serial interface to the standalone RoboClaw 2x7A motor controller
     */
     RoboClaw throttle_valve = RoboClaw(&Serial4, MOTOR_TIMEOUT);
+
+    /*
+        Estimator interfaces with various instruments to provide data acquisition and feedback for control.
+    */
     Estimator estimator;
 
     /*
-        Control mode defines whether the thruster operates using an open or closed loop chamber pressure control scheme
+        Control mode defines whether the thruster operates using an open throttle position or closed loop chamber pressure control scheme
     */
-    ControlMode _control_mode = control_mode_open;
+    ControlMode control_mode = CONTROL_MODE_OPEN;
 
     /*
-        Engine mode defines whether the thruster is operated hot or cold. During a hot run, the igniter fires, during a cold run, no ignition sequence is run and nitrous is flowed cold
+        Engine mode defines whether the thruster is operated hot or cold. During a hot run, the igniter fires, during a cold run, no ignition sequence is run and nitrous is cold-flowed
     */
-    EngineMode _engine_mode = engine_mode_cold;
+    EngineMode engine_mode = ENGINE_MODE_COLD;
 
     /*
         Run duration defines the maximum duration of the test sequence after T0
@@ -228,6 +253,14 @@ private:
     void openRunValve(void);
 
     void closeRunValve(void);
+
+    void initializeIgniter(void);
+
+    void setIgniterOutputVoltage(float voltage);
+
+    void shutdownIgniter();
+
+    void activateIgniter();
 
     int throttleAngleToEncoder(float _angle);
 

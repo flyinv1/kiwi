@@ -17,6 +17,7 @@ void Controller::init()
     estimator.init();
     throttle_valve.begin(MOTOR_BAUD);
     initializeRunValve();
+    initializeIgniter();
 };
 
 void Controller::main()
@@ -104,18 +105,32 @@ void Controller::setTargets(uint8_t* buffer, size_t len)
 
 void Controller::sm_safe(void)
 {
+    // Update the estimator, do not read
     estimator.main();
 }
 
 void Controller::sm_armed(void)
 {
-    // Update estimator and retrieve state
+    // Update estimator and populate state
     estimator.main();
     readEngineState();
 }
 
 void Controller::sm_preburn(void)
 {
+    estimator.main();
+    readEngineState();
+    // Check preburn casualty response parameters
+    if (engine_mode == ENGINE_MODE_COLD) {
+        if (engineState.upstream_pressure > SAFE_PRESSURE_PSI || engineState.downstream_pressure > SAFE_PRESSURE_PSI) {
+            // should shutdown -> nitrous may be present in lines
+        }
+
+    } else if (engine_mode == ENGINE_MODE_HOT) {
+        if (engineState.downstream_pressure > SAFE_PRESSURE_PSI) {
+            // should shutdown
+        }
+    }
 }
 
 void Controller::sm_igniting(void)
@@ -168,35 +183,67 @@ void Controller::smt_armed_to_safe(void)
 
 void Controller::readEngineState()
 {
-    data.chamber_pressure = estimator.getChamberPressure();
-    data.downstream_pressure = estimator.getDownstreamPressure();
-    data.upstream_pressure = estimator.getUpstreamPressure();
-    data.propellant_mass = estimator.getPropellantMass();
-    data.thrust = estimator.getPropellantMass();
-    data.mass_flow = 0;
+    engineState.chamber_pressure = estimator.getChamberPressure();
+    engineState.downstream_pressure = estimator.getDownstreamPressure();
+    engineState.upstream_pressure = estimator.getUpstreamPressure();
+    engineState.propellant_mass = estimator.getPropellantMass();
+    engineState.thrust = estimator.getPropellantMass();
+    engineState.mass_flow = 0;
 
     uint32_t _throttle_position = throttle_valve.ReadEncM1(MOTOR_ADDRESS);
-    data.throttle_position = throttleEncoderToAngle(_throttle_position);
+    engineState.throttle_position = throttleEncoderToAngle(_throttle_position);
 
-    data.mission_elapsed_time = float(engineClock.total_et());
-    data.state_elapsed_time = float(engineClock.state_et());
-    data.delta_time = float(engineClock.total_dt());
+    engineState.mission_elapsed_time = float(engineClock.total_et());
+    engineState.state_elapsed_time = float(engineClock.state_et());
+    engineState.delta_time = float(engineClock.total_dt());
 }
 
 void Controller::initializeRunValve(void)
 {
     pinMode(pin_run_valve, OUTPUT);
     digitalWrite(pin_run_valve, LOW);
+    runValveOpen = false;
 }
 
 void Controller::openRunValve(void)
 {
+    runValveOpen = true;
     digitalWrite(pin_run_valve, HIGH);
 }
 
 void Controller::closeRunValve(void)
 {
+    runValveOpen = false;
     digitalWrite(pin_run_valve, LOW);
+}
+
+void Controller::initializeIgniter(void)
+{
+    pinMode(pin_igniter_ctr, OUTPUT);
+    analogWriteResolution(IGNITER_DAC_RESOLUTION);
+    analogWrite(pin_igniter_ctr, 0);
+    analogWrite(pin_igniter_sdn, HIGH);
+    igniterOutput = 0;
+    igniterActive = false;
+}
+
+void Controller::setIgniterOutputVoltage(float _voltage)
+{
+    // Convert voltage to clamped 8 bit value
+    uint8_t _input = clamp<uint8_t>(uint8_t(ceil((_voltage - IGNITER_OFFSET) / IGNITER_SCALE)), 0, IGNITER_MAX_VOLTAGE);
+    igniterOutput = _input;
+    analogWrite(pin_igniter_ctr, _input);
+}
+
+void Controller::shutdownIgniter(void)
+{
+    digitalWrite(pin_igniter_sdn, HIGH);
+}
+
+void Controller::activateIgniter(void)
+{
+    igniterActive = false;
+    digitalWrite(pin_igniter_sdn, LOW);
 }
 
 int Controller::throttleAngleToEncoder(float _angle)
@@ -213,25 +260,25 @@ float Controller::throttleEncoderToAngle(int _position)
 Controller::ControlMode Controller::setControlModeFrom(uint8_t* buffer, size_t len)
 {
     if (len > 0) {
-        uint8_t _requested_mode = buffer[0];
-        Controller::ControlMode _control_mode = ControlMode(_requested_mode);
-        if (_control_mode == control_mode_open || _control_mode == control_mode_closed) {
+        Controller::ControlMode _control_mode = ControlMode(buffer[0]);
+        if (_control_mode == CONTROL_MODE_OPEN || _control_mode == CONTROL_MODE_CLOSED) {
+            control_mode = _control_mode;
             return _control_mode;
         }
     }
-    return control_mode_error;
+    return CONTROL_MODE_ERROR;
 }
 
 Controller::EngineMode Controller::setEngineModeFrom(uint8_t* buffer, size_t len)
 {
     if (len > 0) {
-        uint8_t _requested_mode = buffer[0];
-        Controller::EngineMode _engine_mode = EngineMode(_requested_mode);
-        if (_engine_mode == engine_mode_cold || _engine_mode == engine_mode_hot) {
-            Estimator::PressureMode _pressure_mode = (_engine_mode == engine_mode_cold) ? Estimator::THROTTLE : Estimator::CHAMBER;
+        Controller::EngineMode _engine_mode = EngineMode(buffer[0]);
+        if (_engine_mode == ENGINE_MODE_COLD || _engine_mode == ENGINE_MODE_HOT) {
+            Estimator::PressureMode _pressure_mode = (engine_mode == ENGINE_MODE_COLD) ? Estimator::THROTTLE : Estimator::CHAMBER;
+            engine_mode = _engine_mode;
             estimator.setPressureMode(_pressure_mode);
-            return _engine_mode;
+            return engine_mode;
         }
     }
-    return engine_mode_error;
+    return ENGINE_MODE_ERROR;
 }

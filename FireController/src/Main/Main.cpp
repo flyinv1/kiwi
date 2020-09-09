@@ -150,14 +150,14 @@ void Main::_on(uint8_t id, uint8_t* buffer, size_t len)
     } break;
     case SET_CONTROLMODE: {
         if (_configurable()) {
-            if (controller.setControlModeFrom(buffer, len) == Controller::control_mode_error) {
+            if (controller.setControlModeFrom(buffer, len) == Controller::CONTROL_MODE_ERROR) {
                 // Error setting control mode
             }
         }
     } break;
     case SET_ENGINEMODE: {
         if (_configurable()) {
-            if (controller.setEngineModeFrom(buffer, len) == Controller::engine_mode_error) {
+            if (controller.setEngineModeFrom(buffer, len) == Controller::CONTROL_MODE_ERROR) {
                 // Error setting engine mode
             }
         }
