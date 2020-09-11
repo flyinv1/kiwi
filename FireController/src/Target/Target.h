@@ -8,8 +8,10 @@ struct Target {
     uint32_t time = 0;
     uint32_t value = 0;
 
-    Target()
+    Target(uint32_t _time = 0, uint32_t _value = 0)
     {
+        time = _time;
+        value = _value;
     }
 
     ~Target()

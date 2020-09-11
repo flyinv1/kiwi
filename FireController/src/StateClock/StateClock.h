@@ -17,11 +17,11 @@ public:
         long _t = micros();
 
         if (_total_ticks > 0) {
-            _total_dt = (_t - _total_clock) / _total_ticks;
+            _total_dt = (_t - _total_clock_start) / _total_ticks;
         }
 
-        if (!_should_update_state) {
-            _state_dt = (_t - _state_clock) / _state_ticks;
+        if (_should_update_state) {
+            _state_dt = (_t - _state_clock_start) / _state_ticks;
         } else {
             _should_update_state = true;
         }

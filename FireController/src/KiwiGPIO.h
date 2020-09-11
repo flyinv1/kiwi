@@ -14,4 +14,8 @@ enum KIWI_IO {
     pin_run_valve = 20,         // Run valve digital output (HIGH = OPEN)
 };
 
+enum EEPROM_ADDR {
+    eeprom_last_encoder_count = 0,
+};
+
 #endif

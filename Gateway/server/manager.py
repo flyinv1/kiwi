@@ -5,7 +5,7 @@ class Manager:
     def __init__(self):
         self.host = '192.168.1.10'
         self.port = 1883
-
+        
     def start(self):
         print("Starting client")
         self.client.loop_start()

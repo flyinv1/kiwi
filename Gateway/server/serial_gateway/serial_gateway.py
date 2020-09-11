@@ -2,4 +2,5 @@ import serial
 
 class SerialGateway:
     def __init__(self):
-        print('init')
+        # initialize an empty serialport object
+        serialport = 0

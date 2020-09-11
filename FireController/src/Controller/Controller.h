@@ -11,10 +11,10 @@
 
 #define DEFAULT_RUN_DURATION_MS      10000
 #define MAXIMUM_RUN_DURATION_MS      20000
-#define DEFAULT_IGNITION_DURATION_MS 400
-#define MAXIMUM_IGNITION_DURATION_MS 1000
-#define DEFAULT_IGNITION_PREBURN_MS  200
-#define MAXIMUM_IGNITION_PREBURN_MS  1000
+#define DEFAULT_IGNITION_DURATION_MS 1000
+#define MAXIMUM_IGNITION_DURATION_MS 2000
+#define DEFAULT_IGNITION_PREBURN_MS  1000
+#define MAXIMUM_IGNITION_PREBURN_MS  2000
 #define DEFAULT_IGNITION_VOLTAGE     300
 #define MAXIMUM_IGNITION_VOLTAGE     600
 
@@ -47,20 +47,21 @@
 #define THROTTLE_POS_CLOSED 660
 #define THROTTLE_POS_OPEN   0
 #define THROTTLE_POS_SDN    200
-#define THROTTLE_EQ_DBAND   10
+#define THROTTLE_EQ_DBAND   4   // position deadband of 0.5deg
+#define TARGET_SCALE        100 // scale angle targets to preserve resolution
 
 /*
     RoboClaw motor control parameters required for position control
     Acceleration and decceleration rates are the same
 */
-#define THROTTLE_ACC     2000
-#define THROTTLE_VEL     800
+#define THROTTLE_ACC     4000
+#define THROTTLE_VEL     2000
 #define THROTTLE_VEL_SDN 220
 
 /**
  *  Define maximum allowable targets, no engine test is planned to allow a large number of target setpoints
  */
-#define TARGETS 32
+#define TARGETS 128
 
 class Controller {
 
@@ -162,7 +163,11 @@ public:
 
     void abort();
 
-    void setTargets(uint8_t* buffer, size_t len);
+    StateType getState();
+
+    void setTargetsFrom(uint8_t* buffer, size_t len);
+
+    void setTargets(Target* _targets, size_t len);
 
     void setRunDuration(uint32_t duration);
 
@@ -173,6 +178,10 @@ public:
     void setIgnitionVoltage(uint32_t voltage);
 
     void tareThrustCell();
+
+    ControlMode setControlMode(ControlMode _mode);
+
+    EngineMode setEngineMode(EngineMode _mode);
 
     ControlMode setControlModeFrom(uint8_t* buffer, size_t len);
 
@@ -268,7 +277,7 @@ private:
 
     void activateIgniter();
 
-    int throttleAngleToEncoder(float _angle);
+    uint32_t throttleAngleToEncoder(float _angle);
 
     float throttleEncoderToAngle(int position);
 
@@ -301,6 +310,10 @@ private:
     bool smt_shutdown_to_safe(void);
 
     bool smt_armed_to_safe(void);
+
+    void writeEncoderPosition(uint32_t position);
+
+    uint32_t readLastEncoderPosition(void);
 };
 
 #endif

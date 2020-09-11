@@ -1,6 +1,7 @@
 #include "Controller.h"
 
 #include <Arduino.h>
+#include <EEPROM.h>
 #include <RoboClaw.h>
 
 #include "../Estimator/Estimator.h"
@@ -17,6 +18,7 @@ void Controller::init()
     estimator.init();
     estimator.begin();
     throttle_valve.begin(MOTOR_BAUD);
+    Serial.println(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
     initializeRunValve();
     initializeIgniter();
 };
@@ -36,6 +38,10 @@ void Controller::setState(Controller::StateType next_state)
         for (int i = 0; i < num_transitions; i++) {
             if (TransitionTable[i].prev == state && TransitionTable[i].next == next_state) {
                 if ((this->*TransitionTable[i].method)()) {
+                    Serial.print("STATE: ");
+                    Serial.println(next_state);
+                    Serial.print("ET: ");
+                    Serial.println(engineClock.state_et());
                     engineClock.advance();
                     state = next_state;
                 }
@@ -57,12 +63,17 @@ void Controller::disarm()
 
 void Controller::fire()
 {
-    setState(state_firing);
+    setState(state_preburn);
 }
 
 void Controller::abort()
 {
     setState(state_shutdown);
+}
+
+Controller::StateType Controller::getState()
+{
+    return state;
 }
 
 void Controller::setRunDuration(uint32_t duration)
@@ -94,12 +105,20 @@ void Controller::tareThrustCell()
     estimator.tareThrustCell();
 }
 
-void Controller::setTargets(uint8_t* buffer, size_t len)
+void Controller::setTargetsFrom(uint8_t* buffer, size_t len)
 {
     // Set target keyframes
     size_t _targets = len > TARGETS ? TARGETS : len;
     _num_targets = Target::decode(buffer, _targets, _target_buffer);
     _target = 0;
+}
+
+void Controller::setTargets(Target* _targets, size_t len)
+{
+    for (int i = 0; i < len; i++) {
+        _target_buffer[i] = _targets[i];
+    }
+    _num_targets = len;
 }
 
 /**
@@ -133,10 +152,17 @@ void Controller::sm_preburn(void)
             // should shutdown
         }
     }
+
+    if (engineClock.state_et() > _ignition_preburn * 1000) {
+        setState(state_igniting);
+    }
 }
 
 void Controller::sm_igniting(void)
 {
+
+    readEngineState();
+
     if (engine_mode == ENGINE_MODE_COLD) {
     } else {
     }
@@ -158,19 +184,20 @@ void Controller::sm_firing(void)
 {
     targetClock.tick();
 
-    if (engine_mode == ENGINE_MODE_COLD) {
-        if (_target < _num_targets) {
-            uint32_t _current_throttle_target = uint32_t(_target_buffer[_target].value);
-            _current_throttle_target = clamp<uint32_t>(throttleAngleToEncoder(float(_current_throttle_target)), THROTTLE_POS_OPEN, THROTTLE_POS_CLOSED);
-            throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, _current_throttle_target, 0);
-        }
-    } else if (engine_mode == ENGINE_MODE_HOT) {
+    readEngineState();
+
+    if (engine_mode == ENGINE_MODE_HOT) {
         // perform closed loop control
     }
 
     // Transition targets
-    if (targetClock.state_et() > _target_buffer[_target].time * 1000) {
-        if (_target < _num_targets) {
+    if (targetClock.total_et() > _target_buffer[_target].time * 1000) {
+        if (_target <= _num_targets) {
+            if (engine_mode == ENGINE_MODE_COLD) {
+                float _target_angle = float(_target_buffer[_target].value) / TARGET_SCALE;
+                uint32_t _target_position = clamp<uint32_t>(throttleAngleToEncoder(_target_angle), THROTTLE_POS_OPEN, THROTTLE_POS_CLOSED);
+                throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, _target_position, 1);
+            }
             _target++;
             targetClock.advance();
         } else {
@@ -182,9 +209,6 @@ void Controller::sm_firing(void)
 
 void Controller::sm_shutdown(void)
 {
-    if (engineClock.state_et() > SHUTDOWN_DRAIN_INTERVAL * 1000) {
-        throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_SDN, 0);
-    }
     if (abs(throttle_valve.ReadEncM1(MOTOR_ADDRESS) - THROTTLE_POS_SDN) > THROTTLE_EQ_DBAND) {
         // Monitor upstream and downstream pressure
         if (engineState.upstream_pressure < SAFE_PRESSURE_PSI && engineState.downstream_pressure < SAFE_PRESSURE_PSI) {
@@ -197,15 +221,27 @@ void Controller::sm_shutdown(void)
     } else if (engineClock.state_et() > SHUTDOWN_MAXIMUM_PERIOD * 1000) {
         setState(state_safe);
     }
+    setState(state_safe);
 }
 
 bool Controller::smt_safe_to_armed(void)
 {
+    throttle_valve.SetEncM1(MOTOR_ADDRESS, readLastEncoderPosition());
+    Serial.println("__armed");
+    Serial.println(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
+    Serial.println(readLastEncoderPosition());
+    Serial.println("^");
+    if (throttle_valve.ReadEncM1(MOTOR_ADDRESS) < THROTTLE_POS_CLOSED) {
+        Serial.println(THROTTLE_POS_CLOSED);
+        Serial.println(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
+        // throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 0);
+    }
     return true;
 }
 
 bool Controller::smt_armed_to_preburn(void)
 {
+    Serial.println("__preburn");
     /*
         - Turn on the igniter to the run setpoint
     */
@@ -218,17 +254,21 @@ bool Controller::smt_armed_to_preburn(void)
 
 bool Controller::smt_preburn_to_igniting(void)
 {
+    Serial.println("__igniting");
     /*
         - Open the run valve
         - Command the throttle valve motor to the full open position
     */
     openRunValve();
-    throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, THROTTLE_POS_OPEN, 0);
+    Serial.print("Target: ");
+    Serial.println(THROTTLE_POS_OPEN);
+    // throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, THROTTLE_POS_OPEN, 0);
     return true;
 }
 
 bool Controller::smt_igniting_to_firing(void)
 {
+    Serial.println("__firing");
     /*
         - Start the target clock
         - Shutdown the igniter
@@ -241,10 +281,12 @@ bool Controller::smt_igniting_to_firing(void)
 
 bool Controller::smt_firing_to_shutdown(void)
 {
+    Serial.println("__shutdown");
     /*
         - Close the run valve
         - The motor position is handled by the shutdown loop
     */
+    _target = 0;
     closeRunValve();
     return true;
 }
@@ -273,11 +315,17 @@ bool Controller::smt_preburn_to_shutdown(void)
 
 bool Controller::smt_shutdown_to_safe(void)
 {
+    Serial.println("__safe");
+    Serial.print("Target: ");
+    Serial.println(THROTTLE_POS_CLOSED);
+    writeEncoderPosition(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
+    // throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 1);
     return true;
 }
 
 bool Controller::smt_armed_to_safe(void)
 {
+    Serial.println("__safe");
     return true;
 }
 
@@ -287,7 +335,7 @@ void Controller::readEngineState()
     engineState.downstream_pressure = estimator.getDownstreamPressure();
     engineState.upstream_pressure = estimator.getUpstreamPressure();
     engineState.propellant_mass = estimator.getPropellantMass();
-    engineState.thrust = estimator.getPropellantMass();
+    engineState.thrust = estimator.getThrust();
     engineState.mass_flow = 0;
 
     uint32_t _throttle_position = throttle_valve.ReadEncM1(MOTOR_ADDRESS);
@@ -296,6 +344,21 @@ void Controller::readEngineState()
     engineState.mission_elapsed_time = float(engineClock.total_et());
     engineState.state_elapsed_time = float(engineClock.state_et());
     engineState.delta_time = float(engineClock.total_dt());
+}
+
+void Controller::getEngineData(Controller::EngineData* data)
+{
+    // Bummer of a thing this is
+    data->chamber_pressure = engineState.chamber_pressure;
+    data->upstream_pressure = engineState.upstream_pressure;
+    data->downstream_pressure = engineState.downstream_pressure;
+    data->thrust = engineState.thrust;
+    data->propellant_mass = engineState.propellant_mass;
+    data->mass_flow = engineState.mass_flow;
+    data->throttle_position = engineState.throttle_position;
+    data->mission_elapsed_time = engineState.mission_elapsed_time;
+    data->state_elapsed_time = engineState.state_elapsed_time;
+    data->delta_time = engineState.delta_time;
 }
 
 void Controller::initializeRunValve(void)
@@ -346,15 +409,25 @@ void Controller::activateIgniter(void)
     digitalWrite(pin_igniter_sdn, LOW);
 }
 
-int Controller::throttleAngleToEncoder(float _angle)
+uint32_t Controller::throttleAngleToEncoder(float _angle)
 {
     // convert angle input to motor position
-    return THROTTLE_POS_CLOSED - ceil(_angle / THROTTLE_ANG_OPEN * THROTTLE_POS_CLOSED);
+    return THROTTLE_POS_CLOSED - ceil(_angle / THROTTLE_ANG_OPEN * (THROTTLE_POS_CLOSED - THROTTLE_POS_OPEN));
 }
 
 float Controller::throttleEncoderToAngle(int _position)
 {
-    return float(THROTTLE_POS_CLOSED - _position) / THROTTLE_POS_CLOSED * THROTTLE_ANG_OPEN;
+    return float(THROTTLE_POS_CLOSED - _position) / (THROTTLE_POS_CLOSED - THROTTLE_POS_OPEN) * THROTTLE_ANG_OPEN;
+}
+
+Controller::ControlMode Controller::setControlMode(ControlMode _mode)
+{
+    control_mode = _mode;
+}
+
+Controller::EngineMode Controller::setEngineMode(EngineMode _mode)
+{
+    engine_mode = _mode;
 }
 
 Controller::ControlMode Controller::setControlModeFrom(uint8_t* buffer, size_t len)
@@ -383,4 +456,16 @@ Controller::EngineMode Controller::setEngineModeFrom(uint8_t* buffer, size_t len
     }
     engine_mode = ENGINE_MODE_ERROR;
     return ENGINE_MODE_ERROR;
+}
+
+void Controller::writeEncoderPosition(uint32_t position)
+{
+    EEPROM.put(eeprom_last_encoder_count, position);
+}
+
+uint32_t Controller::readLastEncoderPosition(void)
+{
+    uint32_t position;
+    EEPROM.get(eeprom_last_encoder_count, position);
+    return position;
 }

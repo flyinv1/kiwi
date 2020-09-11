@@ -6,7 +6,7 @@ int encoder_value = 0;
 int motor_address = 0x80;
 int motor_baud = 460800;
 
-int position = 0;
+float position = 0;
 int t = 0;
 
 void setup()
@@ -17,8 +17,12 @@ void setup()
     motor.ReadVersion(motor_address, v);
     Serial.write(v);
     encoder_value = motor.ReadEncM1(motor_address);
+    motor.SetEncM1(motor_address, 660);
+    motor.ReadEncM1(motor_address);
     t = millis();
-    motor.SpeedAccelDeccelPositionM1(motor_address, 1000, 500, 1000, 0, 1);
+    // motor.SpeedAccelDeccelPositionM1(motor_address, 1000, 500, 1000, 0, 1);
+    pinMode(20, OUTPUT);
+    digitalWrite(20, HIGH);
 }
 
 void loop()
@@ -28,12 +32,16 @@ void loop()
         c = Serial.read();
         if (c == 'w') {
             position += 50;
+            motor.SpeedAccelDeccelPositionM1(motor_address, 1000, 500, 1000, position, 1);
         } else if (c == 's') {
             position -= 50;
+            motor.SpeedAccelDeccelPositionM1(motor_address, 1000, 500, 1000, position, 1);
+        } else if (c == 'q') {
+            motor.SpeedAccelDeccelPositionM1(motor_address, 0, 0, 0, 0, 1);
         } else {
             Serial.write(c);
         }
-        motor.SpeedAccelDeccelPositionM1(motor_address, 1000, 500, 1000, position, 1);
+        Serial.print(position);
     }
     encoder_value = motor.ReadEncM1(motor_address);
     if (millis() - t > 10) {

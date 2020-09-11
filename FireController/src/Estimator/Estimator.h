@@ -17,7 +17,7 @@
 #define HX711_GAIN      64
 
 #define ADC_BUFFER_LENGTH  128
-#define ADC_FULL_SCALE     1024
+#define ADC_FULL_SCALE     4096
 #define ADC_REF_VOLTAGE    3.292f
 #define ADC_REF_RESISTANCE 124.0f
 #define ADC_I_MIN          4

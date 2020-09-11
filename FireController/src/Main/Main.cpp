@@ -179,7 +179,7 @@ void Main::_on(uint8_t id, uint8_t* buffer, size_t len)
     } break;
     case SET_TARGETS: {
         if (_configurable()) {
-            controller.setTargets(buffer, len);
+            controller.setTargetsFrom(buffer, len);
         }
     } break;
     case GET_CONFIGURATION: {
