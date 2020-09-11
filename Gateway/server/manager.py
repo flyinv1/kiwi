@@ -5,16 +5,26 @@ class Manager:
     def __init__(self):
         self.host = '192.168.1.10'
         self.port = 1883
-        
-    def start(self):
-        print("Starting client")
-        self.client.loop_start()
+        self.serialport = None
+
+    def main(self):
+        # first update the MQTT client
+        self.client.loop()
+        self.serialport
+
+    def connect_serial(self, hwid):
+        None
 
     def connect_client(self, host, port):
+        # Create an MQTT client
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
-        self.client.connect_async(self.host, self.port)
+
+        # Connect to the MQTT broker asynchronously
+        self.client.connect_async(host, port)
+        self.host = host
+        self.port = port
             
     def on_connect(self, client, userdata, flags, rc):
         print("")

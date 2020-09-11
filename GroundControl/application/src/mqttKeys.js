@@ -11,7 +11,9 @@ export const MQTT = {
         },
         keyframes: 'run/keyframes',
         arm: 'run/arm',
+        disarm: 'run/disarm',
         start: 'run/start',
+        stop: 'run/stop',
         status: 'run/status',
     },
     telemetry: {
