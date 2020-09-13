@@ -1,30 +1,42 @@
-#include "Main.h"
+#include "Manager.h"
 
 #include <Arduino.h>
 
 #include "../Controller/Controller.h"
 #include "../StateClock/StateClock.h"
 
-Main::Main()
+Manager::Manager()
 {
     encoder = BinaryPacket();
-    controller = Controller();
+    // controller = Controller();
     missionClock = StateClock();
-    missionClock.start();
 }
 
-void Main::init()
+Manager::~Manager()
+{
+}
+
+void Manager::init()
 {
     // Begin serial communications with RPI
     Serial.begin(115200);
+    missionClock.start();
     encoder.setStream(&Serial);
 
     // Initialize the controller to standby mode
-    controller.init();
+    // controller.init();
+    pinMode(13, OUTPUT);
+    digitalWrite(13, LOW);
 }
 
-void Main::loop()
+void Manager::loop()
 {
+    if (millis() - t > 200) {
+        digitalWrite(13, !on);
+        on = !on;
+        t = millis();
+    }
+
     // Update primary mission clock
     missionClock.tick();
 
@@ -37,28 +49,30 @@ void Main::loop()
     }
 }
 
-void Main::setState(Main::StateType next_state)
+void Manager::setState(Manager::StateType next_state)
 {
     if (next_state < num_states) {
         for (int i = 0; i < num_transitions; i++) {
             if (TransitionTable[i].prev == state && TransitionTable[i].next == next_state) {
-                (this->*TransitionTable[i].method)();
+                if ((this->*TransitionTable[i].method)()) {
+                    // Do nothing ?
+                }
                 return;
             }
         }
     }
 }
 
-void Main::sm_disconnected()
+void Manager::sm_disconnected()
 {
     // Update controller and sensors;
-    controller.main();
+    // controller.main();
 
     // If timeout, then send sync byte
-    if (missionClock.state_et() > DISCONNECT_INTERVAL_MS) {
-        size_t length = 1;
-        uint8_t _buffer[length] = { SYNC };
-        bool _overflow = encoder.write(_buffer, length);
+    if (missionClock.state_et() > DISCONNECT_INTERVAL_MS * 1000) {
+        size_t length = 5;
+        uint8_t _buffer[length] = { SYNC, 5, 10, 20, 30 };
+        encoder.write(_buffer, length);
         encoder.send();
 
         // Reset the mission clock state timer
@@ -66,58 +80,58 @@ void Main::sm_disconnected()
     }
 }
 
-void Main::sm_standby()
+void Manager::sm_standby()
 {
     // Update controller
-    controller.main();
+    // controller.main();
 }
 
-void Main::sm_armed()
+void Manager::sm_armed()
 {
     // Update controller
-    controller.main();
+    // controller.main();
 
     // Transmit data
 }
 
-void Main::sm_running()
+void Manager::sm_running()
 {
     // Update controller
-    controller.main();
+    // controller.main();
 
     // Transmit data
 }
 
-void Main::sm_error()
+void Manager::sm_error()
 {
     // Update controller
-    controller.main();
+    // controller.main();
 }
 
 /*
 
 */
-void Main::smt_disconnected_to_standby()
+bool Manager::smt_disconnected_to_standby()
 {
 }
 
-void Main::smt_standby_to_armed()
+bool Manager::smt_standby_to_armed()
 {
 }
 
-void Main::smt_armed_to_running()
+bool Manager::smt_armed_to_running()
 {
 }
 
-void Main::smt_running_to_armed()
+bool Manager::smt_running_to_armed()
 {
 }
 
-void Main::smt_armed_to_standby()
+bool Manager::smt_armed_to_standby()
 {
 }
 
-void Main::read()
+void Manager::read()
 {
     encoder.read();
     if (encoder.overflow()) {
@@ -130,17 +144,17 @@ void Main::read()
     }
 }
 
-void Main::_on(uint8_t id, uint8_t* buffer, size_t len)
+void Manager::_on(uint8_t id, uint8_t* buffer, size_t len)
 {
     switch (id) {
     case SYNC: {
         _sync();
     } break;
     case RUN_ARM: {
-        controller.arm();
+        _arm();
     } break;
     case RUN_DISARM: {
-        controller.disarm();
+        _disarm();
     } break;
     case RUN_START: {
         _start();
@@ -188,7 +202,7 @@ void Main::_on(uint8_t id, uint8_t* buffer, size_t len)
     case RUN_CALIBRATE_LOAD: {
         controller.tareThrustCell();
     } break;
-    case GET_STATE: {
+    case STATE: {
         _getState();
     } break;
     default: {
@@ -197,38 +211,73 @@ void Main::_on(uint8_t id, uint8_t* buffer, size_t len)
     }
 }
 
+void Manager::sendById(uint8_t id, uint8_t* buffer, size_t length)
+{
+    size_t _length = length + 1;
+    uint8_t _buffer[length] = {};
+
+    _buffer[0] = id;
+
+    for (int i = 0; i < length; i++) {
+        _buffer[i + 1] = buffer[i];
+    }
+
+    if (encoder.write(_buffer, _length)) {
+        encoder.send();
+    }
+}
+
 /*
     On a synchronization message from the gateway, the fire controller should respond with a sync message of its own and transition into standby mode.
 */
-void Main::_sync()
+void Manager::_sync()
+{
+    setState(state_standby);
+    _getState();
+}
+
+void Manager::_arm()
 {
 }
 
-void Main::_start()
+void Manager::_disarm()
 {
 }
 
-void Main::_stop()
+void Manager::_start()
 {
 }
 
-void Main::_getConfiguration()
+void Manager::_stop()
 {
 }
 
-void Main::_calibrate_thrust()
+void Manager::_getConfiguration()
 {
 }
 
-void Main::_calibrate_propellant()
+void Manager::_calibrate_thrust()
 {
 }
 
-bool Main::_configurable()
+void Manager::_calibrate_propellant()
+{
+}
+
+bool Manager::_configurable()
 {
     return (state == state_standby);
 }
 
-void Main::_getState()
+/*
+    Get current manager and controller states, transmit them upstream
+*/
+void Manager::_getState()
 {
+    Controller::StateType _controller_state = controller.getState();
+    Manager::StateType _manager_state = state;
+
+    size_t len = 2;
+    uint8_t payload[len] = { uint8_t(_manager_state), uint8_t(_controller_state) };
+    sendById(STATE, payload, len);
 }

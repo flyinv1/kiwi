@@ -1,21 +1,24 @@
 from dotenv import load_dotenv
 import os
-from serial.tools import list_ports
 from server.manager import Manager
+from time import sleep
 
-load_dotenv()
+if __name__ == '__main__':
 
-host = os.environ.get('host')       # MQTT host address
-port = int(os.environ.get('port'))  # MQTT host port
-hwid = os.environ.get('hwid')       # Serial hardware ID
+    load_dotenv()
 
-manager = Manager()
-manager.connect_client(host, port)
-manager.connect_serial(hwid)
+    host = os.environ.get('host')       # MQTT host address
+    port = int(os.environ.get('port'))  # MQTT host port
+    path = os.environ.get('path')       # Device path name
 
-try:
-    while 1:
-        manager.main()
-except KeyboardInterrupt:
-    # handle things
-    print("Closing program")
+    manager = Manager()
+    manager.connect_client(host, port)
+    manager.connect_serial(path)
+    manager.open_serial()
+
+    try:
+        while 1:
+            manager.main()
+    except KeyboardInterrupt:
+        # handle things
+        print("Closing program")

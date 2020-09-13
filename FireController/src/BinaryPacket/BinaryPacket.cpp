@@ -45,8 +45,7 @@ void BinaryPacket::read()
 
 void BinaryPacket::send()
 {
-
-    _writeBuffer[0] = crc8(_writeBuffer + 1, _writeBufferIndex - 1);
+    _writeBuffer[0] = crc8(_writeBuffer, _writeBufferIndex);
     uint8_t _encodeBuffer[_writeBufferIndex];
     size_t _lenEncoded = stuff(_writeBuffer, _writeBufferIndex, _encodeBuffer);
 
@@ -54,14 +53,26 @@ void BinaryPacket::send()
         _stream->write(_encodeBuffer[i]);
     }
 
+    _stream->write(delimiter);
+
     flushWriteBuffer();
 }
 
 size_t BinaryPacket::packet(uint8_t* buffer)
 {
     // Offset the buffer by one byte to remove crc
-    buffer = _readBuffer + 1;
-    return _readBufferIndex - 1;
+    buffer = _writeBuffer + 1;
+    return _writeBuffer - 1;
+}
+
+bool BinaryPacket::packetAvailable()
+{
+    return _packetAvailable;
+}
+
+bool BinaryPacket::overflow()
+{
+    return _bufferOverflow;
 }
 
 void BinaryPacket::flush()
@@ -71,15 +82,19 @@ void BinaryPacket::flush()
 
 void BinaryPacket::flushWriteBuffer()
 {
-    _writeBufferIndex = 1;
+    // reset the write buffer CRC and place the index at 1
     _writeBuffer[0] = 0;
+    _writeBufferIndex = 1;
 }
 
 bool BinaryPacket::write(uint8_t* buffer, size_t length)
 {
-    if (_writeBufferIndex + length > 254) {
+    if (_writeBufferIndex + length > 255) {
         return false;
     }
+
+    // Writing simply places data into the write buffer starting at the existing write buffer index
+    // When flushing, the write buffer index is reset at 1 to ensure room for the crc byte
     for (uint8_t i = 0; i < length; i++) {
         _writeBuffer[_writeBufferIndex++] = buffer[i];
     }
@@ -100,7 +115,6 @@ size_t BinaryPacket::stuff(uint8_t* inputBuffer, size_t length, uint8_t* outputB
     size_t read_index = 0;
     size_t write_index = 1;
     size_t code_index = 0;
-
     uint8_t code = 1;
 
     while (read_index < length) {
@@ -145,18 +159,17 @@ size_t BinaryPacket::unstuff(uint8_t* inputBuffer, size_t length, uint8_t* outpu
             outputBuffer[write_index++] = inputBuffer[read_index++];
         }
         if (code != 0xff && read_index != length) {
-            outputBuffer[write_index] = '\0';
+            outputBuffer[write_index++] = '\0';
         }
     }
 }
 
 uint8_t BinaryPacket::crc8(uint8_t* buffer, size_t length)
 {
-    // 8 bit CRC (CRC8-ITU w/ 0x07)
+    // 8 bit CRC (CRC8 w/ 0x07 poly)
     uint8_t crc = 0;
-    uint8_t i;
 
-    for (i = 0; i < length; i++) {
+    for (int i = 0; i < length; i++) {
         crc = _crcLookup[buffer[i] ^ crc];
     }
 
