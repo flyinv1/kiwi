@@ -27,7 +27,14 @@ const ConfigurationView = () => {
     const publishKeyFrameMap = () => {
         let _map = keyframeMap;
         let _arr = Array.from(_map);
-        let _numArr = _arr.map(_subarr => [Number(_subarr[0]), Number(_subarr[1])]);
+        console.log(_arr)
+        // let _numArr = _arr.map(_subarr => [Number(_subarr[0]), Number(_subarr[1])]);
+        let _numArr = _arr.reduce((_c, _subarr) => {
+            _c.push(Number(_subarr[0]));
+            _c.push(Number(_subarr[1]));
+            return _c
+        }, [])
+        console.log(_numArr)
         publish(MQTT.run.keyframes, _numArr);
     }
 
@@ -78,7 +85,7 @@ const ConfigurationView = () => {
 
     useEffect(() => {
         const windowListener = (e) => {
-            const _published = publish(MQTT.run.start, false);
+            const _published = publish(MQTT.run.stop);
             setIsRunning(false);
         }
         window.addEventListener('keypress', windowListener);
@@ -196,7 +203,7 @@ const ConfigurationView = () => {
                         disabled={!validConfiguration}
                         loading={false}
                         onClick={() => {
-                            const _published = publish(MQTT.run.arm, !isArmed);
+                            const _published = isArmed ? publish(MQTT.run.disarm) : publish(MQTT.run.arm)
                             setIsArmed(_armed => !_armed)
                         }}
                     >
@@ -210,11 +217,11 @@ const ConfigurationView = () => {
                     <DestructiveButton
                         disabled={!isArmed || isRunning}
                         onClick={() => {
-                            const _published = publish(MQTT.run.start, true);
+                            const _published = publish(MQTT.run.start);
                             setIsRunning(true);
                         }}
                     >
-                        Run Test
+                        Run test
                     </DestructiveButton>
                 </div>
             </div>

@@ -61,7 +61,7 @@ class Manager {
         { state_armed, state_standby, &Manager::smt_armed_to_standby },
     };
 
-    enum {
+    typedef enum {
         SYNC = 0,
         RUN_ARM = 1,
         RUN_DISARM = 2,
@@ -74,9 +74,34 @@ class Manager {
         SET_IGNITERDURATION = 9,
         SET_TARGETS = 10,
         GET_CONFIGURATION = 11,
-        RUN_CALIBRATE_LOAD = 13,
+        RUN_CALIBRATE_THRUST = 12,
+        num_callbacks = 13,
+
         STATE = 14,
-        CALLBACKS = 15
+        DATA = 15
+    } TopicType;
+
+    typedef void (Manager::*TopicCallback)(uint8_t id, uint8_t* buffer, size_t len);
+
+    typedef struct {
+        TopicType topic;
+        TopicCallback callback;
+    } TopicCallbackType;
+
+    TopicCallbackType TopicTable[num_callbacks] = {
+        { SYNC, &Manager::_on_sync },
+        { RUN_ARM, &Manager::_on_arm },
+        { RUN_DISARM, &Manager::_on_disarm },
+        { RUN_START, &Manager::_on_run_start },
+        { RUN_STOP, &Manager::_on_run_stop },
+        { SET_CONTROLMODE, &Manager::_on_set_controlmode },
+        { SET_ENGINEMODE, &Manager::_on_set_enginemode },
+        { SET_RUNDURATION, &Manager::_on_set_runduration },
+        { SET_IGNITERPREBURN, &Manager::_on_set_igniterpreburn },
+        { SET_IGNITERDURATION, &Manager::_on_set_igniterduration },
+        { SET_TARGETS, &Manager::_on_set_targets },
+        { GET_CONFIGURATION, &Manager::_on_get_configuration },
+        { RUN_CALIBRATE_THRUST, &Manager::_on_run_calibrate_thrust },
     };
 
 public:
@@ -129,30 +154,20 @@ private:
 
     bool _configurable();
 
-    // /*
-    //     API METHODS
-    // */
-    void _on(uint8_t id, uint8_t* buffer, size_t len);
-
-    void _sync();
-
-    void _arm();
-
-    void _disarm();
-
-    void _start();
-
-    void _stop();
-
-    void _set_targets(uint8_t* buffer, size_t len);
-
-    void _getConfiguration();
-
-    void _calibrate_propellant();
-
-    void _calibrate_thrust();
-
-    void _getState();
+    void _on_sync(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_arm(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_disarm(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_run_start(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_run_stop(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_set_controlmode(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_set_enginemode(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_set_runduration(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_set_igniterpreburn(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_set_igniterduration(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_set_targets(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_get_configuration(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_run_calibrate_thrust(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_state(uint8_t topic, uint8_t* buffer, size_t len);
 };
 
 #endif

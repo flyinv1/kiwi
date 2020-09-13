@@ -14,11 +14,16 @@ if __name__ == '__main__':
     manager = Manager()
     manager.connect_client(host, port)
     manager.connect_serial(path)
-    manager.open_serial()
+
+    if manager.serialport == None:
+        print("Error opening serial port: path not found\n.env path: " + path + "\nCheck that the fire controller is connected")
+        exit()
+    else:
+        manager.open_serial()
 
     try:
         while 1:
             manager.main()
     except KeyboardInterrupt:
         # handle things
-        print("Closing program")
+        print("\nClosing program")

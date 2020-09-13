@@ -31,7 +31,15 @@ void Manager::init()
 
 void Manager::loop()
 {
-    if (millis() - t > 200) {
+
+    int interval;
+    if (state == state_disconnected) {
+        interval = 200;
+    } else {
+        interval = 1000;
+    }
+
+    if (millis() - t > interval) {
         digitalWrite(13, !on);
         on = !on;
         t = millis();
@@ -65,17 +73,9 @@ void Manager::setState(Manager::StateType next_state)
 
 void Manager::sm_disconnected()
 {
-    // Update controller and sensors;
-    // controller.main();
-
     // If timeout, then send sync byte
     if (missionClock.state_et() > DISCONNECT_INTERVAL_MS * 1000) {
-        size_t length = 5;
-        uint8_t _buffer[length] = { SYNC, 5, 10, 20, 30 };
-        encoder.write(_buffer, length);
-        encoder.send();
-
-        // Reset the mission clock state timer
+        sendById(SYNC, nullptr, 0);
         missionClock.advance();
     }
 }
@@ -140,74 +140,9 @@ void Manager::read()
         uint8_t* buffer = nullptr;
         size_t len = encoder.packet(buffer);
         uint8_t id = buffer[0];
-        _on(id, buffer + 1, len - 1);
-    }
-}
-
-void Manager::_on(uint8_t id, uint8_t* buffer, size_t len)
-{
-    switch (id) {
-    case SYNC: {
-        _sync();
-    } break;
-    case RUN_ARM: {
-        _arm();
-    } break;
-    case RUN_DISARM: {
-        _disarm();
-    } break;
-    case RUN_START: {
-        _start();
-    } break;
-    case RUN_STOP: {
-        _stop();
-    } break;
-    case SET_CONTROLMODE: {
-        if (_configurable()) {
-            if (controller.setControlModeFrom(buffer, len) == Controller::CONTROL_MODE_ERROR) {
-                // Error setting control mode
-            }
+        if (id < num_callbacks) {
+            (this->*TopicTable[id].callback)(id, buffer, len);
         }
-    } break;
-    case SET_ENGINEMODE: {
-        if (_configurable()) {
-            if (controller.setEngineModeFrom(buffer, len) == Controller::CONTROL_MODE_ERROR) {
-                // Error setting engine mode
-            }
-        }
-    } break;
-    case SET_RUNDURATION: {
-        if (_configurable()) {
-            controller.setRunDuration(encoder.readUInt32(buffer, len));
-        }
-    } break;
-    case SET_IGNITERDURATION: {
-        if (_configurable()) {
-            controller.setIgnitionDuration(encoder.readUInt32(buffer, len));
-        }
-    } break;
-    case SET_IGNITERPREBURN: {
-        if (_configurable()) {
-            controller.setIgnitionPreburn(encoder.readUInt32(buffer, len));
-        }
-    } break;
-    case SET_TARGETS: {
-        if (_configurable()) {
-            controller.setTargetsFrom(buffer, len);
-        }
-    } break;
-    case GET_CONFIGURATION: {
-        _getConfiguration();
-    } break;
-    case RUN_CALIBRATE_LOAD: {
-        controller.tareThrustCell();
-    } break;
-    case STATE: {
-        _getState();
-    } break;
-    default: {
-
-    } break;
     }
 }
 
@@ -230,54 +165,76 @@ void Manager::sendById(uint8_t id, uint8_t* buffer, size_t length)
 /*
     On a synchronization message from the gateway, the fire controller should respond with a sync message of its own and transition into standby mode.
 */
-void Manager::_sync()
+void Manager::_on_sync(uint8_t topic, uint8_t* buffer, size_t len)
 {
     setState(state_standby);
-    _getState();
 }
 
-void Manager::_arm()
+void Manager::_on_arm(uint8_t topic, uint8_t* buffer, size_t len)
+{
+    controller.arm();
+}
+
+void Manager::_on_disarm(uint8_t topic, uint8_t* buffer, size_t len)
+{
+    controller.disarm();
+}
+
+void Manager::_on_run_start(uint8_t topic, uint8_t* buffer, size_t len)
+{
+    controller.fire();
+}
+
+void Manager::_on_run_stop(uint8_t topic, uint8_t* buffer, size_t len)
+{
+    controller.abort();
+}
+
+void Manager::_on_set_controlmode(uint8_t topic, uint8_t* buffer, size_t len)
+{
+    if (_configurable()) {
+    }
+}
+
+void Manager::_on_set_enginemode(uint8_t topic, uint8_t* buffer, size_t len)
+{
+    if (_configurable()) {
+    }
+}
+
+void Manager::_on_set_runduration(uint8_t topic, uint8_t* buffer, size_t len)
+{
+    if (_configurable()) {
+    }
+}
+
+void Manager::_on_set_igniterpreburn(uint8_t topic, uint8_t* buffer, size_t len)
+{
+    if (_configurable()) {
+    }
+}
+
+void Manager::_on_set_igniterduration(uint8_t topic, uint8_t* buffer, size_t len)
 {
 }
 
-void Manager::_disarm()
+void Manager::_on_set_targets(uint8_t topic, uint8_t* buffer, size_t len)
 {
 }
 
-void Manager::_start()
+void Manager::_on_get_configuration(uint8_t topic, uint8_t* buffer, size_t len)
 {
 }
 
-void Manager::_stop()
+void Manager::_on_run_calibrate_thrust(uint8_t topic, uint8_t* buffer, size_t len)
 {
 }
 
-void Manager::_getConfiguration()
-{
-}
-
-void Manager::_calibrate_thrust()
-{
-}
-
-void Manager::_calibrate_propellant()
+void Manager::_on_state(uint8_t topic, uint8_t* buffer, size_t len)
 {
 }
 
 bool Manager::_configurable()
 {
     return (state == state_standby);
-}
-
-/*
-    Get current manager and controller states, transmit them upstream
-*/
-void Manager::_getState()
-{
-    Controller::StateType _controller_state = controller.getState();
-    Manager::StateType _manager_state = state;
-
-    size_t len = 2;
-    uint8_t payload[len] = { uint8_t(_manager_state), uint8_t(_controller_state) };
-    sendById(STATE, payload, len);
 }

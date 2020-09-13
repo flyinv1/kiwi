@@ -15,7 +15,7 @@ void BinaryPacket::read()
 
         uint8_t data = _stream->read();
 
-        if (data == 0) {
+        if (data == 0x00) {
             // packet terminator, decode the read buffer;
             uint8_t _decodeBuffer[_readBufferIndex];
             size_t _lenDecoded = unstuff(_readBuffer, _readBufferIndex, _decodeBuffer);
