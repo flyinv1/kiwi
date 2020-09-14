@@ -23,7 +23,7 @@ class Manager:
         ports = list_ports.comports()
         for port in ports:
             if port.device == path:
-                self.serialport = Serial(path)
+                self.serialport = Serial(path, timeout=0.01, write_timeout=0.01)
                 return True
         return False
 
@@ -31,8 +31,16 @@ class Manager:
     def open_serial(self):
         if not self.serialport.isOpen():
             self.serialport.open()
+            self.serialport.flushInput()
         else:
             print('Connected to serial device at: ' + self.serialport.name)
+
+
+    def close_serial(self):
+        if self.serialport.isOpen():
+            print('Closing serialport')
+            self.write_serial_packet(interface.Keys.CLOSE.value, [])
+            self.serialport.close()
 
 
     def read_serial(self):
@@ -66,23 +74,24 @@ class Manager:
         _buffer[0] = encoder.crc(_buffer[1:])
         _out_buffer = encoder.cobs_encode(_buffer)
         self.serialport.write(_out_buffer)
+        self.serialport.write(bytearray([0x00]))
 
 
     # ON_PACKET SERIAL EVENT
     def on_packet(self, id_, payload):
         _payload, _type, _id = interface.on_id(id_, payload)
-        if _id == 0 and self.controller_connected == False:
-            print('Fire controller is online')
-            self.controller_connected = True
-            self.write_serial_packet(0, [])
-        elif _id == 14:
-            print('Fire controller entered state: ' + str(payload)) 
-        elif _id == 255:
-            pass
-            # log
+        print(id_)
+        print(payload)
+        if _id == interface.Keys.SYNC.value:
+            if not self.controller_connected:
+                print('Connecting packet serial communication...')
+                self.write_serial_packet(interface.Keys.SYNC.value, [])
+        elif _id == interface.Keys.STATE.value:
+            print('Controller entered state: ' + str(int.from_bytes(_payload, byteorder='little')))
+            # Forward to MQTT!
         else:
-            pass
-            # pass
+            # Forward to MQTT!
+            None
 
     # Create a new MQTT client and connect to the main broker
     def connect_client(self, host, port):
@@ -121,7 +130,8 @@ class Manager:
             self.write_serial_packet(_id, _buffer)
 
         elif _result_type == None:
-            pass
+            print(_result, _id)
+            self.write_serial_packet(_id, [])
 
     # ON_DISCONNECT MQTT EVENT
     def on_disconnect(self, client, userdata):

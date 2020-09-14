@@ -8,7 +8,6 @@ Manager manager = Manager();
 void setup()
 {
     manager.init();
-    Serial.println("Running");
 }
 
 void loop()

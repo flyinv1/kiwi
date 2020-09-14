@@ -18,7 +18,6 @@ void Controller::init()
     estimator.init();
     estimator.begin();
     throttle_valve.begin(MOTOR_BAUD);
-    Serial.println(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
     initializeRunValve();
     initializeIgniter();
 };
@@ -38,10 +37,6 @@ void Controller::setState(Controller::StateType next_state)
         for (int i = 0; i < num_transitions; i++) {
             if (TransitionTable[i].prev == state && TransitionTable[i].next == next_state) {
                 if ((this->*TransitionTable[i].method)()) {
-                    Serial.print("STATE: ");
-                    Serial.println(next_state);
-                    Serial.print("ET: ");
-                    Serial.println(engineClock.state_et());
                     engineClock.advance();
                     state = next_state;
                 }
@@ -227,13 +222,7 @@ void Controller::sm_shutdown(void)
 bool Controller::smt_safe_to_armed(void)
 {
     throttle_valve.SetEncM1(MOTOR_ADDRESS, readLastEncoderPosition());
-    Serial.println("__armed");
-    Serial.println(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
-    Serial.println(readLastEncoderPosition());
-    Serial.println("^");
     if (throttle_valve.ReadEncM1(MOTOR_ADDRESS) < THROTTLE_POS_CLOSED) {
-        Serial.println(THROTTLE_POS_CLOSED);
-        Serial.println(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
         // throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 0);
     }
     return true;
@@ -241,7 +230,6 @@ bool Controller::smt_safe_to_armed(void)
 
 bool Controller::smt_armed_to_preburn(void)
 {
-    Serial.println("__preburn");
     /*
         - Turn on the igniter to the run setpoint
     */
@@ -254,21 +242,17 @@ bool Controller::smt_armed_to_preburn(void)
 
 bool Controller::smt_preburn_to_igniting(void)
 {
-    Serial.println("__igniting");
     /*
         - Open the run valve
         - Command the throttle valve motor to the full open position
     */
     openRunValve();
-    Serial.print("Target: ");
-    Serial.println(THROTTLE_POS_OPEN);
     // throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, THROTTLE_POS_OPEN, 0);
     return true;
 }
 
 bool Controller::smt_igniting_to_firing(void)
 {
-    Serial.println("__firing");
     /*
         - Start the target clock
         - Shutdown the igniter
@@ -281,7 +265,6 @@ bool Controller::smt_igniting_to_firing(void)
 
 bool Controller::smt_firing_to_shutdown(void)
 {
-    Serial.println("__shutdown");
     /*
         - Close the run valve
         - The motor position is handled by the shutdown loop
@@ -315,9 +298,6 @@ bool Controller::smt_preburn_to_shutdown(void)
 
 bool Controller::smt_shutdown_to_safe(void)
 {
-    Serial.println("__safe");
-    Serial.print("Target: ");
-    Serial.println(THROTTLE_POS_CLOSED);
     writeEncoderPosition(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
     // throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 1);
     return true;
@@ -325,7 +305,6 @@ bool Controller::smt_shutdown_to_safe(void)
 
 bool Controller::smt_armed_to_safe(void)
 {
-    Serial.println("__safe");
     return true;
 }
 

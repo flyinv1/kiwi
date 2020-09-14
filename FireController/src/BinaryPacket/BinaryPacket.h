@@ -15,6 +15,9 @@ public:
 
     ~BinaryPacket();
 
+    uint8_t newPacket[256] = {};
+    size_t newPacketLength = 0;
+
     void read();
 
     void send();

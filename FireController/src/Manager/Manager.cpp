@@ -64,6 +64,10 @@ void Manager::setState(Manager::StateType next_state)
             if (TransitionTable[i].prev == state && TransitionTable[i].next == next_state) {
                 if ((this->*TransitionTable[i].method)()) {
                     // Do nothing ?
+                    missionClock.advance();
+                    uint8_t _statebuffer[1] = { next_state };
+                    sendById(STATE, _statebuffer, 1);
+                    state = next_state;
                 }
                 return;
             }
@@ -113,22 +117,27 @@ void Manager::sm_error()
 */
 bool Manager::smt_disconnected_to_standby()
 {
+    return true;
 }
 
 bool Manager::smt_standby_to_armed()
 {
+    return true;
 }
 
 bool Manager::smt_armed_to_running()
 {
+    return true;
 }
 
 bool Manager::smt_running_to_armed()
 {
+    return true;
 }
 
 bool Manager::smt_armed_to_standby()
 {
+    return true;
 }
 
 void Manager::read()
@@ -137,11 +146,15 @@ void Manager::read()
     if (encoder.overflow()) {
         encoder.flush();
     } else if (encoder.packetAvailable()) {
-        uint8_t* buffer = nullptr;
-        size_t len = encoder.packet(buffer);
-        uint8_t id = buffer[0];
+        uint8_t _buffer[256];
+        size_t len = encoder.packet(_buffer);
+        uint8_t id = _buffer[0];
         if (id < num_callbacks) {
-            (this->*TopicTable[id].callback)(id, buffer, len);
+            for (int i = 0; i < num_callbacks; i++) {
+                if (TopicTable[i].topic == Manager::TopicType(id)) {
+                    (this->*TopicTable[i].callback)(id, _buffer, len);
+                }
+            }
         }
     }
 }
@@ -172,46 +185,47 @@ void Manager::_on_sync(uint8_t topic, uint8_t* buffer, size_t len)
 
 void Manager::_on_arm(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    controller.arm();
+    setState(state_armed);
+    // controller.arm();
 }
 
 void Manager::_on_disarm(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    controller.disarm();
+    // controller.disarm();
 }
 
 void Manager::_on_run_start(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    controller.fire();
+    // controller.fire();
 }
 
 void Manager::_on_run_stop(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    controller.abort();
+    // controller.abort();
 }
 
 void Manager::_on_set_controlmode(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    if (_configurable()) {
-    }
+    // if (_configurable()) {
+    // }
 }
 
 void Manager::_on_set_enginemode(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    if (_configurable()) {
-    }
+    // if (_configurable()) {
+    // }
 }
 
 void Manager::_on_set_runduration(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    if (_configurable()) {
-    }
+    //     if (_configurable()) {
+    //     }
 }
 
 void Manager::_on_set_igniterpreburn(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    if (_configurable()) {
-    }
+    // if (_configurable()) {
+    // }
 }
 
 void Manager::_on_set_igniterduration(uint8_t topic, uint8_t* buffer, size_t len)
@@ -232,6 +246,11 @@ void Manager::_on_run_calibrate_thrust(uint8_t topic, uint8_t* buffer, size_t le
 
 void Manager::_on_state(uint8_t topic, uint8_t* buffer, size_t len)
 {
+}
+
+void Manager::_on_close(uint8_t topic, uint8_t* buffer, size_t len)
+{
+    state = state_disconnected;
 }
 
 bool Manager::_configurable()

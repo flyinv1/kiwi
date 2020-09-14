@@ -11,11 +11,12 @@ BinaryPacket::~BinaryPacket() { }
 
 void BinaryPacket::read()
 {
-    while (_stream->available() > 0) {
+    while (_stream->available()) {
 
         uint8_t data = _stream->read();
 
         if (data == 0x00) {
+
             // packet terminator, decode the read buffer;
             uint8_t _decodeBuffer[_readBufferIndex];
             size_t _lenDecoded = unstuff(_readBuffer, _readBufferIndex, _decodeBuffer);
@@ -31,6 +32,11 @@ void BinaryPacket::read()
             }
 
             _packetAvailable = true;
+
+            newPacketLength = _lenDecoded - 1;
+            for (int i = 0; i < newPacketLength; i++) {
+                newPacket[i] = _decodeBuffer[i + 1];
+            }
 
         } else {
             // packet is open, add to read buffer if not overflowing
@@ -61,8 +67,13 @@ void BinaryPacket::send()
 size_t BinaryPacket::packet(uint8_t* buffer)
 {
     // Offset the buffer by one byte to remove crc
-    buffer = _writeBuffer + 1;
-    return _writeBuffer - 1;
+    for (int i = 0; i < newPacketLength; i++) {
+        buffer[i] = newPacket[i];
+    }
+    size_t len = newPacketLength;
+    newPacketLength = 0;
+    _packetAvailable = false;
+    return len;
 }
 
 bool BinaryPacket::packetAvailable()
@@ -143,8 +154,8 @@ size_t BinaryPacket::unstuff(uint8_t* inputBuffer, size_t length, uint8_t* outpu
 {
     size_t read_index = 0;
     size_t write_index = 0;
-    uint8_t code;
-    uint8_t i;
+    uint8_t code = 0;
+    uint8_t i = 0;
 
     while (read_index < length) {
         code = inputBuffer[read_index];
@@ -162,6 +173,8 @@ size_t BinaryPacket::unstuff(uint8_t* inputBuffer, size_t length, uint8_t* outpu
             outputBuffer[write_index++] = '\0';
         }
     }
+
+    return write_index;
 }
 
 uint8_t BinaryPacket::crc8(uint8_t* buffer, size_t length)

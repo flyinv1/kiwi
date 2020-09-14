@@ -26,4 +26,5 @@ if __name__ == '__main__':
             manager.main()
     except KeyboardInterrupt:
         # handle things
+        manager.close_serial()
         print("\nClosing program")

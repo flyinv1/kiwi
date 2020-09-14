@@ -79,7 +79,7 @@ export const usePublishJSON = () => {
 
     const { client } = useContext(MQTTContext);
 
-    return (topic, payload) => {
+    return (topic, payload = null) => {
             try {
                 const _payload = JSON.stringify(payload);
                 client.publish(topic, _payload)

@@ -8,7 +8,7 @@
 #ifndef KIWI_MANAGER
 #define KIWI_MANAGER
 
-#define DISCONNECT_INTERVAL_MS 2000
+#define DISCONNECT_INTERVAL_MS 500
 #define DAQ_INTERVAL_MS        1
 
 class Manager {
@@ -75,10 +75,11 @@ class Manager {
         SET_TARGETS = 10,
         GET_CONFIGURATION = 11,
         RUN_CALIBRATE_THRUST = 12,
-        num_callbacks = 13,
+        CLOSE = 13,
+        num_callbacks = 14,
 
-        STATE = 14,
-        DATA = 15
+        STATE = 15,
+        DATA = 16
     } TopicType;
 
     typedef void (Manager::*TopicCallback)(uint8_t id, uint8_t* buffer, size_t len);
@@ -102,6 +103,7 @@ class Manager {
         { SET_TARGETS, &Manager::_on_set_targets },
         { GET_CONFIGURATION, &Manager::_on_get_configuration },
         { RUN_CALIBRATE_THRUST, &Manager::_on_run_calibrate_thrust },
+        { CLOSE, &Manager::_on_close }
     };
 
 public:
@@ -168,6 +170,7 @@ private:
     void _on_get_configuration(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_run_calibrate_thrust(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_state(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_close(uint8_t topic, uint8_t* buffer, size_t len);
 };
 
 #endif
