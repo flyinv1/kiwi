@@ -13,11 +13,10 @@ class Keys(Enum):
     SET_IGNITERPREBURN = 8
     SET_IGNITERDURATION = 9
     SET_TARGETS = 10
-    GET_CONFIGURATION = 11
-    RUN_CALIBRATE_THRUST = 12
-    CLOSE = 13
-    STATE = 15
-    DATA = 16
+    RUN_CALIBRATE_THRUST = 11
+    CLOSE = 12
+    STATE = 14
+    DATA = 15
 
 keymap = [
     {
@@ -31,7 +30,7 @@ keymap = [
         "payload": None
     },
     {
-        "topic": "run/arm",
+        "topic": "run/disarm",
         "id": Keys.RUN_DISARM,
         "payload": None
     },

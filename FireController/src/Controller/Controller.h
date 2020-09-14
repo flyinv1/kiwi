@@ -183,10 +183,6 @@ public:
 
     EngineMode setEngineMode(EngineMode _mode);
 
-    ControlMode setControlModeFrom(uint8_t* buffer, size_t len);
-
-    EngineMode setEngineModeFrom(uint8_t* buffer, size_t len);
-
     void getEngineData(EngineData* data);
 
 private:

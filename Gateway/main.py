@@ -25,6 +25,6 @@ if __name__ == '__main__':
         while 1:
             manager.main()
     except KeyboardInterrupt:
-        # handle things
+        # Safely disconnect from the fire controller
         manager.close_serial()
         print("\nClosing program")

@@ -1,6 +1,5 @@
 export const MQTT = { 
     run: {
-        datarate: 'run/daqrate',
         enginemode: 'run/enginemode',
         controlmode: 'run/controlmode',
         duration: 'run/duration',

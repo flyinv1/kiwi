@@ -409,33 +409,33 @@ Controller::EngineMode Controller::setEngineMode(EngineMode _mode)
     engine_mode = _mode;
 }
 
-Controller::ControlMode Controller::setControlModeFrom(uint8_t* buffer, size_t len)
-{
-    if (len > 0) {
-        Controller::ControlMode _control_mode = ControlMode(buffer[0]);
-        if (_control_mode == CONTROL_MODE_OPEN || _control_mode == CONTROL_MODE_CLOSED) {
-            control_mode = _control_mode;
-            return _control_mode;
-        }
-    }
-    control_mode = CONTROL_MODE_ERROR;
-    return CONTROL_MODE_ERROR;
-}
+// Controller::ControlMode Controller::setControlModeFrom(uint8_t* buffer, size_t len)
+// {
+//     if (len > 0) {
+//         Controller::ControlMode _control_mode = ControlMode(buffer[0]);
+//         if (_control_mode == CONTROL_MODE_OPEN || _control_mode == CONTROL_MODE_CLOSED) {
+//             control_mode = _control_mode;
+//             return _control_mode;
+//         }
+//     }
+//     control_mode = CONTROL_MODE_ERROR;
+//     return CONTROL_MODE_ERROR;
+// }
 
-Controller::EngineMode Controller::setEngineModeFrom(uint8_t* buffer, size_t len)
-{
-    if (len > 0) {
-        Controller::EngineMode _engine_mode = EngineMode(buffer[0]);
-        if (_engine_mode == ENGINE_MODE_COLD || _engine_mode == ENGINE_MODE_HOT) {
-            Estimator::PressureMode _pressure_mode = (engine_mode == ENGINE_MODE_COLD) ? Estimator::THROTTLE : Estimator::CHAMBER;
-            engine_mode = _engine_mode;
-            estimator.setPressureMode(_pressure_mode);
-            return engine_mode;
-        }
-    }
-    engine_mode = ENGINE_MODE_ERROR;
-    return ENGINE_MODE_ERROR;
-}
+// Controller::EngineMode Controller::setEngineModeFrom(uint8_t* buffer, size_t len)
+// {
+//     if (len > 0) {
+//         Controller::EngineMode _engine_mode = EngineMode(buffer[0]);
+//         if (_engine_mode == ENGINE_MODE_COLD || _engine_mode == ENGINE_MODE_HOT) {
+//             Estimator::PressureMode _pressure_mode = (engine_mode == ENGINE_MODE_COLD) ? Estimator::THROTTLE : Estimator::CHAMBER;
+//             engine_mode = _engine_mode;
+//             estimator.setPressureMode(_pressure_mode);
+//             return engine_mode;
+//         }
+//     }
+//     engine_mode = ENGINE_MODE_ERROR;
+//     return ENGINE_MODE_ERROR;
+// }
 
 void Controller::writeEncoderPosition(uint32_t position)
 {

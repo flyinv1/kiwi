@@ -11,6 +11,39 @@
 #define DISCONNECT_INTERVAL_MS 500
 #define DAQ_INTERVAL_MS        1
 
+struct LED {
+
+    typedef enum {
+        DISCONNECTED = 3000,
+        STANDBY = 1000,
+        ARMED = 200,
+        RUNNING = 50,
+        ERROR = 3000,
+    } IntervalType;
+
+public:
+    IntervalType interval = DISCONNECTED;
+
+    LED()
+    {
+        pinMode(ledPin, OUTPUT);
+    }
+
+    void update()
+    {
+        if (millis() - t > interval) {
+            digitalWrite(13, !on);
+            t = millis();
+            on = !on;
+        }
+    }
+
+private:
+    int ledPin = 13;
+    long t = 0;
+    bool on = false;
+};
+
 class Manager {
 
     typedef bool (Manager::*TransitionMethod)(void);
@@ -39,11 +72,12 @@ class Manager {
     };
 
     enum TRANSITIONS {
-        transition_disconnected_standby,
+        transition_disconnected_to_standby,
         transition_standby_to_armed,
         transition_armed_to_running,
         transition_running_to_armed,
         transition_armed_to_standby,
+        transition_standby_to_disconnected,
         num_transitions
     };
 
@@ -59,6 +93,7 @@ class Manager {
         { state_armed, state_running, &Manager::smt_armed_to_running },
         { state_running, state_armed, &Manager::smt_running_to_armed },
         { state_armed, state_standby, &Manager::smt_armed_to_standby },
+        { state_standby, state_disconnected, &Manager::smt_standby_to_disconnected }
     };
 
     typedef enum {
@@ -73,13 +108,12 @@ class Manager {
         SET_IGNITERPREBURN = 8,
         SET_IGNITERDURATION = 9,
         SET_TARGETS = 10,
-        GET_CONFIGURATION = 11,
-        RUN_CALIBRATE_THRUST = 12,
-        CLOSE = 13,
-        num_callbacks = 14,
+        RUN_CALIBRATE_THRUST = 11,
+        CLOSE = 12,
+        num_callbacks = 13,
 
-        STATE = 15,
-        DATA = 16
+        STATE = 14,
+        DATA = 15
     } TopicType;
 
     typedef void (Manager::*TopicCallback)(uint8_t id, uint8_t* buffer, size_t len);
@@ -101,7 +135,6 @@ class Manager {
         { SET_IGNITERPREBURN, &Manager::_on_set_igniterpreburn },
         { SET_IGNITERDURATION, &Manager::_on_set_igniterduration },
         { SET_TARGETS, &Manager::_on_set_targets },
-        { GET_CONFIGURATION, &Manager::_on_get_configuration },
         { RUN_CALIBRATE_THRUST, &Manager::_on_run_calibrate_thrust },
         { CLOSE, &Manager::_on_close }
     };
@@ -118,10 +151,6 @@ public:
     void setState(StateType next);
 
 private:
-    bool on = false;
-
-    long t = 0;
-
     StateType state = state_disconnected;
 
     BinaryPacket encoder;
@@ -129,6 +158,8 @@ private:
     Controller controller;
 
     StateClock missionClock;
+
+    LED led;
 
     void sm_disconnected();
 
@@ -149,6 +180,8 @@ private:
     bool smt_running_to_armed();
 
     bool smt_armed_to_standby();
+
+    bool smt_standby_to_disconnected();
 
     void read();
 

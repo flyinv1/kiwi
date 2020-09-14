@@ -73,6 +73,7 @@ size_t BinaryPacket::packet(uint8_t* buffer)
     size_t len = newPacketLength;
     newPacketLength = 0;
     _packetAvailable = false;
+    flush();
     return len;
 }
 

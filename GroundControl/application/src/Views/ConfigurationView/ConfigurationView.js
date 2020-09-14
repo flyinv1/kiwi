@@ -34,7 +34,6 @@ const ConfigurationView = () => {
             _c.push(Number(_subarr[1]));
             return _c
         }, [])
-        console.log(_numArr)
         publish(MQTT.run.keyframes, _numArr);
     }
 
@@ -100,20 +99,6 @@ const ConfigurationView = () => {
                 Test Configuration
             </div>
             <ActivePanel className={styles.form} disabled={isArmed || clientStatus.status !== 'connected'}>
-                {/* <Input label={'DAQ Rate'} units={'Hz'}>
-                    <NumInput 
-                        placeholder={0}
-                        value={daqRate}
-                        onChange={setdaqRate}
-                        onSubmit={value => {
-                            setdaqRate(value);
-                            const _published = publish(MQTT.run.datarate, value);
-                        }}
-                    />
-                </Input> */}
-                {/* <Input label={'Subsample'} units={''}>
-                    <Checkbox/>
-                </Input> */}
                 <Input label={'Engine Mode'}>
                     <DropdownSelect
                         options={["Cold", "Hot"]}
@@ -191,7 +176,7 @@ const ConfigurationView = () => {
                     <MapValueInput
                         keyLabel={'MET (ms)'}
                         valueLabel={'Throttle (%)'}
-                        valueMap={keyframeMap} 
+                        valueMap={keyframeMap}
                         setMapValue={updateKeyframeMapValue}
                         setMap={updateKeyframeMap}
                     />

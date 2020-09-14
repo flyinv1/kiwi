@@ -10,6 +10,7 @@ Manager::Manager()
     encoder = BinaryPacket();
     // controller = Controller();
     missionClock = StateClock();
+    led = LED();
 }
 
 Manager::~Manager()
@@ -22,28 +23,12 @@ void Manager::init()
     Serial.begin(115200);
     missionClock.start();
     encoder.setStream(&Serial);
-
-    // Initialize the controller to standby mode
-    // controller.init();
-    pinMode(13, OUTPUT);
-    digitalWrite(13, LOW);
 }
 
 void Manager::loop()
 {
-
-    int interval;
-    if (state == state_disconnected) {
-        interval = 200;
-    } else {
-        interval = 1000;
-    }
-
-    if (millis() - t > interval) {
-        digitalWrite(13, !on);
-        on = !on;
-        t = millis();
-    }
+    // Get that sweet, sweet visual feedback
+    led.update();
 
     // Update primary mission clock
     missionClock.tick();
@@ -117,26 +102,37 @@ void Manager::sm_error()
 */
 bool Manager::smt_disconnected_to_standby()
 {
+    led.interval = LED::STANDBY;
     return true;
 }
 
 bool Manager::smt_standby_to_armed()
 {
+    led.interval = LED::ARMED;
     return true;
 }
 
 bool Manager::smt_armed_to_running()
 {
+    led.interval = LED::RUNNING;
     return true;
 }
 
 bool Manager::smt_running_to_armed()
 {
+    led.interval = LED::ARMED;
     return true;
 }
 
 bool Manager::smt_armed_to_standby()
 {
+    led.interval = LED::STANDBY;
+    return true;
+}
+
+bool Manager::smt_standby_to_disconnected()
+{
+    led.interval = LED::DISCONNECTED;
     return true;
 }
 
@@ -186,62 +182,88 @@ void Manager::_on_sync(uint8_t topic, uint8_t* buffer, size_t len)
 void Manager::_on_arm(uint8_t topic, uint8_t* buffer, size_t len)
 {
     setState(state_armed);
-    // controller.arm();
+    controller.arm();
 }
 
 void Manager::_on_disarm(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    // controller.disarm();
+    setState(state_standby);
+    controller.disarm();
 }
 
 void Manager::_on_run_start(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    // controller.fire();
+    setState(state_running);
+    controller.fire();
 }
 
 void Manager::_on_run_stop(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    // controller.abort();
+    setState(state_armed);
+    controller.abort();
 }
 
 void Manager::_on_set_controlmode(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    // if (_configurable()) {
-    // }
+    if (_configurable() && len > 0) {
+        Controller::ControlMode _control_mode = buffer[0];
+        if (_control_mode == Controller::CONTROL_MODE_OPEN || _control_mode == Controller::CONTROL_MODE_CLOSED) {
+            controller.setControlMode(_control_mode);
+        } else {
+            // Invalid control mode
+        }
+    }
 }
 
 void Manager::_on_set_enginemode(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    // if (_configurable()) {
-    // }
+    if (_configurable() && len > 4) {
+        Controller::EngineMode _engine_mode = buffer[0];
+        if (_engine_mode == Controller::ENGINE_MODE_HOT || _engine_mode == Controller::ENGINE_MODE_COLD) {
+            controller.setEngineMode(_engine_mode);
+        } else {
+            // Invalid engine mode
+        }
+    }
+    // May want to respond w/ packet for set confirmation ?
 }
 
 void Manager::_on_set_runduration(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    //     if (_configurable()) {
-    //     }
+    if (_configurable() && len == 4) {
+        uint32_t _duration = encoder.readUInt32(buffer, len);
+        controller.setRunDuration(_duration);
+    }
 }
 
 void Manager::_on_set_igniterpreburn(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    // if (_configurable()) {
-    // }
+    if (_configurable() && len == 4) {
+        uint32_t _duration = encoder.readUInt32(buffer, len);
+        controller.setIgnitionPreburn(_duration);
+    }
 }
 
 void Manager::_on_set_igniterduration(uint8_t topic, uint8_t* buffer, size_t len)
 {
+    if (_configurable() && len == 4) {
+        uint32_t _duration = encoder.readUInt32(buffer, len);
+        controller.setIgnitionDuration(_duration);
+    }
 }
 
 void Manager::_on_set_targets(uint8_t topic, uint8_t* buffer, size_t len)
 {
-}
-
-void Manager::_on_get_configuration(uint8_t topic, uint8_t* buffer, size_t len)
-{
+    if (_configurable()) {
+        controller.setTargetsFrom(buffer, len);
+    }
 }
 
 void Manager::_on_run_calibrate_thrust(uint8_t topic, uint8_t* buffer, size_t len)
 {
+    if (_configurable()) {
+        controller.tareThrustCell();
+    }
 }
 
 void Manager::_on_state(uint8_t topic, uint8_t* buffer, size_t len)

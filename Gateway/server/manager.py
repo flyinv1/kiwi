@@ -128,7 +128,6 @@ class Manager:
             for _int, i in enumerate(_result):
                 _buffer[i:i+4] = bytearray(_int.to_bytes(4, byteorder='little', signed=False))
             self.write_serial_packet(_id, _buffer)
-
         elif _result_type == None:
             print(_result, _id)
             self.write_serial_packet(_id, [])
