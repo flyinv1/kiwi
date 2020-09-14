@@ -89,9 +89,11 @@ class Manager:
                 self.write_serial_packet(interface.Keys.SYNC.value, [])
         elif _id == interface.Keys.STATE.value:
             print('Controller entered state: ' + str(int.from_bytes(_payload, byteorder='little')))
-            # Forward to MQTT!
+            # Forward to MQTT
+        elif _id == interface.Keys.DATA.value:
+            # Forward to MQTT
+            pass
         else:
-            # Forward to MQTT!
             None
 
     # Create a new MQTT client and connect to the main broker
@@ -126,8 +128,9 @@ class Manager:
         if _result_type == list:
             # assume list of 32 bit integers pairs
             _buffer = bytearray(len(_result) * 4)
-            for _int, i in enumerate(_result):
-                _buffer[i:i+4] = bytearray(_int.to_bytes(4, byteorder='little', signed=False))
+            for i, _int in enumerate(_result):
+                br = bytearray(_int.to_bytes(4, byteorder='little', signed=False))
+                _buffer[i:i+4] = br
             self.write_serial_packet(_id, _buffer)
         elif _result_type == None:
             print(_id, _result, _result_type)
