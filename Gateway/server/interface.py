@@ -96,11 +96,12 @@ keymap = [
 def on_topic(topic, payload):
     for _dict in (x for x in keymap if x["topic"] == topic):
         _payload = json.loads(payload)
-        return _payload, _dict["payload"], _dict["id"].value
+        print(payload, _payload)
+        return (_payload, _dict["payload"], _dict["id"].value)
 
 
 def on_id(id_, payload):
     for _dict in (x for x in keymap if x["id"] == id_):
         return payload, _dict["payload"], _dict["id"].value
-    return payload, None, id_,
+    return (payload, None, id_)
 

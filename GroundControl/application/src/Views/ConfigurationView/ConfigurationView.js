@@ -34,6 +34,7 @@ const ConfigurationView = () => {
             _c.push(Number(_subarr[1]));
             return _c
         }, [])
+        console.log(_numArr);
         publish(MQTT.run.keyframes, _numArr);
     }
 

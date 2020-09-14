@@ -15,7 +15,7 @@ struct LED {
 
     typedef enum {
         DISCONNECTED = 3000,
-        STANDBY = 1000,
+        STANDBY = 500,
         ARMED = 200,
         RUNNING = 50,
         ERROR = 3000,

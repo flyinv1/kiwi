@@ -16,8 +16,8 @@ void Controller::init()
 {
     engineClock.start();
     estimator.init();
-    estimator.begin();
-    throttle_valve.begin(MOTOR_BAUD);
+    // estimator.begin();
+    // throttle_valve.begin(MOTOR_BAUD);
     initializeRunValve();
     initializeIgniter();
 };
