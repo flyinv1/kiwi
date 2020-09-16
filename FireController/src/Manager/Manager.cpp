@@ -260,22 +260,25 @@ void Manager::_on_run_stop(uint8_t topic, uint8_t* buffer, size_t len)
 /*
     User Input
     Set the engine control mode, respond with update control mode buffer
+    If the control mode cannot be set, respond with current mode
 */
 void Manager::_on_set_controlmode(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len > 0) {
         Controller::ControlMode _control_mode = buffer[0];
         if (_control_mode == Controller::CONTROL_MODE_OPEN || _control_mode == Controller::CONTROL_MODE_CLOSED) {
-            Controller::ControlMode _newset_control_mode = controller.setControlMode(_control_mode);
-            // uint8_t _buff[1] = { uint8_t(_newset_control_mode) };
-            // sendById(SET_CONTROLMODE, _buff, 1);
+            Controller::ControlMode _new_control_mode = controller.setControlMode(_control_mode);
+            uint8_t _buff[1] = { uint8_t(_new_control_mode) };
+            sendById(SET_CONTROLMODE, _buff, 1);
         } else {
             // Error setting the control mode
-            // uint8_t _buff[1] = { uint8_t(Controller::CONTROL_MODE_ERROR) };
-            // sendById(SET_CONTROLMODE, _buff, 1);
+            uint8_t _buff[1] = { uint8_t(Controller::CONTROL_MODE_ERROR) };
+            sendById(SET_CONTROLMODE, _buff, 1);
         }
     } else {
-        // Control mode cannot be set right now, return the current control mode
+        Controller::EngineMode _old_control_mode = controller.getControlMode();
+        uint8_t _buff[1] = { uint8_t(_old_control_mode) };
+        sendById(SET_CONTROLMODE, _buff, 1);
     }
 }
 
@@ -284,35 +287,51 @@ void Manager::_on_set_enginemode(uint8_t topic, uint8_t* buffer, size_t len)
     if (_configurable() && len > 4) {
         Controller::EngineMode _engine_mode = buffer[0];
         if (_engine_mode == Controller::ENGINE_MODE_HOT || _engine_mode == Controller::ENGINE_MODE_COLD) {
-            controller.setEngineMode(_engine_mode);
+            Controller::EngineMode _new_engine_mode = controller.setEngineMode(_engine_mode);
+            uint8_t _buff[1] = { uint8_t(_new_engine_mode) };
+            sendById(SET_ENGINEMODE, _buff, 1);
         } else {
             // Invalid engine mode
+            uint8_t _buff[1] = { uint8_t(Controller::ENGINE_MODE_ERROR) };
+            sendById(SET_CONTROLMODE, _buff, 1);
         }
+    } else {
+        Controller::EngineMode _old_engine_mode = controller.getEngineMode();
+        uint8_t _buff[1] = { uint8_t(_old_engine_mode) };
+        sendById(SET_ENGINEMODE, _buff, 1);
     }
-    // May want to respond w/ packet for set confirmation ?
 }
 
 void Manager::_on_set_runduration(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len == 4) {
-        // uint32_t _duration = encoder.readUInt32(buffer, len);
-        // controller.setRunDuration(_duration);
+        uint32_t _duration = encoder.readUInt32(buffer, len);
+        controller.setRunDuration(_duration);
+        sendById(SET_RUNDURATION, buffer, len);
+    } else {
     }
 }
 
 void Manager::_on_set_igniterpreburn(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len == 4) {
-        // uint32_t _duration = encoder.readUInt32(buffer, len);
-        // controller.setIgnitionPreburn(_duration);
+        uint32_t _duration = encoder.readUInt32(buffer, len);
+        controller.setIgnitionPreburn(_duration);
+        sendById(SET_IGNITERPREBURN, buffer, len);
+    } else {
     }
 }
 
 void Manager::_on_set_igniterduration(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len == 4) {
-        // uint32_t _duration = encoder.readUInt32(buffer, len);
-        // controller.setIgnitionDuration(_duration);
+        uint32_t _duration = encoder.readUInt32(buffer, len);
+        controller.setIgnitionDuration(_duration);
+        sendById(SET_IGNITERDURATION, buffer, len);
+    } else {
+        uint8_t _buff[4];
+        encoder.getUInt32Buffer(controller.getIgnitionDuration, _buff);
+        sendById(SET_RUNDURATION, _buff, 4);
     }
 }
 

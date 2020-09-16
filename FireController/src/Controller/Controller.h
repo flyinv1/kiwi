@@ -204,7 +204,7 @@ private:
         Where `time` describes the time (in ms) at which to transition to the next value. The target value depends on the current engine mode, hot will use chamber pressure, while cold will set throttle position.
     */
     Target _target_buffer[TARGETS];
-    size_t _num_targets;
+    size_t _num_targets = 0;
     uint32_t _target;
 
     /*
