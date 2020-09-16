@@ -5,7 +5,6 @@ import NumInput from './Inputs/NumInput/NumInput';
 import TextInput from './Inputs/TextInput/TextInput';
 import ActivePanel from './Core/ActivePanel/ActivePanel';
 import Dropdown from './Core/Dropdown/Dropdown';
-import Resizable from './Core/Resizable/Resizable';
 import Collapsible from './Collapsible/Collapsible';
 import Button, {
     PrimaryButton,
@@ -31,7 +30,6 @@ export {
     DropdownSelect,
     ActivePanel,
     Dropdown,
-    Resizable,
     Collapsible,
     Button,
     Buttons,

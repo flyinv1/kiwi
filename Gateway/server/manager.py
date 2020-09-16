@@ -80,9 +80,10 @@ class Manager:
     # ON_PACKET SERIAL EVENT
     def on_packet(self, id_, payload):
         _payload, _type, _id = interface.on_id(id_, payload)
-        print(_id)
-        print(_payload)
-        print(_type)
+        if (_id != interface.Keys.DATA.value):
+            print('\npacket id:', _id)
+            print('\tpayload:', _payload)
+            print('\ttype:', _type)
         if _id == interface.Keys.SYNC.value:
             if not self.controller_connected:
                 print('Connecting packet serial communication...')
@@ -133,7 +134,7 @@ class Manager:
                 _buffer[i:i+4] = br
             self.write_serial_packet(_id, _buffer)
         elif _result_type == None:
-            print(_id, _result, _result_type)
+            print('message id:', _id)
             self.write_serial_packet(_id, [])
 
     # ON_DISCONNECT MQTT EVENT

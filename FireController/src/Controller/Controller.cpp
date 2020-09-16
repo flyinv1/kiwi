@@ -71,6 +71,16 @@ Controller::StateType Controller::getState()
     return state;
 }
 
+Controller::ControlMode Controller::getControlMode()
+{
+    return control_mode;
+}
+
+Controller::EngineMode Controller::getEngineMode()
+{
+    return engine_mode;
+}
+
 void Controller::setRunDuration(uint32_t duration)
 {
     // Set run duration in ms
@@ -164,11 +174,13 @@ void Controller::sm_igniting(void)
 
     if (engineClock.state_et() > _ignition_duration * 1000) {
         if (engine_mode == ENGINE_MODE_HOT) {
-            if (engineState.chamber_pressure < IGNITION_PRESSURE_THRESHOLD) {
-                setState(state_shutdown);
-            } else {
-                setState(state_firing);
-            }
+            // WARN - WIP
+            // if (engineState.chamber_pressure < IGNITION_PRESSURE_THRESHOLD) {
+            //     setState(state_shutdown);
+            // } else {
+            //     setState(state_firing);
+            // }
+            setState(state_firing);
         } else {
             setState(state_firing);
         }
@@ -185,13 +197,17 @@ void Controller::sm_firing(void)
         // perform closed loop control
     }
 
-    // Transition targets
+    /*
+        Execute target transition
+    */
     if (targetClock.total_et() > _target_buffer[_target].time * 1000) {
         if (_target <= _num_targets) {
             if (engine_mode == ENGINE_MODE_COLD) {
                 float _target_angle = float(_target_buffer[_target].value) / TARGET_SCALE;
                 uint32_t _target_position = clamp<uint32_t>(throttleAngleToEncoder(_target_angle), THROTTLE_POS_OPEN, THROTTLE_POS_CLOSED);
                 throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, _target_position, 1);
+            } else {
+                // float _target_pressure = float(_target_buffer[_target].value) / TARGET_SCALE;
             }
             _target++;
             targetClock.advance();
@@ -216,6 +232,7 @@ void Controller::sm_shutdown(void)
     } else if (engineClock.state_et() > SHUTDOWN_MAXIMUM_PERIOD * 1000) {
         setState(state_safe);
     }
+    // CHANGE
     setState(state_safe);
 }
 

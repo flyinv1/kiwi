@@ -42,7 +42,13 @@ void Manager::loop()
     }
 }
 
-void Manager::setState(Manager::StateType next_state)
+/*
+    Iterate over statetransition table
+    -> find transition which matches current and next states
+    -> execute the transition method and set the next state if successful
+    return transition success
+*/
+bool Manager::setState(Manager::StateType next_state)
 {
     if (next_state < num_states) {
         for (int i = 0; i < num_transitions; i++) {
@@ -53,13 +59,21 @@ void Manager::setState(Manager::StateType next_state)
                     uint8_t _statebuffer[1] = { next_state };
                     sendById(STATE, _statebuffer, 1);
                     state = next_state;
+                    return true;
                 }
-                return;
+                return false;
             }
         }
     }
+    return false;
 }
 
+//// STATE MACHINE METHODS
+
+/*
+    The MCU has no serial connection to the server
+    Ping serial stream every DISCONNECT_INTERVAL_MS milliseconds to establish a connection
+*/
 void Manager::sm_disconnected()
 {
     // If timeout, then send sync byte
@@ -67,18 +81,19 @@ void Manager::sm_disconnected()
         sendById(SYNC, nullptr, 0);
         missionClock.advance();
     }
+    controller.main();
 }
 
 void Manager::sm_standby()
 {
     // Update controller
-    // controller.main();
+    controller.main();
 }
 
 void Manager::sm_armed()
 {
     // Update controller
-    // controller.main();
+    controller.main();
 
     // Transmit data
 }
@@ -86,7 +101,7 @@ void Manager::sm_armed()
 void Manager::sm_running()
 {
     // Update controller
-    // controller.main();
+    controller.main();
 
     // Transmit data
 }
@@ -94,11 +109,18 @@ void Manager::sm_running()
 void Manager::sm_error()
 {
     // Update controller
-    // controller.main();
+    controller.main();
+    if (controller.getState() != Controller::state_safe) {
+        // Do something
+    }
 }
 
-/*
+//// STATE MACHINE TRANSITIONS
 
+/*
+    smt_disconnected_to_standby
+
+    Controller connected to server
 */
 bool Manager::smt_disconnected_to_standby()
 {
@@ -108,22 +130,29 @@ bool Manager::smt_disconnected_to_standby()
 
 bool Manager::smt_standby_to_armed()
 {
-    led.interval = LED::ARMED;
-    return true;
+    controller.arm();
+    if (controller.getState() == Controller::state_armed) {
+        led.interval = LED::ARMED;
+        return true;
+    } else {
+        return false;
+    }
 }
 
+/*
+    smt_armed_to_running
+*/
 bool Manager::smt_armed_to_running()
 {
+    // Start the controller's fire sequence
+    controller.fire();
     led.interval = LED::RUNNING;
     return true;
 }
 
-bool Manager::smt_running_to_armed()
-{
-    led.interval = LED::ARMED;
-    return true;
-}
-
+/*
+    smt_armed_to_standby
+*/
 bool Manager::smt_armed_to_standby()
 {
     led.interval = LED::STANDBY;
@@ -171,6 +200,8 @@ void Manager::sendById(uint8_t id, uint8_t* buffer, size_t length)
     }
 }
 
+//// SERVER COMM CALLBACKS
+
 /*
     On a synchronization message from the gateway, the fire controller should respond with a sync message of its own and transition into standby mode.
 */
@@ -179,39 +210,68 @@ void Manager::_on_sync(uint8_t topic, uint8_t* buffer, size_t len)
     setState(state_standby);
 }
 
+/*
+    Triggered on user 'ARM' input
+    The manager attempts to enter 'ARMED' 
+        state: state_armed
+        transition: smt_armed_to_running
+*/
 void Manager::_on_arm(uint8_t topic, uint8_t* buffer, size_t len)
 {
     setState(state_armed);
-    // controller.arm();
 }
 
+/*
+    Triggered on user 'DISARM' input
+    The manager attempts to enter 'STANDBY'
+        state: state_standby
+        transition: smt_armed_to_standby
+*/
 void Manager::_on_disarm(uint8_t topic, uint8_t* buffer, size_t len)
 {
     setState(state_standby);
-    // controller.disarm();
 }
 
+/*
+    Triggered on user 'FIRE' input
+    The manager attempts to enter 'RUNNING'
+        state: state_running
+        transition: smt_armed_to_running
+*/
 void Manager::_on_run_start(uint8_t topic, uint8_t* buffer, size_t len)
 {
     setState(state_running);
-    // controller.fire();
 }
 
+/*
+    Triggered on user 'ABORT' input
+    The controller begins shutdown procedures
+        -> begin to monitor controller state and eventually enters standby
+*/
 void Manager::_on_run_stop(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    setState(state_armed);
-    // controller.abort();
+    controller.abort();
 }
 
+/*
+    User Input
+    Set the engine control mode, respond with update control mode buffer
+*/
 void Manager::_on_set_controlmode(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len > 0) {
         Controller::ControlMode _control_mode = buffer[0];
         if (_control_mode == Controller::CONTROL_MODE_OPEN || _control_mode == Controller::CONTROL_MODE_CLOSED) {
-            controller.setControlMode(_control_mode);
+            _newset_control_mode = controller.setControlMode(_control_mode);
+            uint8_t _buff[1] = { uint8_t(_newset_control_mode) };
+            sendById(SET_CONTROLMODE, _buff, 1);
         } else {
-            // Invalid control mode
+            // Error setting the control mode
+            // uint8_t _buff[1] = { uint8_t(Controller::CONTROL_MODE_ERROR) };
+            // sendById(SET_CONTROLMODE, _buff, 1);
         }
+    } else {
+        // Control mode cannot be set right now, return the current control mode
     }
 }
 
@@ -231,24 +291,24 @@ void Manager::_on_set_enginemode(uint8_t topic, uint8_t* buffer, size_t len)
 void Manager::_on_set_runduration(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len == 4) {
-        // uint32_t _duration = encoder.readUInt32(buffer, len);
-        // controller.setRunDuration(_duration);
+        uint32_t _duration = encoder.readUInt32(buffer, len);
+        controller.setRunDuration(_duration);
     }
 }
 
 void Manager::_on_set_igniterpreburn(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len == 4) {
-        // uint32_t _duration = encoder.readUInt32(buffer, len);
-        // controller.setIgnitionPreburn(_duration);
+        uint32_t _duration = encoder.readUInt32(buffer, len);
+        controller.setIgnitionPreburn(_duration);
     }
 }
 
 void Manager::_on_set_igniterduration(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len == 4) {
-        // uint32_t _duration = encoder.readUInt32(buffer, len);
-        // controller.setIgnitionDuration(_duration);
+        uint32_t _duration = encoder.readUInt32(buffer, len);
+        controller.setIgnitionDuration(_duration);
     }
 }
 
@@ -266,10 +326,18 @@ void Manager::_on_run_calibrate_thrust(uint8_t topic, uint8_t* buffer, size_t le
     }
 }
 
+/*
+    Request for current state from upstream, send current state
+*/
 void Manager::_on_state(uint8_t topic, uint8_t* buffer, size_t len)
 {
+    uint8_t _buff[1] = { state };
+    sendById(STATE, _buff, 1);
 }
 
+/*
+    Python server has sent a disconnect code, enter disconnect state
+*/
 void Manager::_on_close(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (state == state_armed) {
@@ -278,6 +346,10 @@ void Manager::_on_close(uint8_t topic, uint8_t* buffer, size_t len)
     setState(state_disconnected);
 }
 
+/*
+    Check that the manager is in a configurable state
+    Only returns true if in standby
+*/
 bool Manager::_configurable()
 {
     return (state == state_standby);

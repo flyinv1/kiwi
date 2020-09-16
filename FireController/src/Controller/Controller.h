@@ -183,6 +183,10 @@ public:
 
     EngineMode setEngineMode(EngineMode _mode);
 
+    ControlMode getControlMode();
+
+    EngineMode getEngineMode();
+
     void getEngineData(EngineData* data);
 
 private:

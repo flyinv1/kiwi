@@ -75,7 +75,6 @@ class Manager {
         transition_disconnected_to_standby,
         transition_standby_to_armed,
         transition_armed_to_running,
-        transition_running_to_armed,
         transition_armed_to_standby,
         transition_standby_to_disconnected,
         num_transitions
@@ -91,7 +90,6 @@ class Manager {
         { state_disconnected, state_standby, &Manager::smt_disconnected_to_standby },
         { state_standby, state_armed, &Manager::smt_standby_to_armed },
         { state_armed, state_running, &Manager::smt_armed_to_running },
-        { state_running, state_armed, &Manager::smt_running_to_armed },
         { state_armed, state_standby, &Manager::smt_armed_to_standby },
         { state_standby, state_disconnected, &Manager::smt_standby_to_disconnected }
     };
@@ -148,7 +146,7 @@ public:
 
     void loop();
 
-    void setState(StateType next);
+    bool setState(StateType next);
 
 private:
     StateType state = state_disconnected;
