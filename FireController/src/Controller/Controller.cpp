@@ -149,10 +149,15 @@ int Controller::getTargetCount()
 
 size_t Controller::getTargets(Target* _outputBuffer, size_t maximum = TARGETS)
 {
+    for (int i = 0; i < _num_targets; i++) {
+        _outputBuffer[i] = _target_buffer[i];
+    }
 }
 
-size_t Controller::getTargetBuffer(uint8_t _outputBuffer)
+size_t Controller::getTargetBuffer(uint8_t* _outputBuffer)
 {
+    size_t _output_size = encode(_target_buffer, _num_targets, _outputBuffer);
+    return _output_size;
 }
 
 /**
