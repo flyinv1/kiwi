@@ -152,42 +152,40 @@ public:
     Controller();
 
     void init();
-
     void main();
-
     void arm();
-
     void disarm();
-
     void fire();
-
     void abort();
 
     StateType getState();
 
     void setTargetsFrom(uint8_t* buffer, size_t len);
-
     void setTargets(Target* _targets, size_t len);
+    size_t getTargets(Target* _outputBuffer, size_t maximum = TARGETS);
+    size_t getTargetBuffer(uint8_t* _outputBuffer);
+    int getTargetCount();
 
     void setRunDuration(uint32_t duration);
+    uint32_t getRunDuration();
 
     void setIgnitionDuration(uint32_t duration);
+    uint32_t getIgnitionDuration();
 
     void setIgnitionPreburn(uint32_t duration);
+    uint32_t getIgnitionPreburn();
 
     void setIgnitionVoltage(uint32_t voltage);
-
-    void tareThrustCell();
+    uint32_t getIgnitionVoltage();
 
     ControlMode setControlMode(ControlMode _mode);
-
-    EngineMode setEngineMode(EngineMode _mode);
-
     ControlMode getControlMode();
 
+    EngineMode setEngineMode(EngineMode _mode);
     EngineMode getEngineMode();
 
     void getEngineData(EngineData* data);
+    void tareThrustCell();
 
 private:
     StateType state = state_safe;

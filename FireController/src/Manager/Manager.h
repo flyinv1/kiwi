@@ -109,7 +109,6 @@ class Manager {
         RUN_CALIBRATE_THRUST = 11,
         CLOSE = 12,
         num_callbacks = 13,
-
         STATE = 14,
         DATA = 15
     } TopicType;

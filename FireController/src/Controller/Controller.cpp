@@ -16,8 +16,8 @@ void Controller::init()
 {
     engineClock.start();
     estimator.init();
-    // estimator.begin();
-    // throttle_valve.begin(MOTOR_BAUD);
+    estimator.begin();
+    throttle_valve.begin(MOTOR_BAUD);
     initializeRunValve();
     initializeIgniter();
 };
@@ -71,6 +71,46 @@ Controller::StateType Controller::getState()
     return state;
 }
 
+void Controller::setRunDuration(uint32_t duration)
+{
+    _run_duration = clamp<uint32_t>(duration, 0, MAXIMUM_RUN_DURATION_MS);
+}
+
+uint32_t Controller::getRunDuration()
+{
+    return _run_duration;
+}
+
+void Controller::setIgnitionDuration(uint32_t duration)
+{
+    _ignition_duration = clamp<uint32_t>(duration, 0, MAXIMUM_IGNITION_DURATION_MS);
+}
+
+uint32_t Controller::getIgnitionDuration()
+{
+    return _ignition_duration;
+}
+
+void Controller::setIgnitionPreburn(uint32_t duration)
+{
+    _ignition_preburn = clamp<uint32_t>(duration, 0, MAXIMUM_IGNITION_PREBURN_MS);
+}
+
+uint32_t Controller::getIgnitionPreburn()
+{
+    return _ignition_preburn;
+}
+
+void Controller::setIgnitionVoltage(uint32_t voltage)
+{
+    _ignition_voltage = clamp<uint32_t>(voltage, 0, MAXIMUM_IGNITION_VOLTAGE);
+}
+
+uint32_t Controller::getIgnitionVoltage()
+{
+    return _ignition_voltage;
+}
+
 Controller::ControlMode Controller::getControlMode()
 {
     return control_mode;
@@ -79,30 +119,6 @@ Controller::ControlMode Controller::getControlMode()
 Controller::EngineMode Controller::getEngineMode()
 {
     return engine_mode;
-}
-
-void Controller::setRunDuration(uint32_t duration)
-{
-    // Set run duration in ms
-    _run_duration = clamp<uint32_t>(duration, 0, MAXIMUM_RUN_DURATION_MS);
-}
-
-void Controller::setIgnitionDuration(uint32_t duration)
-{
-    // Set ignition duration in ms
-    _ignition_duration = clamp<uint32_t>(duration, 0, MAXIMUM_IGNITION_DURATION_MS);
-}
-
-void Controller::setIgnitionPreburn(uint32_t duration)
-{
-    // Set ignition preburn duration in ms
-    _ignition_preburn = clamp<uint32_t>(duration, 0, MAXIMUM_IGNITION_PREBURN_MS);
-}
-
-void Controller::setIgnitionVoltage(uint32_t voltage)
-{
-    // Set ignition voltage
-    _ignition_voltage = clamp<uint32_t>(voltage, 0, MAXIMUM_IGNITION_VOLTAGE);
 }
 
 void Controller::tareThrustCell()
@@ -124,6 +140,19 @@ void Controller::setTargets(Target* _targets, size_t len)
         _target_buffer[i] = _targets[i];
     }
     _num_targets = len;
+}
+
+int Controller::getTargetCount()
+{
+    return _num_targets;
+}
+
+size_t Controller::getTargets(Target* _outputBuffer, size_t maximum = TARGETS)
+{
+}
+
+size_t Controller::getTargetBuffer(uint8_t _outputBuffer)
+{
 }
 
 /**

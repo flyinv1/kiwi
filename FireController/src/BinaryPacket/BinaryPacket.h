@@ -45,7 +45,7 @@ public:
 
     int32_t readInt32(uint8_t* buffer, size_t len, bool bendian = false);
 
-    uint32_t readUInt32(uint8_t* buffer, size_t len, bool bendian = false);
+    uint32_t readUInt32(uint8_t* buffer, size_t len);
 
 private:
     // Pointer to stream (Serial or SoftSerial instance)

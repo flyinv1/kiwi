@@ -22,6 +22,7 @@ void Manager::init()
     // Begin serial communications with RPI
     Serial.begin(115200);
     missionClock.start();
+    controller.init();
     encoder.setStream(&Serial);
 }
 
@@ -103,7 +104,10 @@ void Manager::sm_running()
     // Update controller
     controller.main();
 
-    // Transmit data
+    // Check for running exit condition
+    if (controller.getState() == Controller::state_safe) {
+        setState(state_standby);
+    }
 }
 
 void Manager::sm_error()
@@ -262,9 +266,9 @@ void Manager::_on_set_controlmode(uint8_t topic, uint8_t* buffer, size_t len)
     if (_configurable() && len > 0) {
         Controller::ControlMode _control_mode = buffer[0];
         if (_control_mode == Controller::CONTROL_MODE_OPEN || _control_mode == Controller::CONTROL_MODE_CLOSED) {
-            _newset_control_mode = controller.setControlMode(_control_mode);
-            uint8_t _buff[1] = { uint8_t(_newset_control_mode) };
-            sendById(SET_CONTROLMODE, _buff, 1);
+            Controller::ControlMode _newset_control_mode = controller.setControlMode(_control_mode);
+            // uint8_t _buff[1] = { uint8_t(_newset_control_mode) };
+            // sendById(SET_CONTROLMODE, _buff, 1);
         } else {
             // Error setting the control mode
             // uint8_t _buff[1] = { uint8_t(Controller::CONTROL_MODE_ERROR) };
@@ -291,24 +295,24 @@ void Manager::_on_set_enginemode(uint8_t topic, uint8_t* buffer, size_t len)
 void Manager::_on_set_runduration(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len == 4) {
-        uint32_t _duration = encoder.readUInt32(buffer, len);
-        controller.setRunDuration(_duration);
+        // uint32_t _duration = encoder.readUInt32(buffer, len);
+        // controller.setRunDuration(_duration);
     }
 }
 
 void Manager::_on_set_igniterpreburn(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len == 4) {
-        uint32_t _duration = encoder.readUInt32(buffer, len);
-        controller.setIgnitionPreburn(_duration);
+        // uint32_t _duration = encoder.readUInt32(buffer, len);
+        // controller.setIgnitionPreburn(_duration);
     }
 }
 
 void Manager::_on_set_igniterduration(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len == 4) {
-        uint32_t _duration = encoder.readUInt32(buffer, len);
-        controller.setIgnitionDuration(_duration);
+        // uint32_t _duration = encoder.readUInt32(buffer, len);
+        // controller.setIgnitionDuration(_duration);
     }
 }
 
@@ -340,6 +344,7 @@ void Manager::_on_state(uint8_t topic, uint8_t* buffer, size_t len)
 */
 void Manager::_on_close(uint8_t topic, uint8_t* buffer, size_t len)
 {
+
     if (state == state_armed) {
         setState(state_standby);
     }
