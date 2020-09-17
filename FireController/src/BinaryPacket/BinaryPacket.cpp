@@ -190,7 +190,7 @@ uint8_t BinaryPacket::crc8(uint8_t* buffer, size_t length)
     return crc;
 }
 
-size_t readFloatBuffer(uint8_t* buffer, size_t len, float* output)
+size_t BinaryPacket::readFloatBuffer(uint8_t* buffer, size_t len, float* output)
 {
     size_t outputLength = ((len / 4) % 4 == 0) ? (len / 4) : len - len % 4;
     for (int i = 0; i < outputLength; i++) {
@@ -206,7 +206,7 @@ size_t readFloatBuffer(uint8_t* buffer, size_t len, float* output)
     return outputLength;
 }
 
-float readFloat(uint8_t* buffer, size_t len, bool bendian = false)
+float BinaryPacket::readFloat(uint8_t* buffer, size_t len, bool bendian = false)
 {
     union {
         byte b[4];
@@ -218,7 +218,7 @@ float readFloat(uint8_t* buffer, size_t len, bool bendian = false)
     return f.v;
 }
 
-size_t readInt32Buffer(uint8_t* buffer, size_t len, int32_t* output)
+size_t BinaryPacket::readIntBuffer(uint8_t* buffer, size_t len, int32_t* output)
 {
     size_t outputLength = ((len / 4) % 4 == 0) ? (len / 4) : len - len % 4;
     for (int i = 0; i < outputLength; i++) {
@@ -234,7 +234,7 @@ size_t readInt32Buffer(uint8_t* buffer, size_t len, int32_t* output)
     return outputLength;
 }
 
-int32_t readInt32(uint8_t* buffer, size_t len, bool bendian = false)
+int32_t BinaryPacket::readInt(uint8_t* buffer, size_t len, bool bendian = false)
 {
     if (len == 4) {
         union {
@@ -250,7 +250,7 @@ int32_t readInt32(uint8_t* buffer, size_t len, bool bendian = false)
     }
 }
 
-uint32_t readUInt32(uint8_t* buffer, size_t len)
+uint32_t BinaryPacket::readUInt(uint8_t* buffer, size_t len)
 {
     if (len == 4) {
         union {
@@ -266,7 +266,7 @@ uint32_t readUInt32(uint8_t* buffer, size_t len)
     }
 }
 
-void castUInt32(uint32_t value, uint8_t* output)
+void BinaryPacket::castUInt(uint32_t value, uint8_t* output)
 {
     union {
         byte b[4];
@@ -274,6 +274,6 @@ void castUInt32(uint32_t value, uint8_t* output)
     } in;
     in.v = value;
     for (int i = 0; i < 4; i++) {
-        output[i] = b[i];
+        output[i] = in.b[i];
     }
 }

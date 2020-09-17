@@ -17,9 +17,9 @@ void Controller::init()
     engineClock.start();
     estimator.init();
     estimator.begin();
-    throttle_valve.begin(MOTOR_BAUD);
     initializeRunValve();
     initializeIgniter();
+    throttle_valve.begin(MOTOR_BAUD);
 };
 
 void Controller::main()
@@ -156,7 +156,7 @@ size_t Controller::getTargets(Target* _outputBuffer, size_t maximum = TARGETS)
 
 size_t Controller::getTargetBuffer(uint8_t* _outputBuffer)
 {
-    size_t _output_size = encode(_target_buffer, _num_targets, _outputBuffer);
+    size_t _output_size = Target::encode(_target_buffer, _num_targets, _outputBuffer);
     return _output_size;
 }
 

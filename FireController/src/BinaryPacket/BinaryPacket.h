@@ -41,13 +41,13 @@ public:
 
     float readFloat(uint8_t* buffer, size_t len, bool bendian = false);
 
-    size_t readInt32Buffer(uint8_t* buffer, size_t len, int32_t* output);
+    size_t readIntBuffer(uint8_t* buffer, size_t len, int32_t* output);
 
-    int32_t readInt32(uint8_t* buffer, size_t len, bool bendian = false);
+    int32_t readInt(uint8_t* buffer, size_t len, bool bendian = false);
 
-    uint32_t readUInt32(uint8_t* buffer, size_t len);
+    uint32_t readUInt(uint8_t* buffer, size_t len);
 
-    void castUInt32(uint32_t value, uint8_t* output);
+    void castUInt(uint32_t value, uint8_t* output);
 
 private:
     // Pointer to stream (Serial or SoftSerial instance)

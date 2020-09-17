@@ -305,12 +305,12 @@ void Manager::_on_set_enginemode(uint8_t topic, uint8_t* buffer, size_t len)
 void Manager::_on_set_runduration(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len == 4) {
-        uint32_t _duration = encoder.readUInt32(buffer, len);
+        uint32_t _duration = encoder.readUInt(buffer, len);
         controller.setRunDuration(_duration);
         sendById(SET_RUNDURATION, buffer, len);
     } else {
         uint8_t _buff[4];
-        encoder.castUInt32(controller.getrunDuration(), _buff);
+        encoder.castUInt(controller.getRunDuration(), _buff);
         sendById(SET_RUNDURATION, _buff, 4);
     }
 }
@@ -318,12 +318,12 @@ void Manager::_on_set_runduration(uint8_t topic, uint8_t* buffer, size_t len)
 void Manager::_on_set_igniterpreburn(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len == 4) {
-        uint32_t _duration = encoder.readUInt32(buffer, len);
+        uint32_t _duration = encoder.readUInt(buffer, len);
         controller.setIgnitionPreburn(_duration);
         sendById(SET_IGNITERPREBURN, buffer, len);
     } else {
         uint8_t _buff[4];
-        encoder.castUInt32(controller.getIgnitionPreburn(), _buff);
+        encoder.castUInt(controller.getIgnitionPreburn(), _buff);
         sendById(SET_IGNITERPREBURN, _buff, 4);
     }
 }
@@ -331,12 +331,12 @@ void Manager::_on_set_igniterpreburn(uint8_t topic, uint8_t* buffer, size_t len)
 void Manager::_on_set_igniterduration(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len == 4) {
-        uint32_t _duration = encoder.readUInt32(buffer, len);
+        uint32_t _duration = encoder.readUInt(buffer, len);
         controller.setIgnitionDuration(_duration);
         sendById(SET_IGNITERDURATION, buffer, len);
     } else {
         uint8_t _buff[4];
-        encoder.castUInt32(controller.getIgnitionDuration(), _buff);
+        encoder.castUInt(controller.getIgnitionDuration(), _buff);
         sendById(SET_RUNDURATION, _buff, 4);
     }
 }

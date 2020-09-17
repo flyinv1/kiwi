@@ -3,6 +3,8 @@
 
 #include "src/Manager/Manager.h"
 
+#define __KIWI_USELIVE__ false
+
 Manager manager = Manager();
 
 void setup()
