@@ -119,7 +119,7 @@ void Manager::sm_error()
     }
 }
 
-//// STATE MACHINE TRANSITIONS
+//// STATE TRANSITION METHODS
 
 /*
     smt_disconnected_to_standby
@@ -265,7 +265,7 @@ void Manager::_on_run_stop(uint8_t topic, uint8_t* buffer, size_t len)
 void Manager::_on_set_controlmode(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len > 0) {
-        Controller::ControlMode _control_mode = buffer[0];
+        Controller::ControlMode _control_mode = Controller::ControlMode(buffer[0]);
         if (_control_mode == Controller::CONTROL_MODE_OPEN || _control_mode == Controller::CONTROL_MODE_CLOSED) {
             Controller::ControlMode _new_control_mode = controller.setControlMode(_control_mode);
             uint8_t _buff[1] = { uint8_t(_new_control_mode) };
@@ -276,7 +276,7 @@ void Manager::_on_set_controlmode(uint8_t topic, uint8_t* buffer, size_t len)
             sendById(SET_CONTROLMODE, _buff, 1);
         }
     } else {
-        Controller::EngineMode _old_control_mode = controller.getControlMode();
+        Controller::ControlMode _old_control_mode = controller.getControlMode();
         uint8_t _buff[1] = { uint8_t(_old_control_mode) };
         sendById(SET_CONTROLMODE, _buff, 1);
     }
@@ -285,7 +285,7 @@ void Manager::_on_set_controlmode(uint8_t topic, uint8_t* buffer, size_t len)
 void Manager::_on_set_enginemode(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable() && len > 4) {
-        Controller::EngineMode _engine_mode = buffer[0];
+        Controller::EngineMode _engine_mode = Controller::EngineMode(buffer[0]);
         if (_engine_mode == Controller::ENGINE_MODE_HOT || _engine_mode == Controller::ENGINE_MODE_COLD) {
             Controller::EngineMode _new_engine_mode = controller.setEngineMode(_engine_mode);
             uint8_t _buff[1] = { uint8_t(_new_engine_mode) };
@@ -309,6 +309,9 @@ void Manager::_on_set_runduration(uint8_t topic, uint8_t* buffer, size_t len)
         controller.setRunDuration(_duration);
         sendById(SET_RUNDURATION, buffer, len);
     } else {
+        uint8_t _buff[4];
+        encoder.castUInt32(controller.getrunDuration(), _buff);
+        sendById(SET_RUNDURATION, _buff, 4);
     }
 }
 
@@ -319,6 +322,9 @@ void Manager::_on_set_igniterpreburn(uint8_t topic, uint8_t* buffer, size_t len)
         controller.setIgnitionPreburn(_duration);
         sendById(SET_IGNITERPREBURN, buffer, len);
     } else {
+        uint8_t _buff[4];
+        encoder.castUInt32(controller.getIgnitionPreburn(), _buff);
+        sendById(SET_IGNITERPREBURN, _buff, 4);
     }
 }
 
@@ -330,7 +336,7 @@ void Manager::_on_set_igniterduration(uint8_t topic, uint8_t* buffer, size_t len
         sendById(SET_IGNITERDURATION, buffer, len);
     } else {
         uint8_t _buff[4];
-        encoder.getUInt32Buffer(controller.getIgnitionDuration, _buff);
+        encoder.castUInt32(controller.getIgnitionDuration(), _buff);
         sendById(SET_RUNDURATION, _buff, 4);
     }
 }
@@ -340,6 +346,10 @@ void Manager::_on_set_targets(uint8_t topic, uint8_t* buffer, size_t len)
     if (_configurable()) {
         controller.setTargetsFrom(buffer, len);
     }
+    size_t _targetBufferSize = controller.getTargetCount() * 4;
+    uint8_t _targetBuffer[_targetBufferSize] = {};
+    controller.getTargetBuffer(_targetBuffer);
+    sendById(SET_TARGETS, _targetBuffer, _targetBufferSize);
 }
 
 void Manager::_on_run_calibrate_thrust(uint8_t topic, uint8_t* buffer, size_t len)

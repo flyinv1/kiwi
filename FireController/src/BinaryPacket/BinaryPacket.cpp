@@ -265,3 +265,15 @@ uint32_t readUInt32(uint8_t* buffer, size_t len)
         return 0;
     }
 }
+
+void castUInt32(uint32_t value, uint8_t* output)
+{
+    union {
+        byte b[4];
+        uint32_t v;
+    } in;
+    in.v = value;
+    for (int i = 0; i < 4; i++) {
+        output[i] = b[i];
+    }
+}

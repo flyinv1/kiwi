@@ -4,45 +4,13 @@
 #include "../Controller/Controller.h"
 #include "../StateClock/StateClock.h"
 #include "../Target/Target.h"
+#include "../LED.h"
 
 #ifndef KIWI_MANAGER
 #define KIWI_MANAGER
 
 #define DISCONNECT_INTERVAL_MS 500
 #define DAQ_INTERVAL_MS        1
-
-struct LED {
-
-    typedef enum {
-        DISCONNECTED = 3000,
-        STANDBY = 500,
-        ARMED = 200,
-        RUNNING = 50,
-        ERROR = 3000,
-    } IntervalType;
-
-public:
-    IntervalType interval = DISCONNECTED;
-
-    LED()
-    {
-        pinMode(ledPin, OUTPUT);
-    }
-
-    void update()
-    {
-        if (millis() - t > interval) {
-            digitalWrite(13, !on);
-            t = millis();
-            on = !on;
-        }
-    }
-
-private:
-    int ledPin = 13;
-    long t = 0;
-    bool on = false;
-};
 
 class Manager {
 

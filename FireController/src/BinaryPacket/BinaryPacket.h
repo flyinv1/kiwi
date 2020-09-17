@@ -47,6 +47,8 @@ public:
 
     uint32_t readUInt32(uint8_t* buffer, size_t len);
 
+    void castUInt32(uint32_t value, uint8_t* output);
+
 private:
     // Pointer to stream (Serial or SoftSerial instance)
     Stream* _stream;
