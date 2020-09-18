@@ -5,6 +5,7 @@ from . import encoder
 from . import interface
 import json
 from time import monotonic
+import struct
 
 class Manager:
     
@@ -16,7 +17,8 @@ class Manager:
         self.timeout_interval = 2
         self.timeout = 0
         self.dataBufferElapsed = 0
-        self.dataInterval = 0.03
+        self.dataInterval = 0.5
+        self.controller_state = 0
 
 
     def main(self):
@@ -60,14 +62,23 @@ class Manager:
         #   - Publish updated controller state
         elif _id == interface.Keys.STATE.value:
             _newstate = int.from_bytes(_payload, byteorder='little')
+            self.controller_state = _newstate
             self.client.publish(_emitter, json.dumps(_newstate))
 
         # DATA packet
         #   - Log data to csv
         #   - If interval elapsed, publish buffer
         elif _id == interface.Keys.DATA.value:
+            _data = []
+            for i in range(int(len(_payload) / 4)):
+                _data.append(struct.unpack('f', bytearray(_payload[4*i:4*i+4])))
+
+            if self.controller_state == 3:
+                # Save data to csv ?
+                pass
+
             if _time - self.dataBufferElapsed > self.dataInterval:
-                # Construct buffer and transmit
+                self.client.publish(_emitter, json.dumps(_data))
                 self.dataBufferElapsed = _time
 
         # TARGETS packet
@@ -176,6 +187,7 @@ class Manager:
         if self.serialport:
             while self.serialport.inWaiting() > 0:
                 _bytes = self.serialport.read(self.serialport.inWaiting())
+                print(_bytes)
                 for _byte in _bytes:
                     self.serial_buffer[self.serial_read_index] = _byte
                     if _byte == 0x00:
@@ -183,8 +195,7 @@ class Manager:
                         if encoder.crc(_packet[1:]) == _packet[0]:
                             _id = _packet[1]
                             _msg = _packet[2:]
-                            self.on_packet(_id, _msg)   
-                        self.serialport.flushInput()
+                            self.on_packet(_id, _msg)
                         self.serial_read_index = 0
                     else:
                         if self.serial_read_index + 1 > 255:

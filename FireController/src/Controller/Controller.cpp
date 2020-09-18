@@ -196,12 +196,12 @@ void Controller::sm_preburn(void)
 
     // Check preburn casualty response parameters
     if (engine_mode == ENGINE_MODE_COLD) {
-        if (engineState.upstream_pressure > SAFE_PRESSURE_PSI || engineState.downstream_pressure > SAFE_PRESSURE_PSI) {
+        if (engineState[upstream_pressure] > SAFE_PRESSURE_PSI || engineState[downstream_pressure] > SAFE_PRESSURE_PSI) {
             // should shutdown -> nitrous may be present in lines
         }
 
     } else {
-        if (engineState.downstream_pressure > SAFE_PRESSURE_PSI) {
+        if (engineState[downstream_pressure] > SAFE_PRESSURE_PSI) {
             // should shutdown
         }
     }
@@ -379,35 +379,34 @@ bool Controller::smt_armed_to_safe(void)
 
 void Controller::readEngineState()
 {
-    engineState.chamber_pressure = estimator.getChamberPressure();
-    engineState.downstream_pressure = estimator.getDownstreamPressure();
-    engineState.upstream_pressure = estimator.getUpstreamPressure();
-    engineState.propellant_mass = estimator.getPropellantMass();
-    engineState.thrust = estimator.getThrust();
-    engineState.mass_flow = 0;
+    engineState[chamber_pressure] = estimator.getChamberPressure();
+    engineState[downstream_pressure] = estimator.getDownstreamPressure();
+    engineState[upstream_pressure] = estimator.getUpstreamPressure();
+    engineState[propellant_mass] = estimator.getPropellantMass();
+    engineState[thrust] = estimator.getThrust();
+    engineState[mass_flow] = 0;
 
     // uint32_t _throttle_position = throttle_valve.ReadEncM1(MOTOR_ADDRESS);
-    // engineState.throttle_position = throttleEncoderToAngle(_throttle_position);
-    engineState.throttle_position = 0;
+    // engineState[throttle_position] = throttleEncoderToAngle(_throttle_position);
+    engineState[throttle_position] = 0;
 
-    engineState.mission_elapsed_time = float(engineClock.total_et());
-    engineState.state_elapsed_time = float(engineClock.state_et());
-    engineState.delta_time = float(engineClock.total_dt());
+    engineState[mission_elapsed_time] = float(engineClock.total_et());
+    engineState[state_elapsed_time] = float(engineClock.state_et());
+    engineState[delta_time] = float(engineClock.total_dt());
 }
 
-void Controller::getEngineData(Controller::EngineData* data)
+void Controller::getEngineDataBuffer(uint8_t* _output)
 {
-    // Bummer of a thing this is
-    data->chamber_pressure = engineState.chamber_pressure;
-    data->upstream_pressure = engineState.upstream_pressure;
-    data->downstream_pressure = engineState.downstream_pressure;
-    data->thrust = engineState.thrust;
-    data->propellant_mass = engineState.propellant_mass;
-    data->mass_flow = engineState.mass_flow;
-    data->throttle_position = engineState.throttle_position;
-    data->mission_elapsed_time = engineState.mission_elapsed_time;
-    data->state_elapsed_time = engineState.state_elapsed_time;
-    data->delta_time = engineState.delta_time;
+    for (int i = 0; i < engine_data_size; i++) {
+        union {
+            byte b[4];
+            float f;
+        } u;
+        u.f = engineState[i];
+        for (int j = 0; j < 4; j++) {
+            _output[i * 4 + j] = u.b[j];
+        }
+    }
 }
 
 void Controller::initializeRunValve(void)

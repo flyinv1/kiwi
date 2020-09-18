@@ -41,16 +41,16 @@ void Manager::loop()
     int _mil = millis();
     if (state == state_disconnected) {
         // Send ping byte
-        if (_mil - timeout > DISCONNECT_INTERVAL_MS) {
+        if (_mil - comm_timer > DISCONNECT_INTERVAL_MS) {
             sendById(SYNC, nullptr, 0);
-            timeout = _mil;
+            comm_timer = _mil;
         }
     } else {
         // Send the current state as a keepalive ping
-        if (millis() - timeout > PING_INTERVAL_MS) {
+        if (millis() - comm_timer > PING_INTERVAL_MS) {
             uint8_t _buff[1] = { state };
             sendById(STATE, _buff, 1);
-            timeout = millis();
+            comm_timer = _mil;
         }
     }
 
@@ -101,6 +101,12 @@ void Manager::sm_standby()
 {
     // Update controller
     controller.main();
+
+    if (missionClock.total_et() - data_timer > DAQ_INTERVAL_MS_STANDBY * 1000) {
+        controller.getEngineDataBuffer(engine_data_buffer);
+        sendById(DATA, engine_data_buffer, Controller::engine_data_size * 4);
+        data_timer = missionClock.total_et();
+    }
 }
 
 void Manager::sm_armed()
@@ -109,12 +115,23 @@ void Manager::sm_armed()
     controller.main();
 
     // Transmit data
+    if (missionClock.total_et() - data_timer > DAQ_INTERVAL_MS * 1000) {
+        controller.getEngineDataBuffer(engine_data_buffer);
+        sendById(DATA, engine_data_buffer, Controller::engine_data_size * 4);
+        data_timer = missionClock.total_et();
+    }
 }
 
 void Manager::sm_running()
 {
     // Update controller
     controller.main();
+
+    if (missionClock.total_et() - data_timer > DAQ_INTERVAL_MS) {
+        controller.getEngineDataBuffer(engine_data_buffer);
+        sendById(DATA, engine_data_buffer, Controller::engine_data_size);
+        data_timer = missionClock.total_et();
+    }
 
     // Check for running exit condition
     if (controller.getState() == Controller::state_safe) {

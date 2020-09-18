@@ -136,17 +136,18 @@ public:
         ENGINE_MODE_ERROR = 255,
     } EngineMode;
 
-    typedef struct {
-        float chamber_pressure;
-        float upstream_pressure;
-        float downstream_pressure;
-        float thrust;
-        float propellant_mass;
-        float mass_flow;
-        float throttle_position;
-        float mission_elapsed_time;
-        float state_elapsed_time;
-        float delta_time;
+    typedef enum {
+        chamber_pressure,
+        upstream_pressure,
+        downstream_pressure,
+        thrust,
+        propellant_mass,
+        mass_flow,
+        throttle_position,
+        mission_elapsed_time,
+        state_elapsed_time,
+        delta_time,
+        engine_data_size
     } EngineData;
 
     Controller();
@@ -188,12 +189,13 @@ public:
     uint32_t setEncoderValue(uint32_t value);
 
     void getEngineData(EngineData* data);
+    void getEngineDataBuffer(uint8_t* _output);
     void tareThrustCell();
 
 private:
     StateType state = state_safe;
 
-    EngineData engineState;
+    float engineState[engine_data_size];
 
     StateClock engineClock;
     StateClock targetClock;
