@@ -17,8 +17,10 @@ class Manager:
         self.timeout_interval = 2
         self.timeout = 0
         self.dataBufferElapsed = 0
-        self.dataInterval = 0.5
+        self.dataInterval = 0.05
         self.controller_state = 0
+        self.timeoutMax = 0.25
+        self.timeoutElapsed = 0
 
 
     def main(self):
@@ -38,7 +40,11 @@ class Manager:
         _time = monotonic()
 
         self.timeout = _time
-        self.client.publish('get/connected', json.dumps(True))
+
+        # Wait a min interval as to not overload broker
+        if _time - self.timeoutElapsed > self.timeoutMax:
+            self.client.publish('get/connected', json.dumps(True))
+            self.timeoutElapsed = _time
 
         # log the incoming packet
         if _id != interface.Keys.DATA.value and _id != interface.Keys.STATE.value:
@@ -71,11 +77,14 @@ class Manager:
         elif _id == interface.Keys.DATA.value:
             _data = []
             for i in range(int(len(_payload) / 4)):
-                _data.append(struct.unpack('f', bytearray(_payload[4*i:4*i+4])))
+                _val = struct.unpack('f', bytearray(_payload[4*i:4*i+4]))
+                _data.append(_val[0])
+
+            # print(_data)
 
             if self.controller_state == 3:
                 # Save data to csv ?
-                pass
+                None
 
             if _time - self.dataBufferElapsed > self.dataInterval:
                 self.client.publish(_emitter, json.dumps(_data))
@@ -162,6 +171,7 @@ class Manager:
         for port in ports:
             if port.device == path:
                 self.serialport = Serial(path, timeout=0.01, write_timeout=0.01)
+                self.serialport.baudrate=4000000
                 return True
         return False
 
@@ -186,8 +196,7 @@ class Manager:
     def read_serial(self):
         if self.serialport:
             while self.serialport.inWaiting() > 0:
-                _bytes = self.serialport.read(self.serialport.inWaiting())
-                print(_bytes)
+                _bytes = self.serialport.read(8)
                 for _byte in _bytes:
                     self.serial_buffer[self.serial_read_index] = _byte
                     if _byte == 0x00:

@@ -115,7 +115,6 @@ const ConfigurationView = () => {
         const windowListener = (e) => {
             const _published = publish(MQTT.cmd.stop);
             window.removeEventListener('keypress', windowListener)
-            setIsRunning(false);
         }
         if (isRunning) {
             window.addEventListener('keypress', windowListener);

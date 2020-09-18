@@ -12,11 +12,9 @@ import {
 } from './Streams';
 import { MQTT } from 'mqttKeys.js';
 
-const StreamView = () => {
+const StreamView = ({shouldAnimate = true}) => {
 
     const bufferTopic = useTopic(MQTT.use.data);
-
-    const armedTopic = useTopic(MQTT.use.state);
 
     // const [ shouldAnimate, setShouldAnimate ] = useState(false);
 
@@ -24,27 +22,21 @@ const StreamView = () => {
         let _databuffer
         try {
             _databuffer = JSON.parse(bufferTopic.payload);
+            console.log(_databuffer)
         } catch(err) {}
         return {
-            pressure: _databuffer?.slice(0, 2),
-            thrust: _databuffer?.[2],
-            mass: _databuffer?.[3],
-            voltage: _databuffer?.[4],
-            throttle: _databuffer?.[5]
+            chamber_pressure: _databuffer?.[0],
+            upstream_pressure: _databuffer?.[1],
+            downstream_pressure: _databuffer?.[2],
+            thrust: _databuffer?.[3],
+            propellant_mass: _databuffer?.[4],
+            mass_flow: _databuffer?.[5],
+            throttle_position: _databuffer?.[6],
+            mission_elapsed_time: _databuffer?.[7],
+            state_elapsed_time: _databuffer?.[8],
+            delta_time: _databuffer?.[9],
         }
     }, [bufferTopic])
-
-    const shouldAnimate = useMemo(() => {
-        // console.log(armedTopic)
-        let _armed
-        try {
-            _armed = JSON.parse(armedTopic.payload);
-        } catch(err) {
-            _armed = (armedTopic.payload)
-        }
-        console.log(Boolean(_armed));
-        return Boolean(_armed);
-    }, [armedTopic.payload])
 
     return(
         <div className={styles.container}>
@@ -56,24 +48,24 @@ const StreamView = () => {
                     />
                     <MassStream 
                         animate={shouldAnimate}
-                        newData={buffer.mass}
+                        newData={buffer.propellant_mass}
                     />
                 </div>
                 <div className={styles.right}>
                     <PressureStream 
                         animate={shouldAnimate}
-                        newData={buffer.pressure}
+                        newData={[buffer.chamber_pressure, buffer.upstream_pressure, buffer.downstream_pressure]}
                     />
                 </div>
             </div>
             <div className={styles.bottom}>
                 <VoltageStream 
                     animate={shouldAnimate}
-                    newData={buffer.voltage}
+                    newData={buffer.mass_flow}
                 />
                 <ThrottleStream
                     animate={shouldAnimate}
-                    newData={buffer.throttle}
+                    newData={buffer.throttle_position}
                 />
             </div>
         </div>

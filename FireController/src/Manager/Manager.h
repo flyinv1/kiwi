@@ -12,9 +12,7 @@
 #define DISCONNECT_INTERVAL_MS  500
 #define PING_INTERVAL_MS        1000
 #define DAQ_INTERVAL_MS_STANDBY 500
-#define DAQ_INTERVAL_MS         100
-
-#define ENGINE_DATA_SIZE_BYTE 40
+#define DAQ_INTERVAL_MS         5
 
 class Manager {
 

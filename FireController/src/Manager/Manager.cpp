@@ -129,7 +129,7 @@ void Manager::sm_running()
 
     if (missionClock.total_et() - data_timer > DAQ_INTERVAL_MS) {
         controller.getEngineDataBuffer(engine_data_buffer);
-        sendById(DATA, engine_data_buffer, Controller::engine_data_size);
+        sendById(DATA, engine_data_buffer, Controller::engine_data_size * 4);
         data_timer = missionClock.total_et();
     }
 

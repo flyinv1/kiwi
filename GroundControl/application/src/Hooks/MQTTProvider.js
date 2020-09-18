@@ -80,14 +80,14 @@ export const usePublishJSON = () => {
     const { client } = useContext(MQTTContext);
 
     return (topic, payload = null) => {
-            try {
-                const _payload = JSON.stringify(payload);
-                client.publish(topic, _payload)
-                return true;
-            } catch(err) {
-                return false;
-            }
+        try {
+            const _payload = JSON.stringify(payload);
+            client.publish(topic, _payload)
+            return true;
+        } catch(err) {
+            return false;
         }
+    }
 }
 
 export default MQTTProvider

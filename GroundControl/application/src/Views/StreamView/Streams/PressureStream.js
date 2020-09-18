@@ -13,12 +13,12 @@ const configuration = {
     layout: {
         limits: {
             xmin: 0,
-            xmax: 5,
+            xmax: 20,
             ymin: 0,
             ymax: 1000
         },
         grid: {
-            xInterval: 0.5,
+            xInterval: 2,
             yInterval: 100
         },
         axes: true
@@ -28,15 +28,15 @@ const configuration = {
             id: 'pressure0',
             name: 'Pressure 0',
             color: Color.fromHex(Themes.palette.umber[0]),
-            duration: 5,
-            points: 300
+            duration: 20,
+            points: 600
         },
         pressure1: {
             id: 'pressure1',
             name: 'Pressure 1',
             color: Color.fromHex(Themes.palette.umber[1]),
-            duration: 5,
-            points: 300
+            duration: 20,
+            points: 600
         },
     }
 }
