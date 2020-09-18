@@ -3,6 +3,7 @@ from serial.tools import list_ports
 from serial import Serial
 from . import encoder
 from . import interface
+import json
 
 class Manager:
     
@@ -46,9 +47,8 @@ class Manager:
     def read_serial(self):
         if self.serialport:
             while self.serialport.inWaiting() > 0:
-                _bytes = self.serialport.read(1)
-                if len(_bytes) > 0:
-                    _byte = _bytes[0]
+                _bytes = self.serialport.read(self.serialport.inWaiting())
+                for _byte in _bytes:
                     self.serial_buffer[self.serial_read_index] = _byte
                     if _byte == 0x00:
                         _packet = encoder.cobs_decode(self.serial_buffer[0:self.serial_read_index])
@@ -60,7 +60,6 @@ class Manager:
                         self.serial_read_index = 0
                     else:
                         if self.serial_read_index + 1 > 255:
-                            self.serialport.flushInput()
                             self.serial_read_index = 0
                         else:
                             self.serial_read_index += 1
@@ -73,16 +72,18 @@ class Manager:
         _buffer[2:] = payload
         _buffer[0] = encoder.crc(_buffer[1:])
         _out_buffer = encoder.cobs_encode(_buffer)
+        print("out_packet: ", _buffer, _out_buffer)
         self.serialport.write(_out_buffer)
         self.serialport.write(bytearray([0x00]))
 
 
     # ON_PACKET SERIAL EVENT
     def on_packet(self, id_, payload):
+        print("in_packet: ", payload)
         _payload, _type, _id = interface.on_id(id_, payload)
         if (_id != interface.Keys.DATA.value):
             print('\npacket id:', _id)
-            print('\tpayload:', _payload)
+            print('\tpayload:', _payload, str(int.from_bytes(_payload, byteorder='little')))
             print('\ttype:', _type)
         if _id == interface.Keys.SYNC.value:
             if not self.controller_connected:
@@ -128,10 +129,14 @@ class Manager:
             self.write_serial_packet(_id, _buffer)
         if _result_type == list:
             # assume list of 32 bit integers pairs
+            print(_result)
             _buffer = bytearray(len(_result) * 4)
             for i, _int in enumerate(_result):
+                print(i, int)
                 br = bytearray(_int.to_bytes(4, byteorder='little', signed=False))
-                _buffer[i:i+4] = br
+                print(br)
+                _buffer[ i * 4:(i * 4) + 4 ] = br
+            print(_buffer)
             self.write_serial_packet(_id, _buffer)
         elif _result_type == None:
             print('message id:', _id)

@@ -124,13 +124,13 @@ public:
         { state_armed, state_safe, &Controller::smt_armed_to_safe },
     };
 
-    typedef enum {
+    typedef enum : uint8_t {
         CONTROL_MODE_OPEN = 0,    // Open loop control using throttle position (deg)
         CONTROL_MODE_CLOSED = 1,  // Closed loop control using chamber pressure feedback
         CONTROL_MODE_ERROR = 255, // Error control mode assignment
     } ControlMode;
 
-    typedef enum {
+    typedef enum : uint8_t {
         ENGINE_MODE_COLD = 0,
         ENGINE_MODE_HOT = 1,
         ENGINE_MODE_ERROR = 255,

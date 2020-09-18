@@ -6,7 +6,7 @@ import './index.css';
 import './constants.css';
 
 const config = {
-  host: '192.168.1.19',
+  host: '192.168.0.16',
   port: 1883
 }
 

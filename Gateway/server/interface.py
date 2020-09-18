@@ -101,6 +101,6 @@ def on_topic(topic, payload):
 
 def on_id(id_, payload):
     for _dict in (x for x in keymap if x["id"] == id_):
-        return payload, _dict["payload"], _dict["id"].value
+        return (payload, _dict["payload"], _dict["id"].value)
     return (payload, None, id_)
 

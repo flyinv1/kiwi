@@ -450,14 +450,16 @@ float Controller::throttleEncoderToAngle(int _position)
     return float(THROTTLE_POS_CLOSED - _position) / (THROTTLE_POS_CLOSED - THROTTLE_POS_OPEN) * THROTTLE_ANG_OPEN;
 }
 
-Controller::ControlMode Controller::setControlMode(ControlMode _mode)
+Controller::ControlMode Controller::setControlMode(Controller::ControlMode _mode)
 {
     control_mode = _mode;
+    return control_mode;
 }
 
-Controller::EngineMode Controller::setEngineMode(EngineMode _mode)
+Controller::EngineMode Controller::setEngineMode(Controller::EngineMode _mode)
 {
     engine_mode = _mode;
+    return engine_mode;
 }
 
 // Controller::ControlMode Controller::setControlModeFrom(uint8_t* buffer, size_t len)
