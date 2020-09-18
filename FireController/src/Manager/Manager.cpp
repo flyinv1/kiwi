@@ -351,7 +351,7 @@ void Manager::_on_set_targets(uint8_t topic, uint8_t* buffer, size_t len)
     if (_configurable()) {
         controller.setTargetsFrom(buffer, len);
     }
-    size_t _targetBufferSize = controller.getTargetCount() * 4;
+    size_t _targetBufferSize = controller.getTargetCount() * 8;
     uint8_t _targetBuffer[_targetBufferSize] = {};
     controller.getTargetBuffer(_targetBuffer);
     sendById(SET_TARGETS, _targetBuffer, _targetBufferSize);
