@@ -12,6 +12,12 @@
     background-color: var(--fill-ul);
 }
 
+.control {
+    padding: var(--b-l);
+    padding-bottom: var(--b-xl);
+    border-bottom: 1px solid var(--border-l);
+}
+
 .form {
     padding: var(--b-l);
 }

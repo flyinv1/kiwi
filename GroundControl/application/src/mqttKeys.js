@@ -1,21 +1,41 @@
-export const MQTT = { 
-    run: {
-        enginemode: 'run/enginemode',
-        controlmode: 'run/controlmode',
-        duration: 'run/duration',
-        igniter: {
-            voltage: 'run/igniter/voltage',
-            preburn: 'run/igniter/preburn',
-            duration: 'run/igniter/duration',
-        },
-        keyframes: 'run/keyframes',
-        arm: 'run/arm',
-        disarm: 'run/disarm',
-        start: 'run/start',
-        stop: 'run/stop',
-        status: 'run/status',
+export const MQTT = {
+    cmd: {
+        arm: 'cmd/arm',
+        disarm: 'cmd/disarm',
+        start: 'cmd/start',
+        stop: 'cmd/stop',
+        throttle: {
+            position: 'cmd/throttle/position',
+            encoder: 'cmd/throttle/encoder'
+        } 
     },
-    telemetry: {
-        buffer: 'telemetry/buffer'
-    }
+    set: {
+        enginemode: 'set/enginemode',
+        controlmode: 'set/controlmode',
+        duration: 'set/duration',
+        igniter: {
+            voltage: 'set/igniter/voltage',
+            preburn: 'set/igniter/preburn',
+            duration: 'set/igniter/duration',
+        },
+        targets: 'set/targets',
+    },
+    use: {
+        enginemode: 'get/enginemode',
+        controlmode: 'get/controlmode',
+        duration: 'get/duration',
+        igniter: {
+            voltage: 'get/igniter/voltage',
+            preburn: 'get/igniter/preburn',
+            duration: 'get/igniter/duration',
+        },
+        throttle: {
+            position: 'get/throttle/position',
+            encoder: 'get/throttle/encoder',
+        },
+        targets: 'get/targets',
+        connected: 'get/connected',
+        state: 'get/state',
+        data: 'get/data'
+    },
 }

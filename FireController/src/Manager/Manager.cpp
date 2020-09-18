@@ -37,6 +37,23 @@ void Manager::loop()
     // Update encoder serial buffer
     read();
 
+    // Update SYNC bytes and PING
+    int _mil = millis();
+    if (state == state_disconnected) {
+        // Send ping byte
+        if (_mil - timeout > DISCONNECT_INTERVAL_MS) {
+            sendById(SYNC, nullptr, 0);
+            timeout = _mil;
+        }
+    } else {
+        // Send the current state as a keepalive ping
+        if (millis() - timeout > PING_INTERVAL_MS) {
+            uint8_t _buff[1] = { state };
+            sendById(STATE, _buff, 1);
+            timeout = millis();
+        }
+    }
+
     // Execute state machine method
     if (state < num_states) {
         (this->*StateMachine[state].method)();
@@ -77,11 +94,6 @@ bool Manager::setState(Manager::StateType next_state)
 */
 void Manager::sm_disconnected()
 {
-    // If timeout, then send sync byte
-    if (missionClock.state_et() > DISCONNECT_INTERVAL_MS * 1000) {
-        sendById(SYNC, nullptr, 0);
-        missionClock.advance();
-    }
     controller.main();
 }
 
@@ -151,6 +163,12 @@ bool Manager::smt_armed_to_running()
     // Start the controller's fire sequence
     controller.fire();
     led.interval = LED::RUNNING;
+    return true;
+}
+
+bool Manager::smt_running_to_standby()
+{
+    led.interval = LED::STANDBY;
     return true;
 }
 
@@ -242,7 +260,7 @@ void Manager::_on_disarm(uint8_t topic, uint8_t* buffer, size_t len)
         state: state_running
         transition: smt_armed_to_running
 */
-void Manager::_on_run_start(uint8_t topic, uint8_t* buffer, size_t len)
+void Manager::_on_start(uint8_t topic, uint8_t* buffer, size_t len)
 {
     setState(state_running);
 }
@@ -252,7 +270,7 @@ void Manager::_on_run_start(uint8_t topic, uint8_t* buffer, size_t len)
     The controller begins shutdown procedures
         -> begin to monitor controller state and eventually enters standby
 */
-void Manager::_on_run_stop(uint8_t topic, uint8_t* buffer, size_t len)
+void Manager::_on_stop(uint8_t topic, uint8_t* buffer, size_t len)
 {
     controller.abort();
 }
@@ -310,9 +328,6 @@ void Manager::_on_set_runduration(uint8_t topic, uint8_t* buffer, size_t len)
         uint32_t _duration = encoder.readUInt(buffer, len);
         controller.setRunDuration(_duration);
         sendById(SET_RUNDURATION, buffer, len);
-        digitalWrite(13, HIGH);
-        delay(_duration);
-        digitalWrite(13, LOW);
     } else {
         uint8_t _buff[4];
         encoder.castUInt(controller.getRunDuration(), _buff);
@@ -357,10 +372,26 @@ void Manager::_on_set_targets(uint8_t topic, uint8_t* buffer, size_t len)
     sendById(SET_TARGETS, _targetBuffer, _targetBufferSize);
 }
 
-void Manager::_on_run_calibrate_thrust(uint8_t topic, uint8_t* buffer, size_t len)
+void Manager::_on_calibrate_thrust(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable()) {
         controller.tareThrustCell();
+    }
+}
+
+void Manager::_on_set_throttle_position(uint8_t topic, uint8_t* buffer, size_t len)
+{
+    if (_configurable()) {
+        uint32_t _motorPosition = encoder.readUInt(buffer, len);
+        // controller.setThrottlePosition(_motorPosition);
+    }
+}
+
+void Manager::_on_set_encoder_value(uint8_t topic, uint8_t* buffer, size_t len)
+{
+    if (_configurable()) {
+        uint32_t _encoderValue = encoder.readUInt(buffer, len);
+        // controller.setEncoderValue(_encoderValue);
     }
 }
 

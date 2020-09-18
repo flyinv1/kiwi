@@ -28,6 +28,18 @@
     margin-bottom: var(--b-xl);
 }
 
+.right {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    justify-content: stretch;
+    align-items: stretch;
+}
+
+.right > :first-child {
+    flex-grow: 1;
+}
+
 .bottom {
     display: flex;
     flex-direction: row;

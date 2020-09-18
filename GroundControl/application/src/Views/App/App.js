@@ -5,15 +5,14 @@ import { useTopic, useClientStatus } from '../../Hooks/MQTTProvider';
 import StreamView from '../StreamView/StreamView';
 import HeaderView from '../HeaderView/HeaderView';
 import styles from './App.module.scss';
+import { MQTT } from 'mqttKeys.js'
 
 
 const App = () => {
-
-    const { status } = useClientStatus();
     
     return(
         <div className={styles.appContainer}>
-            <HeaderView status={status}/>
+            <HeaderView/>
             <div className={styles.contentContainer}>
                 <StreamView/>
                 <ConfigurationView/>

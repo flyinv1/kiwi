@@ -184,6 +184,9 @@ public:
     EngineMode setEngineMode(EngineMode _mode);
     EngineMode getEngineMode();
 
+    uint32_t setThrottlePosition(uint32_t position);
+    uint32_t setEncoderValue(uint32_t value);
+
     void getEngineData(EngineData* data);
     void tareThrustCell();
 

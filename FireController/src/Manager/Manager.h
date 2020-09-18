@@ -2,14 +2,15 @@
 
 #include "../BinaryPacket/BinaryPacket.h"
 #include "../Controller/Controller.h"
+#include "../LED.h"
 #include "../StateClock/StateClock.h"
 #include "../Target/Target.h"
-#include "../LED.h"
 
 #ifndef KIWI_MANAGER
 #define KIWI_MANAGER
 
 #define DISCONNECT_INTERVAL_MS 500
+#define PING_INTERVAL_MS       1000
 #define DAQ_INTERVAL_MS        1
 
 class Manager {
@@ -44,6 +45,7 @@ class Manager {
         transition_standby_to_armed,
         transition_armed_to_running,
         transition_armed_to_standby,
+        transition_running_to_standby,
         transition_standby_to_disconnected,
         num_transitions
     };
@@ -59,26 +61,30 @@ class Manager {
         { state_standby, state_armed, &Manager::smt_standby_to_armed },
         { state_armed, state_running, &Manager::smt_armed_to_running },
         { state_armed, state_standby, &Manager::smt_armed_to_standby },
+        { state_running, state_standby, &Manager::smt_running_to_standby },
         { state_standby, state_disconnected, &Manager::smt_standby_to_disconnected }
     };
 
     typedef enum {
         SYNC = 0,
-        RUN_ARM = 1,
-        RUN_DISARM = 2,
-        RUN_START = 3,
-        RUN_STOP = 4,
+        ARM = 1,
+        DISARM = 2,
+        START = 3,
+        STOP = 4,
         SET_CONTROLMODE = 5,
         SET_ENGINEMODE = 6,
         SET_RUNDURATION = 7,
         SET_IGNITERPREBURN = 8,
         SET_IGNITERDURATION = 9,
         SET_TARGETS = 10,
-        RUN_CALIBRATE_THRUST = 11,
+        CALIBRATE_THRUST = 11,
         CLOSE = 12,
-        num_callbacks = 13,
-        STATE = 14,
-        DATA = 15
+        THROTTLE_POSITION = 13,
+        THROTTLE_ENCODER = 14,
+        num_callbacks = 15,
+        STATE = 16,
+        DATA = 17,
+        LOG = 18
     } TopicType;
 
     typedef void (Manager::*TopicCallback)(uint8_t id, uint8_t* buffer, size_t len);
@@ -90,17 +96,19 @@ class Manager {
 
     TopicCallbackType TopicTable[num_callbacks] = {
         { SYNC, &Manager::_on_sync },
-        { RUN_ARM, &Manager::_on_arm },
-        { RUN_DISARM, &Manager::_on_disarm },
-        { RUN_START, &Manager::_on_run_start },
-        { RUN_STOP, &Manager::_on_run_stop },
+        { ARM, &Manager::_on_arm },
+        { DISARM, &Manager::_on_disarm },
+        { START, &Manager::_on_start },
+        { STOP, &Manager::_on_stop },
         { SET_CONTROLMODE, &Manager::_on_set_controlmode },
         { SET_ENGINEMODE, &Manager::_on_set_enginemode },
         { SET_RUNDURATION, &Manager::_on_set_runduration },
         { SET_IGNITERPREBURN, &Manager::_on_set_igniterpreburn },
         { SET_IGNITERDURATION, &Manager::_on_set_igniterduration },
         { SET_TARGETS, &Manager::_on_set_targets },
-        { RUN_CALIBRATE_THRUST, &Manager::_on_run_calibrate_thrust },
+        { CALIBRATE_THRUST, &Manager::_on_calibrate_thrust },
+        { THROTTLE_POSITION, &Manager::_on_set_throttle_position },
+        { THROTTLE_ENCODER, &Manager::_on_set_encoder_value },
         { CLOSE, &Manager::_on_close }
     };
 
@@ -126,6 +134,8 @@ private:
 
     LED led;
 
+    uint32_t timeout = 0;
+
     void sm_disconnected();
 
     void sm_standby();
@@ -142,7 +152,7 @@ private:
 
     bool smt_armed_to_running();
 
-    bool smt_running_to_armed();
+    bool smt_running_to_standby();
 
     bool smt_armed_to_standby();
 
@@ -157,8 +167,9 @@ private:
     void _on_sync(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_arm(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_disarm(uint8_t topic, uint8_t* buffer, size_t len);
-    void _on_run_start(uint8_t topic, uint8_t* buffer, size_t len);
-    void _on_run_stop(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_start(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_stop(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_calibrate_thrust(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_set_controlmode(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_set_enginemode(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_set_runduration(uint8_t topic, uint8_t* buffer, size_t len);
@@ -166,7 +177,8 @@ private:
     void _on_set_igniterduration(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_set_targets(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_get_configuration(uint8_t topic, uint8_t* buffer, size_t len);
-    void _on_run_calibrate_thrust(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_set_throttle_position(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_set_encoder_value(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_state(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_close(uint8_t topic, uint8_t* buffer, size_t len);
 };

@@ -15,13 +15,37 @@
     font-weight: 400;
 }
 
+.statusContainer {
+    position: absolute;
+    display: flex;
+    left: 0;
+    flex-direction: row;
+    .statusIndicator {
+        margin-left: 4px;
+    }
+}
+
+.stateContainer {
+    position: absolute;
+    display: flex;
+    right: 0;
+    flex-direction: row;
+    .statusIndicator {
+        margin-right: 4px;
+    }
+}
+
 .statusIndicator {
     padding: 4px 8px;
-    position: absolute;
-    left: 4px;
     border-radius: var(--radius);
     color: white;
     text-transform: capitalize;
+}
+
+.stateIndicator {
+    padding: 4px 8px;
+    border-radius: var(--radius);
+    color: var(--positive);
 }
 
 .connected {

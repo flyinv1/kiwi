@@ -19,7 +19,7 @@ void Controller::init()
     estimator.begin();
     initializeRunValve();
     initializeIgniter();
-    throttle_valve.begin(MOTOR_BAUD);
+    // throttle_valve.begin(MOTOR_BAUD);
 };
 
 void Controller::main()
@@ -129,7 +129,7 @@ void Controller::tareThrustCell()
 void Controller::setTargetsFrom(uint8_t* buffer, size_t len)
 {
     // Set target keyframes
-    size_t _targets = len > TARGETS ? TARGETS : len;
+    size_t _targets = len > TARGETS * 8 ? TARGETS * 8 : len;
     _num_targets = Target::decode(buffer, _targets, _target_buffer);
     _target = 0;
 }
@@ -158,6 +158,20 @@ size_t Controller::getTargetBuffer(uint8_t* _outputBuffer)
 {
     size_t _output_size = Target::encode(_target_buffer, _num_targets, _outputBuffer);
     return _output_size;
+}
+
+uint32_t Controller::setThrottlePosition(uint32_t position)
+{
+    uint32_t _clamped = clamp<uint32_t>(position, THROTTLE_POS_OPEN, THROTTLE_POS_CLOSED);
+    throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, _clamped, 1);
+    return _clamped;
+}
+
+uint32_t Controller::setEncoderValue(uint32_t value)
+{
+    uint32_t _clamped = clamp<uint32_t>(value, THROTTLE_POS_OPEN, THROTTLE_POS_CLOSED);
+    throttle_valve.SetEncM1(MOTOR_ADDRESS, _clamped);
+    return _clamped;
 }
 
 /**
@@ -239,7 +253,7 @@ void Controller::sm_firing(void)
             if (engine_mode == ENGINE_MODE_COLD) {
                 float _target_angle = float(_target_buffer[_target].value) / TARGET_SCALE;
                 uint32_t _target_position = clamp<uint32_t>(throttleAngleToEncoder(_target_angle), THROTTLE_POS_OPEN, THROTTLE_POS_CLOSED);
-                throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, _target_position, 1);
+                // throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, _target_position, 1);
             } else {
                 // float _target_pressure = float(_target_buffer[_target].value) / TARGET_SCALE;
             }
@@ -250,32 +264,36 @@ void Controller::sm_firing(void)
         }
     } else {
     }
+
+    if (engineClock.state_et() > _run_duration * 1000) {
+        setState(state_shutdown);
+    }
 }
 
 void Controller::sm_shutdown(void)
 {
-    if (abs(throttle_valve.ReadEncM1(MOTOR_ADDRESS) - THROTTLE_POS_SDN) > THROTTLE_EQ_DBAND) {
-        // Monitor upstream and downstream pressure
-        if (engineState.upstream_pressure < SAFE_PRESSURE_PSI && engineState.downstream_pressure < SAFE_PRESSURE_PSI) {
-            if (engine_mode == ENGINE_MODE_HOT && engineState.chamber_pressure < SAFE_PRESSURE_PSI) {
-                setState(state_safe);
-            } else {
-                setState(state_safe);
-            }
-        }
-    } else if (engineClock.state_et() > SHUTDOWN_MAXIMUM_PERIOD * 1000) {
-        setState(state_safe);
-    }
+    // if (abs(throttle_valve.ReadEncM1(MOTOR_ADDRESS) - THROTTLE_POS_SDN) > THROTTLE_EQ_DBAND) {
+    //     // Monitor upstream and downstream pressure
+    //     if (engineState.upstream_pressure < SAFE_PRESSURE_PSI && engineState.downstream_pressure < SAFE_PRESSURE_PSI) {
+    //         if (engine_mode == ENGINE_MODE_HOT && engineState.chamber_pressure < SAFE_PRESSURE_PSI) {
+    //             setState(state_safe);
+    //         } else {
+    //             setState(state_safe);
+    //         }
+    //     }
+    // } else if (engineClock.state_et() > SHUTDOWN_MAXIMUM_PERIOD * 1000) {
+    //     setState(state_safe);
+    // }
     // CHANGE
     setState(state_safe);
 }
 
 bool Controller::smt_safe_to_armed(void)
 {
-    throttle_valve.SetEncM1(MOTOR_ADDRESS, readLastEncoderPosition());
-    if (throttle_valve.ReadEncM1(MOTOR_ADDRESS) < THROTTLE_POS_CLOSED) {
-        // throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 0);
-    }
+    // throttle_valve.SetEncM1(MOTOR_ADDRESS, readLastEncoderPosition());
+    // if (throttle_valve.ReadEncM1(MOTOR_ADDRESS) < THROTTLE_POS_CLOSED) {
+    // throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 0);
+    // }
     return true;
 }
 
@@ -349,7 +367,7 @@ bool Controller::smt_preburn_to_shutdown(void)
 
 bool Controller::smt_shutdown_to_safe(void)
 {
-    writeEncoderPosition(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
+    // writeEncoderPosition(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
     // throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 1);
     return true;
 }
@@ -368,8 +386,9 @@ void Controller::readEngineState()
     engineState.thrust = estimator.getThrust();
     engineState.mass_flow = 0;
 
-    uint32_t _throttle_position = throttle_valve.ReadEncM1(MOTOR_ADDRESS);
-    engineState.throttle_position = throttleEncoderToAngle(_throttle_position);
+    // uint32_t _throttle_position = throttle_valve.ReadEncM1(MOTOR_ADDRESS);
+    // engineState.throttle_position = throttleEncoderToAngle(_throttle_position);
+    engineState.throttle_position = 0;
 
     engineState.mission_elapsed_time = float(engineClock.total_et());
     engineState.state_elapsed_time = float(engineClock.state_et());

@@ -6,9 +6,14 @@ import MapValueInput from '../../Components/Inputs/MapValueInput/MapValueInput';
 import { PrimaryButton, DestructiveButton } from '../../Components/Button/Button';
 import { MQTT } from 'mqttKeys.js'
 
+const clamp = (x, min, max) => Math.min(Math.max(x, min), max);
+
 const ConfigurationView = () => {
 
     const publish = usePublishJSON()
+
+    const [ throttlePosition, setThrottlePosition ] = useState(0);
+    const [ encoderValue, setEncoderValue ] = useState(0);
 
     const [ controlMode, setControlMode ] = useState(-1);
     const [ engineMode, setEngineMode ] = useState(-1);
@@ -23,19 +28,21 @@ const ConfigurationView = () => {
     const [ keyframeMap, setKeyFrameMap ] = useState(new Map());
 
     const clientStatus = useClientStatus();
+    const mcuStatus = useTopic(MQTT.use.connected);
+    const mcuState = useTopic(MQTT.use.state);
 
     const publishKeyFrameMap = () => {
         let _map = keyframeMap;
         let _arr = Array.from(_map);
-        console.log(_arr)
+        // console.log(_arr)
         // let _numArr = _arr.map(_subarr => [Number(_subarr[0]), Number(_subarr[1])]);
         let _numArr = _arr.reduce((_c, _subarr) => {
             _c.push(Number(_subarr[0]));
             _c.push(Number(_subarr[1]));
             return _c
         }, [])
-        console.log(_numArr);
-        publish(MQTT.run.keyframes, _numArr);
+        // console.log(_numArr);
+        publish(MQTT.set.targets, _numArr);
     }
 
     const updateKeyframeMapValue = (key, value) => {
@@ -53,6 +60,27 @@ const ConfigurationView = () => {
         }))
         setKeyFrameMap(_sortedMap);
     }
+
+    const mcuConnected = useMemo(() => {
+        let connected = false;
+        try {
+            connected = JSON.parse(mcuStatus.payload);
+        } catch(err) {}
+        return connected;
+    }, [mcuStatus])
+
+    useEffect(() => {
+        try {
+            // Reset the GUI state to standby after test completion
+            const state = JSON.parse(mcuState.payload);
+            if (isRunning && state == 1) {
+                setIsRunning(false);
+                setIsArmed(false);
+            }
+        } catch(err) {
+
+        }
+    }, [ mcuState ])
 
     useEffect(() => {
         publishKeyFrameMap();
@@ -85,21 +113,50 @@ const ConfigurationView = () => {
 
     useEffect(() => {
         const windowListener = (e) => {
-            const _published = publish(MQTT.run.stop);
+            const _published = publish(MQTT.cmd.stop);
+            window.removeEventListener('keypress', windowListener)
             setIsRunning(false);
         }
-        window.addEventListener('keypress', windowListener);
-        return(() => {
-            window.removeEventListener('keypress', windowListener)
-        })
+        if (isRunning) {
+            window.addEventListener('keypress', windowListener);
+        }
     }, [isRunning])
     
     return(
         <div className={styles.container}>
             <div className={styles.header}>
+                Subsystem Control
+            </div>
+            <ActivePanel className={styles.control} disabled={isArmed || clientStatus.status !== 'connected' || !mcuConnected}>
+                <Input label={'Throttle Position'}>
+                    <NumInput
+                        placeholder={0}
+                        value={throttlePosition}
+                        onChange={setThrottlePosition}
+                        onSubmit={value => {
+                            const _pos = clamp(value, 0, 660)
+                            setThrottlePosition(_pos);
+                            const _published = publish(MQTT.cmd.throttle.position, _pos);
+                        }}
+                    />
+                </Input>
+                <Input label={'Encoder Value'}>
+                    <NumInput
+                        placeholder={0}
+                        value={encoderValue}
+                        onChange={setEncoderValue}
+                        onSubmit={value => {
+                            const _val = clamp(value, 0, 660)
+                            setEncoderValue(_val);
+                            const _published = publish(MQTT.cmd.throttle.encoder, _val);
+                        }}
+                    />
+                </Input>
+            </ActivePanel>
+            <div className={styles.header}>
                 Test Configuration
             </div>
-            <ActivePanel className={styles.form} disabled={isArmed || clientStatus.status !== 'connected'}>
+            <ActivePanel className={styles.form} disabled={isArmed || clientStatus.status !== 'connected' || !mcuConnected}>
                 <Input label={'Engine Mode'}>
                     <DropdownSelect
                         options={["Cold", "Hot"]}
@@ -107,7 +164,7 @@ const ConfigurationView = () => {
                         placeholder={"Engine Mode"}
                         onSelect={(i) => {
                             setEngineMode(i);
-                            const _published = publish(MQTT.run.enginemode, i);
+                            const _published = publish(MQTT.set.enginemode, i);
                         }}
                         disabled={false}
                         className={styles.dropdown}
@@ -120,7 +177,7 @@ const ConfigurationView = () => {
                         placeholder={"Control Mode"}
                         onSelect={(i) => {
                             setControlMode(i);
-                            const _published = publish(MQTT.run.controlmode, i);
+                            const _published = publish(MQTT.set.controlmode, i);
                         }}
                         disabled={false}
                         className={styles.dropdown}
@@ -133,7 +190,7 @@ const ConfigurationView = () => {
                         onChange={setRunDuration}
                         onSubmit={value => {
                             setRunDuration(value);
-                            const _published = publish(MQTT.run.duration, Number(value));
+                            const _published = publish(MQTT.set.duration, Number(value));
                         }}
                     />
                 </Input>
@@ -145,7 +202,7 @@ const ConfigurationView = () => {
                             onChange={setIgniterVoltage}
                             onSubmit={value => {
                                 setIgniterVoltage(value);
-                                const _published = publish(MQTT.run.igniter.voltage, Number(value));
+                                const _published = publish(MQTT.set.igniter.voltage, Number(value));
                             }}
                         />
                     </Input>
@@ -156,7 +213,7 @@ const ConfigurationView = () => {
                             onChange={setPreIgnitionDuration}
                             onSubmit={value => {
                                 setPreIgnitionDuration(value);
-                                const _published = publish(MQTT.run.igniter.preburn, Number(value));
+                                const _published = publish(MQTT.set.igniter.preburn, Number(value));
                             }}
                         />
                     </Input>
@@ -167,7 +224,7 @@ const ConfigurationView = () => {
                             onChange={setIgnitionDuration}
                             onSubmit={value => {
                                 setIgnitionDuration(value);
-                                const _published = publish(MQTT.run.igniter.duration, Number(value));
+                                const _published = publish(MQTT.set.igniter.duration, Number(value));
                             }}
                         />
                     </Input>
@@ -189,7 +246,7 @@ const ConfigurationView = () => {
                         disabled={!validConfiguration}
                         loading={false}
                         onClick={() => {
-                            const _published = isArmed ? publish(MQTT.run.disarm) : publish(MQTT.run.arm)
+                            const _published = isArmed ? publish(MQTT.cmd.disarm) : publish(MQTT.cmd.arm)
                             setIsArmed(_armed => !_armed)
                         }}
                     >
@@ -203,7 +260,7 @@ const ConfigurationView = () => {
                     <DestructiveButton
                         disabled={!isArmed || isRunning}
                         onClick={() => {
-                            const _published = publish(MQTT.run.start);
+                            const _published = publish(MQTT.cmd.start);
                             setIsRunning(true);
                         }}
                     >

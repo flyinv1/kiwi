@@ -4,10 +4,11 @@ import App from './Views/App/App';
 import MQTTProvider from './Hooks/MQTTProvider';
 import './index.css';
 import './constants.css';
+import { MQTT } from './mqttKeys';
 
 const config = {
   host: '192.168.0.16',
-  port: 1883
+  port: 1883,
 }
 
 ReactDOM.render(

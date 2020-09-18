@@ -14,9 +14,9 @@ import { MQTT } from 'mqttKeys.js';
 
 const StreamView = () => {
 
-    const bufferTopic = useTopic(MQTT.telemetry.buffer);
+    const bufferTopic = useTopic(MQTT.use.data);
 
-    const armedTopic = useTopic(MQTT.run.arm);
+    const armedTopic = useTopic(MQTT.use.state);
 
     // const [ shouldAnimate, setShouldAnimate ] = useState(false);
 
@@ -59,10 +59,12 @@ const StreamView = () => {
                         newData={buffer.mass}
                     />
                 </div>
-                <PressureStream 
-                    animate={shouldAnimate}
-                    newData={buffer.pressure}
-                />
+                <div className={styles.right}>
+                    <PressureStream 
+                        animate={shouldAnimate}
+                        newData={buffer.pressure}
+                    />
+                </div>
             </div>
             <div className={styles.bottom}>
                 <VoltageStream 
