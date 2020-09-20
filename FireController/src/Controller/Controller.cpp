@@ -19,7 +19,7 @@ void Controller::init()
     estimator.begin();
     initializeRunValve();
     initializeIgniter();
-    // throttle_valve.begin(MOTOR_BAUD);
+    throttle_valve.begin(MOTOR_BAUD);
 };
 
 void Controller::main()
@@ -196,12 +196,12 @@ void Controller::sm_preburn(void)
 
     // Check preburn casualty response parameters
     if (engine_mode == ENGINE_MODE_COLD) {
-        if (engineState[upstream_pressure] > SAFE_PRESSURE_PSI || engineState[downstream_pressure] > SAFE_PRESSURE_PSI) {
+        if (engineState[data_upstream_pressure] > SAFE_PRESSURE_PSI || engineState[data_downstream_pressure] > SAFE_PRESSURE_PSI) {
             // should shutdown -> nitrous may be present in lines
         }
 
     } else {
-        if (engineState[downstream_pressure] > SAFE_PRESSURE_PSI) {
+        if (engineState[data_downstream_pressure] > SAFE_PRESSURE_PSI) {
             // should shutdown
         }
     }
@@ -253,7 +253,7 @@ void Controller::sm_firing(void)
             if (engine_mode == ENGINE_MODE_COLD) {
                 float _target_angle = float(_target_buffer[_target].value) / TARGET_SCALE;
                 uint32_t _target_position = clamp<uint32_t>(throttleAngleToEncoder(_target_angle), THROTTLE_POS_OPEN, THROTTLE_POS_CLOSED);
-                // throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, _target_position, 1);
+                throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, _target_position, 1);
             } else {
                 // float _target_pressure = float(_target_buffer[_target].value) / TARGET_SCALE;
             }
@@ -290,10 +290,10 @@ void Controller::sm_shutdown(void)
 
 bool Controller::smt_safe_to_armed(void)
 {
-    // throttle_valve.SetEncM1(MOTOR_ADDRESS, readLastEncoderPosition());
-    // if (throttle_valve.ReadEncM1(MOTOR_ADDRESS) < THROTTLE_POS_CLOSED) {
-    // throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 0);
-    // }
+    throttle_valve.SetEncM1(MOTOR_ADDRESS, readLastEncoderPosition());
+    if (throttle_valve.ReadEncM1(MOTOR_ADDRESS) < THROTTLE_POS_CLOSED) {
+        throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 0);
+    }
     return true;
 }
 
@@ -316,7 +316,7 @@ bool Controller::smt_preburn_to_igniting(void)
         - Command the throttle valve motor to the full open position
     */
     openRunValve();
-    // throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, THROTTLE_POS_OPEN, 0);
+    throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, THROTTLE_POS_OPEN, 0);
     return true;
 }
 
@@ -367,8 +367,8 @@ bool Controller::smt_preburn_to_shutdown(void)
 
 bool Controller::smt_shutdown_to_safe(void)
 {
-    // writeEncoderPosition(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
-    // throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 1);
+    writeEncoderPosition(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
+    throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 1);
     return true;
 }
 
@@ -379,20 +379,22 @@ bool Controller::smt_armed_to_safe(void)
 
 void Controller::readEngineState()
 {
-    engineState[chamber_pressure] = estimator.getChamberPressure();
-    engineState[downstream_pressure] = estimator.getDownstreamPressure();
-    engineState[upstream_pressure] = estimator.getUpstreamPressure();
-    engineState[propellant_mass] = estimator.getPropellantMass();
-    engineState[thrust] = estimator.getThrust();
-    engineState[mass_flow] = 0;
+    engineState[data_chamber_pressure] = estimator.getChamberPressure();
+    engineState[data_downstream_pressure] = estimator.getDownstreamPressure();
+    engineState[data_upstream_pressure] = estimator.getUpstreamPressure();
+    engineState[data_propellant_mass] = estimator.getPropellantMass();
+    engineState[data_thrust] = estimator.getThrust();
+    engineState[data_mass_flow] = 0;
+    engineState[data_igniter_voltage] = igniterOutput;
 
-    // uint32_t _throttle_position = throttle_valve.ReadEncM1(MOTOR_ADDRESS);
-    // engineState[throttle_position] = throttleEncoderToAngle(_throttle_position);
-    engineState[throttle_position] = 0;
+    uint32_t _throttle_position = throttle_valve.ReadEncM1(MOTOR_ADDRESS);
+    engineState[data_throttle_position] = throttleEncoderToAngle(_throttle_position);
 
-    engineState[mission_elapsed_time] = float(engineClock.total_et());
-    engineState[state_elapsed_time] = float(engineClock.state_et());
-    engineState[delta_time] = float(engineClock.total_dt());
+    engineState[data_throttle_position] = 0;
+
+    engineState[data_mission_elapsed_time] = float(engineClock.total_et());
+    engineState[data_state_elapsed_time] = float(engineClock.state_et());
+    engineState[data_delta_time] = float(engineClock.total_dt());
 }
 
 void Controller::getEngineDataBuffer(uint8_t* _output)
@@ -433,7 +435,7 @@ void Controller::initializeIgniter(void)
     pinMode(pin_igniter_ctr, OUTPUT);
     analogWriteResolution(IGNITER_DAC_RESOLUTION);
     analogWrite(pin_igniter_ctr, 0);
-    analogWrite(pin_igniter_sdn, HIGH);
+    analogWrite(pin_igniter_sdn, LOW);
     igniterOutput = 0;
     igniterActive = false;
 }

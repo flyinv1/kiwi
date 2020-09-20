@@ -12,7 +12,7 @@
 #define DISCONNECT_INTERVAL_MS  500
 #define PING_INTERVAL_MS        1000
 #define DAQ_INTERVAL_MS_STANDBY 500
-#define DAQ_INTERVAL_MS         5
+#define DAQ_INTERVAL_MS         50
 
 class Manager {
 
@@ -77,15 +77,16 @@ class Manager {
         SET_RUNDURATION = 7,
         SET_IGNITERPREBURN = 8,
         SET_IGNITERDURATION = 9,
-        SET_TARGETS = 10,
-        CALIBRATE_THRUST = 11,
-        CLOSE = 12,
-        THROTTLE_POSITION = 13,
-        THROTTLE_ENCODER = 14,
-        num_callbacks = 15,
-        STATE = 16,
-        DATA = 17,
-        LOG = 18
+        SET_IGNITERVOLTAGE = 10,
+        SET_TARGETS = 11,
+        CALIBRATE_THRUST = 12,
+        CLOSE = 13,
+        THROTTLE_POSITION = 14,
+        THROTTLE_ENCODER = 15,
+        num_callbacks = 16,
+        STATE = 17,
+        DATA = 18,
+        LOG = 19
     } TopicType;
 
     typedef void (Manager::*TopicCallback)(uint8_t id, uint8_t* buffer, size_t len);
@@ -104,6 +105,7 @@ class Manager {
         { SET_CONTROLMODE, &Manager::_on_set_controlmode },
         { SET_ENGINEMODE, &Manager::_on_set_enginemode },
         { SET_RUNDURATION, &Manager::_on_set_runduration },
+        { SET_IGNITERVOLTAGE, &Manager::_on_set_ignitervoltage },
         { SET_IGNITERPREBURN, &Manager::_on_set_igniterpreburn },
         { SET_IGNITERDURATION, &Manager::_on_set_igniterduration },
         { SET_TARGETS, &Manager::_on_set_targets },
@@ -178,6 +180,7 @@ private:
     void _on_set_runduration(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_set_igniterpreburn(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_set_igniterduration(uint8_t topic, uint8_t* buffer, size_t len);
+    void _on_set_ignitervoltage(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_set_targets(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_get_configuration(uint8_t topic, uint8_t* buffer, size_t len);
     void _on_set_throttle_position(uint8_t topic, uint8_t* buffer, size_t len);

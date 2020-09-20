@@ -114,6 +114,7 @@ const ConfigurationView = () => {
     useEffect(() => {
         const windowListener = (e) => {
             const _published = publish(MQTT.cmd.stop);
+            console.log('keypress -> published: ', _published)
             window.removeEventListener('keypress', windowListener)
         }
         if (isRunning) {

@@ -15,14 +15,15 @@ class Keys(Enum):
     RUNDURATION = 7
     IGNITERPREBURN = 8
     IGNITERDURATION = 9
-    TARGETS = 10
-    CALIBRATE_THRUST = 11
-    CLOSE = 12
-    THROTTLE_POSITION = 13
-    THROTTLE_ENCODER = 14
-    STATE = 16
-    DATA = 17
-    LOG = 18
+    IGNITERVOLTAGE = 10
+    TARGETS = 11
+    CALIBRATE_THRUST = 12
+    CLOSE = 13
+    THROTTLE_POSITION = 14
+    THROTTLE_ENCODER = 15
+    STATE = 17
+    DATA = 18
+    LOG = 19
 
 #
 # The keymap is configured to:
@@ -85,6 +86,12 @@ keymap = [
         "id": Keys.RUNDURATION,
         "type": int
     },
+        {
+        "emitter": "get/igniter/voltage",
+        "consumer": "set/igniter/voltage",
+        "id": Keys.IGNITERVOLTAGE,
+        "type": int
+    },
     {
         "emitter": "get/igniter/preburn",
         "consumer": "set/igniter/preburn",
@@ -145,5 +152,5 @@ def on_mqtt(topic, payload):
 def on_serial(id_, payload):
     for _dict in (x for x in keymap if x["id"].value == id_):
         return (payload, _dict["id"].value, _dict["type"], _dict["emitter"])
-    return (payload, id_, None)
+    return (payload, id_, None, None)
 

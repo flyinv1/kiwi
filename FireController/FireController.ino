@@ -3,7 +3,7 @@
 
 #include "src/Manager/Manager.h"
 
-#define __KIWI_USELIVE__ false
+#define __KIWI_LIVE__ true
 
 Manager manager = Manager();
 

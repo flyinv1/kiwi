@@ -137,16 +137,17 @@ public:
     } EngineMode;
 
     typedef enum {
-        chamber_pressure,
-        upstream_pressure,
-        downstream_pressure,
-        thrust,
-        propellant_mass,
-        mass_flow,
-        throttle_position,
-        mission_elapsed_time,
-        state_elapsed_time,
-        delta_time,
+        data_chamber_pressure,
+        data_upstream_pressure,
+        data_downstream_pressure,
+        data_thrust,
+        data_propellant_mass,
+        data_mass_flow,
+        data_throttle_position,
+        data_igniter_voltage,
+        data_mission_elapsed_time,
+        data_state_elapsed_time,
+        data_delta_time,
         engine_data_size
     } EngineData;
 

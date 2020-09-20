@@ -7,7 +7,7 @@ import './constants.css';
 import { MQTT } from './mqttKeys';
 
 const config = {
-  host: '192.168.0.16',
+  host: '192.168.1.16',
   port: 1883,
 }
 

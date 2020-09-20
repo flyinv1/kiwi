@@ -22,7 +22,7 @@ const StreamView = ({shouldAnimate = true}) => {
         let _databuffer
         try {
             _databuffer = JSON.parse(bufferTopic.payload);
-            console.log(_databuffer)
+            // console.log(_databuffer)
         } catch(err) {}
         return {
             chamber_pressure: _databuffer?.[0],

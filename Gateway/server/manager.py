@@ -17,7 +17,7 @@ class Manager:
         self.timeout_interval = 2
         self.timeout = 0
         self.dataBufferElapsed = 0
-        self.dataInterval = 0.05
+        self.dataInterval = 1
         self.controller_state = 0
         self.timeoutMax = 0.25
         self.timeoutElapsed = 0
@@ -138,6 +138,10 @@ class Manager:
         #   - no payload
         #   - Write out by id with no buffer
         elif _type == None:
+
+            if _id == interface.Keys.STOP.value:
+                print('should stop now')
+
             self.write_serial_packet(_id, [])
 
 
@@ -201,10 +205,11 @@ class Manager:
                     self.serial_buffer[self.serial_read_index] = _byte
                     if _byte == 0x00:
                         _packet = encoder.cobs_decode(self.serial_buffer[0:self.serial_read_index])
-                        if encoder.crc(_packet[1:]) == _packet[0]:
-                            _id = _packet[1]
-                            _msg = _packet[2:]
-                            self.on_packet(_id, _msg)
+                        if type(_packet) == bytearray:
+                            if encoder.crc(_packet[1:]) == _packet[0]:
+                                _id = _packet[1]
+                                _msg = _packet[2:]
+                                self.on_packet(_id, _msg)
                         self.serial_read_index = 0
                     else:
                         if self.serial_read_index + 1 > 255:

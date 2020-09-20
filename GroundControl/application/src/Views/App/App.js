@@ -8,8 +8,7 @@ import styles from './App.module.scss';
 import { MQTT } from 'mqttKeys.js'
 
 
-const App = () => {
-    
+const App = () => {    
     return(
         <div className={styles.appContainer}>
             <HeaderView/>

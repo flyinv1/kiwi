@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
-template <class type>
-static type clamp(type value, type min, type max)
+template <typename T>
+static T clamp(const T& x, const T& min, const T& max)
 {
-    return (value > min ? value : min) < max ? value : max;
+    return x <= min ? min : x >= max ? max : x;
 };

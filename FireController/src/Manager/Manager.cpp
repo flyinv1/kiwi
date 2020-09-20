@@ -127,7 +127,7 @@ void Manager::sm_running()
     // Update controller
     controller.main();
 
-    if (missionClock.total_et() - data_timer > DAQ_INTERVAL_MS) {
+    if (missionClock.total_et() - data_timer > DAQ_INTERVAL_MS * 1000) {
         controller.getEngineDataBuffer(engine_data_buffer);
         sendById(DATA, engine_data_buffer, Controller::engine_data_size * 4);
         data_timer = missionClock.total_et();
@@ -375,6 +375,19 @@ void Manager::_on_set_igniterduration(uint8_t topic, uint8_t* buffer, size_t len
         uint8_t _buff[4];
         encoder.castUInt(controller.getIgnitionDuration(), _buff);
         sendById(SET_IGNITERDURATION, _buff, 4);
+    }
+}
+
+void Manager::_on_set_ignitervoltage(uint8_t topic, uint8_t* buffer, size_t len)
+{
+    if (_configurable() && len == 4) {
+        uint32_t _voltage = encoder.readUInt(buffer, len);
+        controller.setIgnitionVoltage(_voltage);
+        sendById(SET_IGNITERVOLTAGE, buffer, len);
+    } else {
+        uint8_t _buff[4];
+        encoder.castUInt(controller.getIgnitionVoltage(), _buff);
+        sendById(SET_IGNITERPREBURN, _buff, 4);
     }
 }
 
