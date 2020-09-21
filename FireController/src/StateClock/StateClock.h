@@ -45,9 +45,19 @@ public:
         return _total_clock;
     }
 
+    long total_et_ms()
+    {
+        return _total_clock / 1000;
+    }
+
     long state_et()
     {
         return _state_clock;
+    }
+
+    long state_et_ms()
+    {
+        return _state_clock / 1000;
     }
 
     float total_dt()
@@ -55,9 +65,14 @@ public:
         return _total_dt;
     }
 
-    float state_dt()
+    float total_dt_ms()
     {
-        return _state_dt;
+        return _total_dt / 1000;
+    }
+
+    float state_dt_ms()
+    {
+        return _state_dt / 1000;
     }
 
 private:

@@ -135,11 +135,11 @@ keymap = [
         "type": int
     },
     {
-        "emitter": None,
+        "emitter": "get/throttle/encoder",
         "consumer": "cmd/throttle/encoder",
         "id": Keys.THROTTLE_ENCODER,
-        "type": None
-    }
+        "type": int
+    },
 ]
 
 

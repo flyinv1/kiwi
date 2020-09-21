@@ -102,10 +102,10 @@ void Manager::sm_standby()
     // Update controller
     controller.main();
 
-    if (missionClock.total_et() - data_timer > DAQ_INTERVAL_MS_STANDBY * 1000) {
+    if (missionClock.total_et_ms() - data_timer > DAQ_INTERVAL_MS_STANDBY) {
         controller.getEngineDataBuffer(engine_data_buffer);
         sendById(DATA, engine_data_buffer, Controller::engine_data_size * 4);
-        data_timer = missionClock.total_et();
+        data_timer = missionClock.total_et_ms();
     }
 }
 
@@ -115,10 +115,10 @@ void Manager::sm_armed()
     controller.main();
 
     // Transmit data
-    if (missionClock.total_et() - data_timer > DAQ_INTERVAL_MS * 1000) {
+    if (missionClock.total_et_ms() - data_timer > DAQ_INTERVAL_MS) {
         controller.getEngineDataBuffer(engine_data_buffer);
         sendById(DATA, engine_data_buffer, Controller::engine_data_size * 4);
-        data_timer = missionClock.total_et();
+        data_timer = missionClock.total_et_ms();
     }
 }
 
@@ -127,10 +127,10 @@ void Manager::sm_running()
     // Update controller
     controller.main();
 
-    if (missionClock.total_et() - data_timer > DAQ_INTERVAL_MS * 1000) {
+    if (missionClock.total_et_ms() - data_timer > DAQ_INTERVAL_MS) {
         controller.getEngineDataBuffer(engine_data_buffer);
         sendById(DATA, engine_data_buffer, Controller::engine_data_size * 4);
-        data_timer = missionClock.total_et();
+        data_timer = missionClock.total_et_ms();
     }
 
     // Check for running exit condition
@@ -413,7 +413,10 @@ void Manager::_on_set_throttle_position(uint8_t topic, uint8_t* buffer, size_t l
 {
     if (_configurable()) {
         uint32_t _motorPosition = encoder.readUInt(buffer, len);
-        // controller.setThrottlePosition(_motorPosition);
+        uint32_t _clampedPos = controller.setThrottlePosition(_motorPosition);
+        uint8_t _positionBuff[4] = {};
+        encoder.castUInt(_clampedPos, _positionBuff);
+        sendById(THROTTLE_POSITION, _positionBuff, 4);
     }
 }
 
@@ -421,7 +424,10 @@ void Manager::_on_set_encoder_value(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable()) {
         uint32_t _encoderValue = encoder.readUInt(buffer, len);
-        // controller.setEncoderValue(_encoderValue);
+        uint32_t _clampedPos = controller.setEncoderValue(_encoderValue);
+        uint8_t _positionBuff[4] = {};
+        encoder.castUInt(_clampedPos, _positionBuff);
+        sendById(THROTTLE_ENCODER, _positionBuff, 4);
     }
 }
 

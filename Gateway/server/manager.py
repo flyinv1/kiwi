@@ -4,12 +4,28 @@ from serial import Serial
 from . import encoder
 from . import interface
 import json
-from time import monotonic
+from time import monotonic, strftime
 import struct
+import os
+import csv
+
+dataStruct = [
+    "chamberPressure",
+    "upstreamPressure",
+    "downstreamPressure",
+    "thrust",
+    "propellantMass",
+    "massFlow",
+    "throttlePosition",
+    "igniterVoltage",
+    "missionTime",
+    "managerStateTime",
+    "delta",
+]
 
 class Manager:
     
-    def __init__(self):
+    def __init__(self, directory_path):
         self.serialport = None
         self.controller_connected = False
         self.serial_buffer = bytearray(256)
@@ -21,6 +37,14 @@ class Manager:
         self.controller_state = 0
         self.timeoutMax = 0.25
         self.timeoutElapsed = 0
+        self.runData = []
+        self.directory_path = directory_path
+
+        # Check that the directory exists at path or create it
+        if not os.path.exists(directory_path):
+            os.mkdir(directory_path)
+
+        self.write_data_out()
 
 
     def main(self):
@@ -68,8 +92,11 @@ class Manager:
         #   - Publish updated controller state
         elif _id == interface.Keys.STATE.value:
             _newstate = int.from_bytes(_payload, byteorder='little')
-            self.controller_state = _newstate
             self.client.publish(_emitter, json.dumps(_newstate))
+            if _newstate == 1 and self.controller_state == 3:
+                self.write_data_out()
+            self.controller_state = _newstate
+
 
         # DATA packet
         #   - Log data to csv
@@ -84,7 +111,7 @@ class Manager:
 
             if self.controller_state == 3:
                 # Save data to csv ?
-                None
+                self.runData.append(_data)
 
             if _time - self.dataBufferElapsed > self.dataInterval:
                 self.client.publish(_emitter, json.dumps(_data))
@@ -227,7 +254,23 @@ class Manager:
         _out_buffer = encoder.cobs_encode(_buffer)
         self.serialport.write(_out_buffer)
         self.serialport.write(bytearray([0x00]))
-        
+
+
+    def write_data_out(self):
+        # Get current path
+        try:
+            _data_files = [file for file in os.listdir(self.directory_path) if os.path.isfile(os.path.join(self.directory_path, file))]
+            _fname = "run_data_" + str(len(_data_files)) + "_" + strftime("%H_%M")
+            print("Saving run data to: \n", self.directory_path, "\nas ", _fname)
+            _fpath = os.path.join(self.directory_path, _fname)
+            with open(_fpath, 'w', newline='') as csvfile:
+                csvwriter = csv.writer(csvfile, delimiter=' ', quotechar='|')
+                csvwriter.writerow(dataStruct)
+                for row in self.runData:
+                    csvwriter.writerow(row)
+        except Exception as err:
+            print("Exception raised while saving run data!")
+            print(err)
     
 
     

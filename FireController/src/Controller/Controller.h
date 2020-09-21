@@ -56,7 +56,7 @@
 */
 #define THROTTLE_ACC     4000
 #define THROTTLE_VEL     2000
-#define THROTTLE_VEL_SDN 220
+#define THROTTLE_VEL_SDN 150
 
 /**
  *  Define maximum allowable targets, no engine test is planned to allow a large number of target setpoints
@@ -222,7 +222,8 @@ private:
         Igniter is controlled by pwm digital signal
     */
     bool igniterActive = false;
-    uint8_t igniterOutput = 0;
+    uint32_t igniterOutputVoltage = 0;
+    uint8_t igniterOutputSignal = 0;
 
     /*
         RoboClaw provides a serial interface to the standalone RoboClaw 2x7A motor controller

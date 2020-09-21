@@ -10,8 +10,9 @@ if __name__ == '__main__':
     host = os.environ.get('host')       # MQTT host address
     port = int(os.environ.get('port'))  # MQTT host port
     path = os.environ.get('path')       # Device path name
+    output_path = os.environ.get('output_path')
 
-    manager = Manager()
+    manager = Manager(output_path)
     manager.connect_client(host, port)
     manager.connect_serial(path)
 

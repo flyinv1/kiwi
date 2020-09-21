@@ -63,6 +63,7 @@ void Controller::fire()
 
 void Controller::abort()
 {
+    // All active states include a state -> shutdown transition
     setState(state_shutdown);
 }
 
@@ -171,6 +172,7 @@ uint32_t Controller::setEncoderValue(uint32_t value)
 {
     uint32_t _clamped = clamp<uint32_t>(value, THROTTLE_POS_OPEN, THROTTLE_POS_CLOSED);
     throttle_valve.SetEncM1(MOTOR_ADDRESS, _clamped);
+    writeEncoderPosition(_clamped);
     return _clamped;
 }
 
@@ -180,13 +182,11 @@ uint32_t Controller::setEncoderValue(uint32_t value)
 
 void Controller::sm_safe(void)
 {
-    // Update estimator and populate state
     readEngineState();
 }
 
 void Controller::sm_armed(void)
 {
-    // Update estimator and populate state
     readEngineState();
 }
 
@@ -206,7 +206,7 @@ void Controller::sm_preburn(void)
         }
     }
 
-    if (engineClock.state_et() > _ignition_preburn * 1000) {
+    if (engineClock.state_et_ms() > _ignition_preburn) {
         setState(state_igniting);
     }
 }
@@ -220,7 +220,7 @@ void Controller::sm_igniting(void)
     } else {
     }
 
-    if (engineClock.state_et() > _ignition_duration * 1000) {
+    if (engineClock.state_et_ms() > _ignition_duration) {
         if (engine_mode == ENGINE_MODE_HOT) {
             // WARN - WIP
             // if (engineState.chamber_pressure < IGNITION_PRESSURE_THRESHOLD) {
@@ -248,14 +248,16 @@ void Controller::sm_firing(void)
     /*
         Execute target transition
     */
-    if (targetClock.total_et() > _target_buffer[_target].time * 1000) {
+    if (targetClock.total_et_ms() > _target_buffer[_target].time) {
         if (_target <= _num_targets) {
             if (engine_mode == ENGINE_MODE_COLD) {
                 float _target_angle = float(_target_buffer[_target].value) / TARGET_SCALE;
                 uint32_t _target_position = clamp<uint32_t>(throttleAngleToEncoder(_target_angle), THROTTLE_POS_OPEN, THROTTLE_POS_CLOSED);
                 throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, _target_position, 1);
             } else {
-                // float _target_pressure = float(_target_buffer[_target].value) / TARGET_SCALE;
+                float _target_pressure = float(_target_buffer[_target].value) / TARGET_SCALE;
+                // Change for closed loop control !
+                throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, 0, 1);
             }
             _target++;
             targetClock.advance();
@@ -265,35 +267,43 @@ void Controller::sm_firing(void)
     } else {
     }
 
-    if (engineClock.state_et() > _run_duration * 1000) {
+    if (engineClock.state_et_ms() > _run_duration) {
         setState(state_shutdown);
     }
 }
 
 void Controller::sm_shutdown(void)
 {
-    // if (abs(throttle_valve.ReadEncM1(MOTOR_ADDRESS) - THROTTLE_POS_SDN) > THROTTLE_EQ_DBAND) {
-    //     // Monitor upstream and downstream pressure
-    //     if (engineState.upstream_pressure < SAFE_PRESSURE_PSI && engineState.downstream_pressure < SAFE_PRESSURE_PSI) {
-    //         if (engine_mode == ENGINE_MODE_HOT && engineState.chamber_pressure < SAFE_PRESSURE_PSI) {
-    //             setState(state_safe);
-    //         } else {
-    //             setState(state_safe);
-    //         }
-    //     }
-    // } else if (engineClock.state_et() > SHUTDOWN_MAXIMUM_PERIOD * 1000) {
-    //     setState(state_safe);
-    // }
+
+    readEngineState();
+
+    if (abs(throttle_valve.ReadEncM1(MOTOR_ADDRESS) - THROTTLE_POS_CLOSED) > THROTTLE_EQ_DBAND) {
+        throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 1);
+        // Monitor upstream and downstream pressure
+        // if (engineState.upstream_pressure < SAFE_PRESSURE_PSI && engineState.downstream_pressure < SAFE_PRESSURE_PSI) {
+        //     if (engine_mode == ENGINE_MODE_HOT && engineState.chamber_pressure < SAFE_PRESSURE_PSI) {
+        //         setState(state_safe);
+        //     } else {
+        //         setState(state_safe);
+        //     }
+        // }
+    } else {
+        setState(state_safe);
+    }
     // CHANGE
-    setState(state_safe);
 }
 
 bool Controller::smt_safe_to_armed(void)
 {
-    throttle_valve.SetEncM1(MOTOR_ADDRESS, readLastEncoderPosition());
-    if (throttle_valve.ReadEncM1(MOTOR_ADDRESS) < THROTTLE_POS_CLOSED) {
-        throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 0);
-    }
+    /*
+        - Start of firing procedure
+        - The user must verify the throttle valve is in the open position and calibrate if necessary
+        - Open: ENC = 0
+        - Closed: ENC = 660
+    */
+    uint32_t _saved_position = readLastEncoderPosition();
+    throttle_valve.SetEncM1(MOTOR_ADDRESS, _saved_position);
+    throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, THROTTLE_POS_CLOSED, 1);
     return true;
 }
 
@@ -326,6 +336,7 @@ bool Controller::smt_igniting_to_firing(void)
         - Start the target clock
         - Shutdown the igniter
     */
+    _target = 0;
     targetClock.start();
     setIgniterOutputVoltage(0);
     shutdownIgniter();
@@ -338,7 +349,7 @@ bool Controller::smt_firing_to_shutdown(void)
         - Close the run valve
         - The motor position is handled by the shutdown loop
     */
-    _target = 0;
+    throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 1);
     closeRunValve();
     return true;
 }
@@ -349,6 +360,7 @@ bool Controller::smt_igniting_to_shutdown(void)
         - Shutdown the igniter
         - Close the nitrous run valve
     */
+    throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 1);
     setIgniterOutputVoltage(0);
     shutdownIgniter();
     closeRunValve();
@@ -360,6 +372,7 @@ bool Controller::smt_preburn_to_shutdown(void)
     /*
         - Shutdown the igniter
     */
+    throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 1);
     setIgniterOutputVoltage(0);
     shutdownIgniter();
     return true;
@@ -367,13 +380,17 @@ bool Controller::smt_preburn_to_shutdown(void)
 
 bool Controller::smt_shutdown_to_safe(void)
 {
+    /*
+        - End of firing sequence
+        - The motor is moved back to the closed position and the encoder value is recorder
+    */
     writeEncoderPosition(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
-    throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 1);
     return true;
 }
 
 bool Controller::smt_armed_to_safe(void)
 {
+    writeEncoderPosition(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
     return true;
 }
 
@@ -385,7 +402,7 @@ void Controller::readEngineState()
     engineState[data_propellant_mass] = estimator.getPropellantMass();
     engineState[data_thrust] = estimator.getThrust();
     engineState[data_mass_flow] = 0;
-    engineState[data_igniter_voltage] = igniterOutput;
+    engineState[data_igniter_voltage] = igniterOutputVoltage;
 
     uint32_t _throttle_position = throttle_valve.ReadEncM1(MOTOR_ADDRESS);
     engineState[data_throttle_position] = throttleEncoderToAngle(_throttle_position);
@@ -436,26 +453,29 @@ void Controller::initializeIgniter(void)
     analogWriteResolution(IGNITER_DAC_RESOLUTION);
     analogWrite(pin_igniter_ctr, 0);
     analogWrite(pin_igniter_sdn, LOW);
-    igniterOutput = 0;
+    igniterOutputSignal = 0;
+    igniterOutputVoltage = 0;
     igniterActive = false;
 }
 
 void Controller::setIgniterOutputVoltage(uint32_t _voltage)
 {
     // Convert voltage to clamped 8 bit value
+    igniterOutputVoltage = _voltage;
     uint8_t _input = clamp<uint8_t>(uint8_t(ceil((_voltage - IGNITER_OFFSET) / IGNITER_SCALE)), 0, MAXIMUM_IGNITION_VOLTAGE);
-    igniterOutput = _input;
+    igniterOutputSignal = _input;
     analogWrite(pin_igniter_ctr, _input);
 }
 
 void Controller::shutdownIgniter(void)
 {
-    digitalWrite(pin_igniter_sdn, HIGH);
+    igniterActive = false;
+    digitalWrite(pin_igniter_sdn, LOW);
 }
 
 void Controller::activateIgniter(void)
 {
-    igniterActive = false;
+    igniterActive = true;
     digitalWrite(pin_igniter_sdn, LOW);
 }
 
