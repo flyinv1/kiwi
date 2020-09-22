@@ -158,6 +158,7 @@ void Manager::sm_error()
 bool Manager::smt_disconnected_to_standby()
 {
     led.interval = LED::STANDBY;
+    controller.tareThrustCell();
     return true;
 }
 
@@ -395,11 +396,11 @@ void Manager::_on_set_targets(uint8_t topic, uint8_t* buffer, size_t len)
 {
     if (_configurable()) {
         controller.setTargetsFrom(buffer, len);
+        size_t _targetBufferSize = controller.getTargetCount() * 8;
+        uint8_t _targetBuffer[_targetBufferSize] = {};
+        controller.getTargetBuffer(_targetBuffer);
+        sendById(SET_TARGETS, _targetBuffer, _targetBufferSize);
     }
-    size_t _targetBufferSize = controller.getTargetCount() * 8;
-    uint8_t _targetBuffer[_targetBufferSize] = {};
-    controller.getTargetBuffer(_targetBuffer);
-    sendById(SET_TARGETS, _targetBuffer, _targetBufferSize);
 }
 
 void Manager::_on_calibrate_thrust(uint8_t topic, uint8_t* buffer, size_t len)

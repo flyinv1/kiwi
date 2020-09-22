@@ -74,42 +74,42 @@ Controller::StateType Controller::getState()
 
 void Controller::setRunDuration(uint32_t duration)
 {
-    _run_duration = clamp<uint32_t>(duration, 0, MAXIMUM_RUN_DURATION_MS);
+    run_duration = clamp<uint32_t>(duration, 0, MAXIMUM_RUN_DURATION_MS);
 }
 
 uint32_t Controller::getRunDuration()
 {
-    return _run_duration;
+    return run_duration;
 }
 
 void Controller::setIgnitionDuration(uint32_t duration)
 {
-    _ignition_duration = clamp<uint32_t>(duration, 0, MAXIMUM_IGNITION_DURATION_MS);
+    ignition_duration = clamp<uint32_t>(duration, 0, MAXIMUM_IGNITION_DURATION_MS);
 }
 
 uint32_t Controller::getIgnitionDuration()
 {
-    return _ignition_duration;
+    return ignition_duration;
 }
 
 void Controller::setIgnitionPreburn(uint32_t duration)
 {
-    _ignition_preburn = clamp<uint32_t>(duration, 0, MAXIMUM_IGNITION_PREBURN_MS);
+    ignition_preburn = clamp<uint32_t>(duration, 0, MAXIMUM_IGNITION_PREBURN_MS);
 }
 
 uint32_t Controller::getIgnitionPreburn()
 {
-    return _ignition_preburn;
+    return ignition_preburn;
 }
 
 void Controller::setIgnitionVoltage(uint32_t voltage)
 {
-    _ignition_voltage = clamp<uint32_t>(voltage, 0, MAXIMUM_IGNITION_VOLTAGE);
+    ignition_voltage = clamp<uint32_t>(voltage, 0, MAXIMUM_IGNITION_VOLTAGE);
 }
 
 uint32_t Controller::getIgnitionVoltage()
 {
-    return _ignition_voltage;
+    return ignition_voltage;
 }
 
 Controller::ControlMode Controller::getControlMode()
@@ -130,34 +130,34 @@ void Controller::tareThrustCell()
 void Controller::setTargetsFrom(uint8_t* buffer, size_t len)
 {
     // Set target keyframes
-    size_t _targets = len > TARGETS * 8 ? TARGETS * 8 : len;
-    _num_targets = Target::decode(buffer, _targets, _target_buffer);
-    _target = 0;
+    size_t targets = len > TARGETS * 8 ? TARGETS * 8 : len;
+    num_targets = Target::decode(buffer, targets, target_buffer);
+    target_index = 0;
 }
 
 void Controller::setTargets(Target* _targets, size_t len)
 {
     for (int i = 0; i < len; i++) {
-        _target_buffer[i] = _targets[i];
+        target_buffer[i] = _targets[i];
     }
-    _num_targets = len;
+    num_targets = len;
 }
 
 int Controller::getTargetCount()
 {
-    return _num_targets;
+    return num_targets;
 }
 
 size_t Controller::getTargets(Target* _outputBuffer, size_t maximum = TARGETS)
 {
-    for (int i = 0; i < _num_targets; i++) {
-        _outputBuffer[i] = _target_buffer[i];
+    for (int i = 0; i < num_targets; i++) {
+        _outputBuffer[i] = target_buffer[i];
     }
 }
 
 size_t Controller::getTargetBuffer(uint8_t* _outputBuffer)
 {
-    size_t _output_size = Target::encode(_target_buffer, _num_targets, _outputBuffer);
+    size_t _output_size = Target::encode(target_buffer, num_targets, _outputBuffer);
     return _output_size;
 }
 
@@ -206,7 +206,7 @@ void Controller::sm_preburn(void)
         }
     }
 
-    if (engineClock.state_et_ms() > _ignition_preburn) {
+    if (engineClock.state_et_ms() > ignition_preburn) {
         setState(state_igniting);
     }
 }
@@ -220,7 +220,7 @@ void Controller::sm_igniting(void)
     } else {
     }
 
-    if (engineClock.state_et_ms() > _ignition_duration) {
+    if (engineClock.state_et_ms() > ignition_duration) {
         if (engine_mode == ENGINE_MODE_HOT) {
             // WARN - WIP
             // if (engineState.chamber_pressure < IGNITION_PRESSURE_THRESHOLD) {
@@ -241,25 +241,37 @@ void Controller::sm_firing(void)
 
     readEngineState();
 
-    if (engine_mode == ENGINE_MODE_HOT) {
+    if (control_mode == CONTROL_MODE_CLOSED) {
+        if (target_index < num_targets) {
+            if (engine_mode == ENGINE_MODE_HOT) {
+                /*
+                    Engine is hot
+                    - Perform closed loop pressure control
+                */
+                float _pressure_target = float(target_buffer[target_index].value) / TARGET_SCALE;
+                float _current_pressure = estimator.getChamberPressure();
+                // PID HERE
+            } else {
+                /*
+                    Engine is cold
+                    - No closed loop control for this mode
+                */
+            }
+        }
         // perform closed loop control
     }
 
     /*
         Execute target transition
     */
-    if (targetClock.total_et_ms() > _target_buffer[_target].time) {
-        if (_target <= _num_targets) {
-            if (engine_mode == ENGINE_MODE_COLD) {
-                float _target_angle = float(_target_buffer[_target].value) / TARGET_SCALE;
+    if (targetClock.total_et_ms() > target_buffer[target_index].time) {
+        if (target_index < num_targets) {
+            if (control_mode == CONTROL_MODE_OPEN) {
+                float _target_angle = float(target_buffer[target_index].value) / TARGET_SCALE;
                 uint32_t _target_position = clamp<uint32_t>(throttleAngleToEncoder(_target_angle), THROTTLE_POS_OPEN, THROTTLE_POS_CLOSED);
                 throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, _target_position, 1);
-            } else {
-                float _target_pressure = float(_target_buffer[_target].value) / TARGET_SCALE;
-                // Change for closed loop control !
-                throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, 0, 1);
             }
-            _target++;
+            target_index++;
             targetClock.advance();
         } else {
             setState(state_shutdown);
@@ -267,7 +279,7 @@ void Controller::sm_firing(void)
     } else {
     }
 
-    if (engineClock.state_et_ms() > _run_duration) {
+    if (engineClock.state_et_ms() > run_duration) {
         setState(state_shutdown);
     }
 }
@@ -314,7 +326,7 @@ bool Controller::smt_armed_to_preburn(void)
     */
     if (engine_mode == ENGINE_MODE_HOT) {
         activateIgniter();
-        setIgniterOutputVoltage(_ignition_voltage);
+        setIgniterOutputVoltage(ignition_voltage);
     }
     return true;
 }
@@ -336,7 +348,7 @@ bool Controller::smt_igniting_to_firing(void)
         - Start the target clock
         - Shutdown the igniter
     */
-    _target = 0;
+    target_index = 0;
     targetClock.start();
     setIgniterOutputVoltage(0);
     shutdownIgniter();
@@ -385,12 +397,14 @@ bool Controller::smt_shutdown_to_safe(void)
         - The motor is moved back to the closed position and the encoder value is recorder
     */
     writeEncoderPosition(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
+    // engineClock.start();
     return true;
 }
 
 bool Controller::smt_armed_to_safe(void)
 {
     writeEncoderPosition(throttle_valve.ReadEncM1(MOTOR_ADDRESS));
+    // engineClock.start();
     return true;
 }
 
@@ -406,8 +420,6 @@ void Controller::readEngineState()
 
     uint32_t _throttle_position = throttle_valve.ReadEncM1(MOTOR_ADDRESS);
     engineState[data_throttle_position] = throttleEncoderToAngle(_throttle_position);
-
-    engineState[data_throttle_position] = 0;
 
     engineState[data_mission_elapsed_time] = float(engineClock.total_et());
     engineState[data_state_elapsed_time] = float(engineClock.state_et());
@@ -460,9 +472,12 @@ void Controller::initializeIgniter(void)
 
 void Controller::setIgniterOutputVoltage(uint32_t _voltage)
 {
-    // Convert voltage to clamped 8 bit value
+    /*
+        Convert voltage to clamped 8 bit value
+        0-256 byte signal corresponds to 0-670V output
+    */
     igniterOutputVoltage = _voltage;
-    uint8_t _input = clamp<uint8_t>(uint8_t(ceil((_voltage - IGNITER_OFFSET) / IGNITER_SCALE)), 0, MAXIMUM_IGNITION_VOLTAGE);
+    uint8_t _input = uint8_t(ceil((_voltage - IGNITER_OFFSET) / IGNITER_SCALE));
     igniterOutputSignal = _input;
     analogWrite(pin_igniter_ctr, _input);
 }
@@ -499,6 +514,8 @@ Controller::ControlMode Controller::setControlMode(Controller::ControlMode _mode
 Controller::EngineMode Controller::setEngineMode(Controller::EngineMode _mode)
 {
     engine_mode = _mode;
+    Estimator::PressureMode _pressure_mode = (_mode == Controller::ENGINE_MODE_HOT) ? Estimator::CHAMBER : Estimator::THROTTLE;
+    estimator.setPressureMode(_pressure_mode);
     return engine_mode;
 }
 

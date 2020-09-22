@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo, useReducer } from 'react';
 import GLPlot from '../../Components/GLPlot/GLPlot';
 import { useTopic, useClientStatus } from '../../Hooks/MQTTProvider';
 import styles from './StreamView.module.scss';
@@ -18,10 +18,17 @@ const StreamView = ({shouldAnimate = true}) => {
 
     // const [ shouldAnimate, setShouldAnimate ] = useState(false);
 
+    const [, forceUpdate] = useReducer(x => x + 1, 0);
+
     const buffer = useMemo(() => {
         let _databuffer
         try {
             _databuffer = JSON.parse(bufferTopic.payload);
+            _databuffer = _databuffer?.map(value => {
+                // Please just rerender everytime there is data jeez
+                const _l = value + Math.random() / 1000000;
+                return _l
+            })
             // console.log(_databuffer)
         } catch(err) {}
         return {

@@ -23,6 +23,7 @@ dataStruct = [
     "delta",
 ]
 
+
 class Manager:
     
     def __init__(self, directory_path):
@@ -33,7 +34,7 @@ class Manager:
         self.timeout_interval = 2
         self.timeout = 0
         self.dataBufferElapsed = 0
-        self.dataInterval = 1
+        self.dataInterval = 0.1
         self.controller_state = 0
         self.timeoutMax = 0.25
         self.timeoutElapsed = 0
@@ -43,8 +44,6 @@ class Manager:
         # Check that the directory exists at path or create it
         if not os.path.exists(directory_path):
             os.mkdir(directory_path)
-
-        self.write_data_out()
 
 
     def main(self):
@@ -95,6 +94,7 @@ class Manager:
             self.client.publish(_emitter, json.dumps(_newstate))
             if _newstate == 1 and self.controller_state == 3:
                 self.write_data_out()
+                self.runData = []
             self.controller_state = _newstate
 
 
@@ -106,7 +106,7 @@ class Manager:
             for i in range(int(len(_payload) / 4)):
                 _val = struct.unpack('f', bytearray(_payload[4*i:4*i+4]))
                 _data.append(_val[0])
-
+            
             # print(_data)
 
             if self.controller_state == 3:
@@ -121,7 +121,7 @@ class Manager:
         #   - Forward the updated targets to client
         elif _id == interface.Keys.TARGETS.value:
             _targets = []
-            for i in range(int(len(_payload) / 4)):
+            for i in range(int(len(_payload) / 4)):                    
                 _targets.append(int.from_bytes(_payload[i:i+4], byteorder='little', signed=False))
             self.client.publish(_emitter, json.dumps(_targets))
 
@@ -150,7 +150,10 @@ class Manager:
             # assume list of 32 bit integers pairs
             _buffer = bytearray(len(_payload) * 4)
             for i, _int in enumerate(_payload):
-                br = bytearray(_int.to_bytes(4, byteorder='little', signed=False))
+                _scaled = _int
+                if i % 2 == 1:
+                    _scaled = _int * 100
+                br = bytearray(_scaled.to_bytes(4, byteorder='little', signed=False))
                 _buffer[ i * 4:(i * 4) + 4 ] = br
             self.write_serial_packet(_id, _buffer)
 
@@ -227,7 +230,7 @@ class Manager:
     def read_serial(self):
         if self.serialport:
             while self.serialport.inWaiting() > 0:
-                _bytes = self.serialport.read(8)
+                _bytes = self.serialport.read(16)
                 for _byte in _bytes:
                     self.serial_buffer[self.serial_read_index] = _byte
                     if _byte == 0x00:
@@ -260,11 +263,11 @@ class Manager:
         # Get current path
         try:
             _data_files = [file for file in os.listdir(self.directory_path) if os.path.isfile(os.path.join(self.directory_path, file))]
-            _fname = "run_data_" + str(len(_data_files)) + "_" + strftime("%H_%M")
+            _fname = "run_data_" + str(len(_data_files)) + "_" + strftime("%H_%M") + ".csv"
             print("Saving run data to: \n", self.directory_path, "\nas ", _fname)
             _fpath = os.path.join(self.directory_path, _fname)
             with open(_fpath, 'w', newline='') as csvfile:
-                csvwriter = csv.writer(csvfile, delimiter=' ', quotechar='|')
+                csvwriter = csv.writer(csvfile, delimiter=',', quotechar='|')
                 csvwriter.writerow(dataStruct)
                 for row in self.runData:
                     csvwriter.writerow(row)

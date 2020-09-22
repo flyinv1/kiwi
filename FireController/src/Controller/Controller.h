@@ -148,6 +148,7 @@ public:
         data_mission_elapsed_time,
         data_state_elapsed_time,
         data_delta_time,
+        data_current_target,
         engine_data_size
     } EngineData;
 
@@ -209,9 +210,9 @@ private:
         }
         Where `time` describes the time (in ms) at which to transition to the next value. The target value depends on the current engine mode, hot will use chamber pressure, while cold will set throttle position.
     */
-    Target _target_buffer[TARGETS];
-    size_t _num_targets = 0;
-    uint32_t _target;
+    Target target_buffer[TARGETS];
+    size_t num_targets = 0;
+    uint32_t target_index;
 
     /*
         Run valve is controlled by digital HIGH / LOW
@@ -248,21 +249,21 @@ private:
     /*
         Run duration defines the maximum duration of the test sequence after T0
     */
-    uint32_t _run_duration = DEFAULT_RUN_DURATION_MS;
+    uint32_t run_duration = DEFAULT_RUN_DURATION_MS;
 
     /* 
         Ignition preburn defines the time in ms the igniter burns before starting nitrous flow.
         This allows pyrolized ABS fumes to build up in the chamber and improve ignition reliability.
         The preignition sequence only runs during startup, not during live restarts.
     */
-    uint32_t _ignition_preburn = DEFAULT_IGNITION_PREBURN_MS;
+    uint32_t ignition_preburn = DEFAULT_IGNITION_PREBURN_MS;
 
     /*
         Ignition duration defines the time in ms the igniter burns after nitrous flow has begun.
     */
-    uint32_t _ignition_duration = DEFAULT_IGNITION_DURATION_MS;
+    uint32_t ignition_duration = DEFAULT_IGNITION_DURATION_MS;
 
-    uint32_t _ignition_voltage = DEFAULT_IGNITION_VOLTAGE;
+    uint32_t ignition_voltage = DEFAULT_IGNITION_VOLTAGE;
 
     void setState(StateType next_state);
 

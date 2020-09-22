@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-int pin = 7;
+int pin = 6;
 long input = 0;
 
 void setup()

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useReducer } from 'react';
 import { Color, Themes } from 'Components/GLPlot/gl-rtplot';
 import styles from './Plot.module.scss';
 import { MQTT } from 'mqttKeys.js';
@@ -13,12 +13,12 @@ const configuration = {
     layout: {
         limits: {
             xmin: 0,
-            xmax: 5,
+            xmax: 20,
             ymin: 0,
             ymax: 100
         },
         grid: {
-            xInterval: 0.5,
+            xInterval: 2,
             yInterval: 10
         },
         axes: true
@@ -28,8 +28,8 @@ const configuration = {
             id: 'throttle',
             name: 'Throttle',
             color: Color.fromHex(Themes.palette.umber[2]),
-            duration: 5,
-            points: 300
+            duration: 20,
+            points: 1200
         },
     }
 }
