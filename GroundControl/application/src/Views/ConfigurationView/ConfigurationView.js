@@ -233,7 +233,7 @@ const ConfigurationView = () => {
                     <div className={styles.keyframeLabel}>Throttle Keyframes</div>
                     <MapValueInput
                         keyLabel={'MET (ms)'}
-                        valueLabel={'Throttle (%)'}
+                        valueLabel={'Throttle (°)'}
                         valueMap={keyframeMap}
                         setMapValue={updateKeyframeMapValue}
                         setMap={updateKeyframeMap}

@@ -9,15 +9,21 @@ if __name__ == '__main__':
 
     host = os.environ.get('host')       # MQTT host address
     port = int(os.environ.get('port'))  # MQTT host port
-    path = os.environ.get('path')       # Device path name
-    output_path = os.environ.get('output_path')
+    isDev = os.environ.get('mode') == "DEBUG"
+
+    device_path = '/dev/ttyACM0'
+    output_path = '/home/pi/data'
+    if isDev:
+        print('Using development configuration')
+        device_path = '/dev/cu.usbmodem82249701'
+        output_path = '~/Desktop/data'
 
     manager = Manager(output_path)
     manager.connect_client(host, port)
-    manager.connect_serial(path)
+    manager.connect_serial(device_path)
 
     if manager.serialport == None:
-        print("Error opening serial port: path not found\n.env path: " + path + "\nCheck that the fire controller is connected")
+        print("Error opening serial port: path not found\n.env path: " + device_path + "\nCheck that the fire controller is connected")
         exit()
     else:
         manager.open_serial()

@@ -87,7 +87,7 @@ void Estimator::main(void)
         if (lc_propellant.update()) {
             // Offset the bottle mass -> this can't be tared before or during a run since the nitrous bottle will be filled
             // Assume that the scale has been tared when assembled (i.e. under load from the top plate)
-            m_propellant = lc_propellant.getUnits() - LC_PROPELLANT_BOTTLE_MASS - LC_PROPELLANT_EMPTY_MASS;
+            m_propellant = lc_propellant.getUnits();
         }
     }
 }

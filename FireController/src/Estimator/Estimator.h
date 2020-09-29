@@ -30,8 +30,8 @@
 */
 #define LC_THRUST_SCALE           -19347.95f
 #define LC_PROPELLANT_SCALE       -102558.6524f
-#define LC_PROPELLANT_EMPTY_MASS  1.422f // mass of scale with no load (structure)
-#define LC_PROPELLANT_BOTTLE_MASS 6.825f // mass of propellant tank
+#define LC_PROPELLANT_EMPTY_MASS  2.2466f // mass of scale with no load (structure)
+#define LC_PROPELLANT_BOTTLE_MASS 6.825f  // mass of propellant tank
 
 class Estimator {
 

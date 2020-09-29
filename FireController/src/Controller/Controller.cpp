@@ -338,7 +338,15 @@ bool Controller::smt_preburn_to_igniting(void)
         - Command the throttle valve motor to the full open position
     */
     openRunValve();
-    throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, THROTTLE_POS_OPEN, 0);
+    if (engine_mode == ENGINE_MODE_HOT) {
+        throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, THROTTLE_POS_OPEN, 0);
+    } else {
+        uint32_t _initial_throttle;
+        if (num_targets > 0) {
+            _initial_throttle = target_buffer[0].value / TARGET_SCALE;
+        }
+        throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, _initial_throttle, 0);
+    }
     return true;
 }
 

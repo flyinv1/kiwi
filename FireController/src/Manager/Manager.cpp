@@ -21,6 +21,7 @@ void Manager::init()
 {
     // Begin serial communications with RPI
     Serial.begin(115200);
+    while (!Serial) { };
     missionClock.start();
     controller.init();
     encoder.setStream(&Serial);

@@ -48,7 +48,7 @@ class Manager:
 
     def main(self):
         # Update the MQTT client
-        self.client.loop()
+        self.client.loop(0.01)
         self.read_serial()
         _time = monotonic()
         if monotonic() - self.timeout > self.timeout_interval:
@@ -204,8 +204,8 @@ class Manager:
         ports = list_ports.comports()
         for port in ports:
             if port.device == path:
-                self.serialport = Serial(path, timeout=0.01, write_timeout=0.01)
-                self.serialport.baudrate=4000000
+                self.serialport = Serial(path, timeout=0, write_timeout=0)
+                self.serialport.baudrate=115200
                 return True
         return False
 
@@ -229,7 +229,7 @@ class Manager:
 
     def read_serial(self):
         if self.serialport:
-            while self.serialport.inWaiting() > 0:
+            while self.serialport.in_waiting > 0:
                 _bytes = self.serialport.read(16)
                 for _byte in _bytes:
                     self.serial_buffer[self.serial_read_index] = _byte
@@ -242,7 +242,7 @@ class Manager:
                                 self.on_packet(_id, _msg)
                         self.serial_read_index = 0
                     else:
-                        if self.serial_read_index + 1 > 255:
+                        if self.serial_read_index + 1 == 255:
                             self.serial_read_index = 0
                         else:
                             self.serial_read_index += 1

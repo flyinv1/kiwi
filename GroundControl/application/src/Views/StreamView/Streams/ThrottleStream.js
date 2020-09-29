@@ -15,7 +15,7 @@ const configuration = {
             xmin: 0,
             xmax: 20,
             ymin: 0,
-            ymax: 100
+            ymax: 90
         },
         grid: {
             xInterval: 2,
@@ -46,7 +46,7 @@ const ThrottleStream = ({animate, newData}) => {
         <div className={styles.container}>
             <div className={styles.header}>
                 <h3>Throttle</h3>
-                <span>%</span>
+                <span>°</span>
             </div>
             <GLPlot
                 className={styles.throttlePlot}
