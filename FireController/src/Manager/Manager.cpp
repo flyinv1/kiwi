@@ -53,6 +53,16 @@ void Manager::loop()
             sendById(STATE, _buff, 1);
             comm_timer = _mil;
         }
+        // If the controller hasn't received a valid packet recently then set disconnected
+        if (millis() - disconnect_timer > DISCONNECT_TIMEOUT_MS) {
+            if (state == state_armed || state_running) {
+                setState(state_standby);
+                setState(state_disconnected);
+            } else {
+                setState(state_disconnected);
+            }
+            disconnect_timer = 0;
+        }
     }
 
     // Execute state machine method
@@ -215,6 +225,7 @@ void Manager::read()
         uint8_t _buffer[256];
         size_t len = encoder.packet(_buffer);
         uint8_t id = _buffer[0];
+        disconnect_timer = millis();
         if (id < num_callbacks) {
             for (int i = 0; i < num_callbacks; i++) {
                 if (TopicTable[i].topic == Manager::TopicType(id)) {
@@ -301,7 +312,6 @@ void Manager::_on_stop(uint8_t topic, uint8_t* buffer, size_t len)
 */
 void Manager::_on_set_controlmode(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    sendById(SET_CONTROLMODE, buffer, len);
     if (_configurable() && len > 0) {
         uint8_t _control_mode = buffer[0];
         if (_control_mode == Controller::CONTROL_MODE_OPEN || _control_mode == Controller::CONTROL_MODE_CLOSED) {
@@ -322,7 +332,6 @@ void Manager::_on_set_controlmode(uint8_t topic, uint8_t* buffer, size_t len)
 
 void Manager::_on_set_enginemode(uint8_t topic, uint8_t* buffer, size_t len)
 {
-    sendById(SET_ENGINEMODE, buffer, len);
     if (_configurable() && len > 0) {
         uint8_t _engine_mode = buffer[0];
         if (_engine_mode == Controller::ENGINE_MODE_HOT || _engine_mode == Controller::ENGINE_MODE_COLD) {

@@ -24,6 +24,7 @@ class Keys(Enum):
     STATE = 17
     DATA = 18
     LOG = 19
+    PING = 20
 
 #
 # The keymap is configured to:

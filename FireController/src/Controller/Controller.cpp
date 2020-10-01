@@ -222,12 +222,6 @@ void Controller::sm_igniting(void)
 
     if (engineClock.state_et_ms() > ignition_duration) {
         if (engine_mode == ENGINE_MODE_HOT) {
-            // WARN - WIP
-            // if (engineState.chamber_pressure < IGNITION_PRESSURE_THRESHOLD) {
-            //     setState(state_shutdown);
-            // } else {
-            //     setState(state_firing);
-            // }
             setState(state_firing);
         } else {
             setState(state_firing);
@@ -335,7 +329,7 @@ bool Controller::smt_preburn_to_igniting(void)
 {
     /*
         - Open the run valve
-        - Command the throttle valve motor to the full open position
+        - Command the throttle valve motor to the full open position if hot firing, otherwise go to first target setpoint
     */
     openRunValve();
     if (engine_mode == ENGINE_MODE_HOT) {
@@ -472,7 +466,6 @@ void Controller::initializeIgniter(void)
     pinMode(pin_igniter_ctr, OUTPUT);
     analogWriteResolution(IGNITER_DAC_RESOLUTION);
     analogWrite(pin_igniter_ctr, 0);
-    analogWrite(pin_igniter_sdn, LOW);
     igniterOutputSignal = 0;
     igniterOutputVoltage = 0;
     igniterActive = false;
@@ -485,7 +478,7 @@ void Controller::setIgniterOutputVoltage(uint32_t _voltage)
         0-256 byte signal corresponds to 0-670V output
     */
     igniterOutputVoltage = _voltage;
-    uint8_t _input = uint8_t(ceil((_voltage - IGNITER_OFFSET) / IGNITER_SCALE));
+    uint8_t _input = uint8_t(ceil((float(_voltage) - IGNITER_OFFSET) / IGNITER_SCALE));
     igniterOutputSignal = _input;
     analogWrite(pin_igniter_ctr, _input);
 }
@@ -493,13 +486,12 @@ void Controller::setIgniterOutputVoltage(uint32_t _voltage)
 void Controller::shutdownIgniter(void)
 {
     igniterActive = false;
-    digitalWrite(pin_igniter_sdn, LOW);
+    digitalWrite(pin_igniter_ctr, 0);
 }
 
 void Controller::activateIgniter(void)
 {
     igniterActive = true;
-    digitalWrite(pin_igniter_sdn, LOW);
 }
 
 uint32_t Controller::throttleAngleToEncoder(float _angle)

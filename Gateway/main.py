@@ -16,7 +16,7 @@ if __name__ == '__main__':
     if isDev:
         print('Using development configuration')
         device_path = '/dev/cu.usbmodem82249701'
-        output_path = '~/Desktop/data'
+        output_path = '/Users/mattvredevoogd/Desktop/data'
 
     manager = Manager(output_path)
     manager.connect_client(host, port)

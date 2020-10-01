@@ -76,8 +76,8 @@ void Estimator::main(void)
             p_chamber = 0;
         } else {
             p_upstream = 0;
-            p_downstream = _p0;
-            p_chamber = _p1;
+            p_downstream = _p1;
+            p_chamber = _p0;
         }
 
         if (lc_thrust.update()) {

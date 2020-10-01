@@ -38,6 +38,8 @@ class Manager:
         self.controller_state = 0
         self.timeoutMax = 0.25
         self.timeoutElapsed = 0
+        self.ping = 0
+        self.ping_interval = 0.5
         self.runData = []
         self.directory_path = directory_path
 
@@ -51,10 +53,15 @@ class Manager:
         self.client.loop(0.01)
         self.read_serial()
         _time = monotonic()
-        if monotonic() - self.timeout > self.timeout_interval:
+
+        if _time - self.ping > self.ping_interval:
+            self.write_serial_packet(interface.Keys.PING.value, [])
+            self.ping = _time
+
+        if _time - self.timeout > self.timeout_interval:
             self.client.publish('get/connected', json.dumps(False))
             self.controller_connected = False
-
+            self.timeout = _time
 
     # Serial packet callback
     def on_packet(self, id_, payload):
@@ -204,9 +211,7 @@ class Manager:
         ports = list_ports.comports()
         for port in ports:
             if port.device == path:
-                self.serialport = Serial(path, timeout=0, write_timeout=0)
-                self.serialport.baudrate=115200
-                return True
+                self.serialport = Serial(path, timeout=0, write_timeout=0, baudrate=115200, rtscts=True, dsrdtr=True)
         return False
 
 
@@ -214,7 +219,9 @@ class Manager:
         if not self.serialport.isOpen():
             self.serialport.open()
             self.serialport.flushInput()
+            self.serialport.flushOutput()
             self.timeout = monotonic()
+            self.serialport._set_special_baudrate()
         else:
             print('Connected to serial device at: ' + self.serialport.name)
 
@@ -246,6 +253,7 @@ class Manager:
                             self.serial_read_index = 0
                         else:
                             self.serial_read_index += 1
+
 
 
     # Write bytes to serial output
