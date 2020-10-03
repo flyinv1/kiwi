@@ -9,16 +9,19 @@ if __name__ == '__main__':
 
     host = os.environ.get('host')       # MQTT host address
     port = int(os.environ.get('port'))  # MQTT host port
-    isDev = os.environ.get('mode') == "DEBUG"
+    isDev = os.environ.get('mode') == "DEV" # Check if using in debug mode (not running on RPI)
 
     device_path = '/dev/ttyACM0'
     output_path = '/home/pi/data'
+    log_dir = '/home/pi/logs'
+
     if isDev:
         print('Using development configuration')
-        device_path = '/dev/cu.usbmodem82249701'
+        device_path = '/dev/cu.usbmodem82249701' # This may change depending on the serial port used
         output_path = '/Users/mattvredevoogd/Desktop/data'
+        log_dir = 'Users/mattvredevoogd/Desktop/logs'
 
-    manager = Manager(output_path)
+    manager = Manager(output_path, log_dir)
     manager.connect_client(host, port)
     manager.connect_serial(device_path)
 
@@ -34,4 +37,5 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         # Safely disconnect from the fire controller
         manager.close_serial()
+        manager.terminate()
         print("\nClosing program")

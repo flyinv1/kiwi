@@ -26,7 +26,7 @@ dataStruct = [
 
 class Manager:
     
-    def __init__(self, directory_path):
+    def __init__(self, directory_path, log_path):
         self.serialport = None
         self.controller_connected = False
         self.serial_buffer = bytearray(256)
@@ -42,10 +42,19 @@ class Manager:
         self.ping_interval = 0.5
         self.runData = []
         self.directory_path = directory_path
+        self.logfile = None
 
         # Check that the directory exists at path or create it
         if not os.path.exists(directory_path):
             os.mkdir(directory_path)
+
+        if not os.path.exists(log_path):
+            os.mkdir(log_path)
+            # Use log subdirectory for this session
+            _t = strftime("%H_%D_%M_%Y")
+            log_filename = "log_" + _t
+            self.logfile = open(log_filename, 'w')
+            self.logfile('Initializing logs: ' + str(monotonic()))
 
 
     def main(self):
@@ -71,17 +80,21 @@ class Manager:
 
         self.timeout = _time
 
-        # Wait a min interval as to not overload broker
+        # Log all received packets
+        self.logfile.write('packet: {id_}\n{payload}\n')
+
+        # Wait a minimum interval as to not overload broker with sync msg
         if _time - self.timeoutElapsed > self.timeoutMax:
+            # After the timeoutMax interval, tell the GUI that the client is connected
+            # This is a intermittent signal in the absence of other communication to ensure the GUI and Gateway states remain synced.
             self.client.publish('get/connected', json.dumps(True))
             self.timeoutElapsed = _time
 
-        # log the incoming packet
-        if _id != interface.Keys.DATA.value and _id != interface.Keys.STATE.value:
+
+        if _id != interface.Keys.DATA.value:
             print('\npacket id:', _id)
             print('\tpayload:', _payload)
             print('\ttype:', _type)
-            # TODO - Save the log to log.txt
 
         # Switch on the packet id
 
@@ -177,7 +190,7 @@ class Manager:
         elif _type == None:
 
             if _id == interface.Keys.STOP.value:
-                print('should stop now')
+                print('STOP command received')
 
             self.write_serial_packet(_id, [])
 
@@ -221,7 +234,6 @@ class Manager:
             self.serialport.flushInput()
             self.serialport.flushOutput()
             self.timeout = monotonic()
-            self.serialport._set_special_baudrate()
         else:
             print('Connected to serial device at: ' + self.serialport.name)
 
@@ -284,5 +296,9 @@ class Manager:
             print(err)
     
 
-    
+    def terminate(self):
+        self.logfile.write('\n')
+        self.logfile.write('Terminating logs: ' + str(monotonic()))
+        self.logfile.close()
+        print('Logs saved to ' + self.logfile.name)
 
