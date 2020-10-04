@@ -51,11 +51,11 @@ class Manager:
         if not os.path.exists(log_path):
             os.mkdir(log_path)
             # Use log subdirectory for this session
-            _t = strftime("%H_%D_%M_%Y")
-            log_filename = "log_" + _t
-            self.logfile = open(log_filename, 'w')
-            self.logfile('Initializing logs: ' + str(monotonic()))
 
+        _t = strftime("%M_%H_%d_%m_%y")
+        log_filename = "log_" + _t
+        self.logfile = open(os.path.join(log_path, log_filename), 'w')
+        self.logfile.write('Initializing logs: ' + str(monotonic()))
 
     def main(self):
         # Update the MQTT client
@@ -81,7 +81,7 @@ class Manager:
         self.timeout = _time
 
         # Log all received packets
-        self.logfile.write('packet: {id_}\n{payload}\n')
+        self.logfile.write(f'packet: {id_}\n{payload}\n')
 
         # Wait a minimum interval as to not overload broker with sync msg
         if _time - self.timeoutElapsed > self.timeoutMax:
@@ -291,6 +291,8 @@ class Manager:
                 csvwriter.writerow(dataStruct)
                 for row in self.runData:
                     csvwriter.writerow(row)
+                print('Final row: ')
+                print(self.runData[-1])
         except Exception as err:
             print("Exception raised while saving run data!")
             print(err)
@@ -298,7 +300,7 @@ class Manager:
 
     def terminate(self):
         self.logfile.write('\n')
-        self.logfile.write('Terminating logs: ' + str(monotonic()))
+        self.logfile.write('Terminating logs: ' + str(monotonic()) + '\n')
         self.logfile.close()
         print('Logs saved to ' + self.logfile.name)
 

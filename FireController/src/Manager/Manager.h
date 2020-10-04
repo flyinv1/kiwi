@@ -87,7 +87,8 @@ class Manager {
         num_callbacks = 16,
         STATE = 17,
         DATA = 18,
-        LOG = 19
+        LOG = 19,
+        PING = 20,
     } TopicType;
 
     typedef void (Manager::*TopicCallback)(uint8_t id, uint8_t* buffer, size_t len);
