@@ -56,7 +56,7 @@
 */
 #define THROTTLE_ACC     4000
 #define THROTTLE_VEL     2000
-#define THROTTLE_VEL_SDN 150
+#define THROTTLE_VEL_SDN 300
 
 /**
  *  Define maximum allowable targets, no engine test is planned to allow a large number of target setpoints
