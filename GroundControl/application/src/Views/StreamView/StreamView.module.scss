@@ -5,11 +5,38 @@
     flex-direction: column;
 }
 
+.timers {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    margin: var(--b) var(--b-xl);
+    box-sizing: border-box;
+
+    div {
+        display: flex;
+        flex-direction: column;
+        width: 64px;
+    }
+
+    div:not(:first-child) {
+        margin-left: var(--b-xl);
+    }
+
+    .timeLabel {
+        color: var(--label);
+    }
+
+    .time {
+        font-size: var(--f-xl);
+    }
+}
+
 .top {
     display: flex;
     flex-direction: row;
     margin: var(--b-xl);
-    flex-basis: 60vh;
+    flex-basis: 50vh;
     flex-shrink: 1;
 }
 

@@ -47,6 +47,16 @@ const StreamView = ({shouldAnimate = true}) => {
 
     return(
         <div className={styles.container}>
+            <div className={styles.timers}>
+                <div>
+                    <span className={styles.timeLabel}>MET</span>
+                    <span className={styles.time}>{ (buffer.mission_elapsed_time / 1000)?.toFixed(0) | 0 }</span>
+                </div>
+                <div>
+                    <span className={styles.timeLabel}>SET</span>
+                    <span className={styles.time}>{ (buffer.state_elapsed_time / 1000)?.toFixed(0) | 0 }</span>
+                </div>
+            </div>
             <div className={styles.top}>
                 <div className={styles.left}>
                     <ThrustStream 
