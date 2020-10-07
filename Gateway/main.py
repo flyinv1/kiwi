@@ -39,3 +39,8 @@ if __name__ == '__main__':
         manager.close_serial()
         manager.terminate()
         print("\nClosing program")
+        exit(1)
+    else:
+        manager.close_serial()
+        manager.terminate()
+        exit(1)

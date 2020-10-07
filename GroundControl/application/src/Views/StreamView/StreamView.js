@@ -39,9 +39,9 @@ const StreamView = ({shouldAnimate = true}) => {
             propellant_mass: _databuffer?.[4],
             mass_flow: _databuffer?.[5],
             throttle_position: _databuffer?.[6],
-            mission_elapsed_time: _databuffer?.[7],
-            state_elapsed_time: _databuffer?.[8],
-            delta_time: _databuffer?.[9],
+            mission_elapsed_time: _databuffer?.[8],
+            state_elapsed_time: _databuffer?.[9],
+            delta_time: _databuffer?.[10],
         }
     }, [bufferTopic])
 

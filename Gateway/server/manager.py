@@ -293,6 +293,7 @@ class Manager:
                     csvwriter.writerow(row)
                 print('Final row: ')
                 print(self.runData[-1])
+            return _fpath
         except Exception as err:
             print("Exception raised while saving run data!")
             print(err)
@@ -302,5 +303,9 @@ class Manager:
         self.logfile.write('\n')
         self.logfile.write('Terminating logs: ' + str(monotonic()) + '\n')
         self.logfile.close()
+        if (self.run_data != []):
+            _path = self.write_data_out()
+            self.run_data = []
+            print(f'Run data cached at {_path}')
         print('Logs saved to ' + self.logfile.name)
 

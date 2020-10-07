@@ -47,6 +47,7 @@
 #define THROTTLE_POS_CLOSED 660
 #define THROTTLE_POS_OPEN   0
 #define THROTTLE_POS_SDN    200
+#define THROTTLE_POS_IGN    330
 #define THROTTLE_EQ_DBAND   4   // position deadband of 0.5deg
 #define TARGET_SCALE        100 // scale angle targets to preserve resolution when using unsigned int types
 

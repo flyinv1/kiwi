@@ -199,7 +199,7 @@ void Controller::sm_preburn(void)
         if (engineState[data_upstream_pressure] > SAFE_PRESSURE_PSI || engineState[data_downstream_pressure] > SAFE_PRESSURE_PSI) {
             // should shutdown -> nitrous may be present in lines
         }
-
+        setState(state_igniting);
     } else {
         if (engineState[data_downstream_pressure] > SAFE_PRESSURE_PSI) {
             // should shutdown
@@ -217,15 +217,12 @@ void Controller::sm_igniting(void)
     readEngineState();
 
     if (engine_mode == ENGINE_MODE_COLD) {
+        setState(state_firing);
     } else {
     }
 
     if (engineClock.state_et_ms() > ignition_duration) {
-        if (engine_mode == ENGINE_MODE_HOT) {
-            setState(state_firing);
-        } else {
-            setState(state_firing);
-        }
+        setState(state_firing);
     }
 }
 
@@ -332,15 +329,14 @@ bool Controller::smt_preburn_to_igniting(void)
         - Command the throttle valve motor to the full open position if hot firing, otherwise go to first target setpoint
     */
     openRunValve();
-    if (engine_mode == ENGINE_MODE_HOT) {
-        throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, THROTTLE_POS_OPEN, 0);
+    uint32_t _initial_throttle;
+    if (num_targets > 0) {
+        uint32_t _target_angle = float(target_buffer[0].value) / TARGET_SCALE;
+        _initial_throttle = clamp<uint32_t>(throttleAngleToEncoder(_target_angle), THROTTLE_POS_OPEN, THROTTLE_POS_CLOSED);
     } else {
-        uint32_t _initial_throttle;
-        if (num_targets > 0) {
-            _initial_throttle = target_buffer[0].value / TARGET_SCALE;
-        }
-        throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, _initial_throttle, 0);
+        _initial_throttle = THROTTLE_POS_IGN;
     }
+    throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL, THROTTLE_ACC, _initial_throttle, 0);
     return true;
 }
 
