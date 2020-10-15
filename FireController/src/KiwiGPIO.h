@@ -12,6 +12,7 @@ enum KIWI_IO {
     pin_throttle_tx = 17,       // Throttle controller serial TX
     pin_throttle_rx = 16,       // Throttle controller serial RX
     pin_run_valve = 20,         // Run valve digital output (HIGH = OPEN)
+    pin_igniter_out = 4         // HV Igniter ouput
 };
 
 enum EEPROM_ADDR {

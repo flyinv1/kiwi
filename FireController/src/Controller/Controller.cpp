@@ -317,7 +317,7 @@ bool Controller::smt_armed_to_preburn(void)
     */
     if (engine_mode == ENGINE_MODE_HOT) {
         activateIgniter();
-        setIgniterOutputVoltage(ignition_voltage);
+        setIgniterOutput(HIGH);
     }
     return true;
 }
@@ -348,7 +348,7 @@ bool Controller::smt_igniting_to_firing(void)
     */
     target_index = 0;
     targetClock.start();
-    setIgniterOutputVoltage(0);
+    setIgniterOutput(LOW);
     shutdownIgniter();
     return true;
 }
@@ -371,7 +371,6 @@ bool Controller::smt_igniting_to_shutdown(void)
         - Close the nitrous run valve
     */
     throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 1);
-    setIgniterOutputVoltage(0);
     shutdownIgniter();
     closeRunValve();
     return true;
@@ -383,7 +382,6 @@ bool Controller::smt_preburn_to_shutdown(void)
         - Shutdown the igniter
     */
     throttle_valve.SpeedAccelDeccelPositionM1(MOTOR_ADDRESS, THROTTLE_ACC, THROTTLE_VEL_SDN, THROTTLE_ACC, THROTTLE_POS_CLOSED, 1);
-    setIgniterOutputVoltage(0);
     shutdownIgniter();
     return true;
 }
@@ -459,12 +457,19 @@ void Controller::closeRunValve(void)
 
 void Controller::initializeIgniter(void)
 {
-    pinMode(pin_igniter_ctr, OUTPUT);
-    analogWriteResolution(IGNITER_DAC_RESOLUTION);
-    analogWrite(pin_igniter_ctr, 0);
+    // pinMode(pin_igniter_ctr, OUTPUT);
+    // analogWriteResolution(IGNITER_DAC_RESOLUTION);
+    // analogWrite(pin_igniter_ctr, 0);
+    pinMode(pin_igniter_out, OUTPUT);
+    digitalWrite(pin_igniter_out, 0);
     igniterOutputSignal = 0;
     igniterOutputVoltage = 0;
     igniterActive = false;
+}
+
+void Controller::setIgniterOutput(bool _out)
+{
+    digitalWrite(pin_igniter_out, _out);
 }
 
 void Controller::setIgniterOutputVoltage(uint32_t _voltage)
@@ -483,6 +488,7 @@ void Controller::shutdownIgniter(void)
 {
     igniterActive = false;
     digitalWrite(pin_igniter_ctr, 0);
+    digitalWrite(pin_igniter_out, LOW);
 }
 
 void Controller::activateIgniter(void)
