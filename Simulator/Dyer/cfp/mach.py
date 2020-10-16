@@ -22,17 +22,23 @@ def derivativeAreaRatioFromMach(M, k):
 
 
 def machFromAreaRatio(AR=1.0, k=1.4, maxiter=100, tol=1e-8):
+    """
+        Compute exit mach number from chamber pressure and area ratio
+
+        Arguments:
+            pc : chamber pressure (Pa)
+            Ar : nozzle area ratio
+            k : chamber specific heat ratio
+
+        Returns:
+            (supersonic, subsonic) : tuple of exit mach numbers
+    """
     # Compute the mach number from area ratio using the Newton-Rhapson method
 
-    # Validate inputs
-    if not isinstance(k, float):
-        raise Exception(f'Specific heat ratio must be of type float, received type(k) = {type(k)}')
-    elif (k < 1.0):
+    if k < 1.0:
         raise Exception(f'Specific heat ratio must be greater than 1')
 
-    if not isinstance(AR, (float, int)):
-        raise Exception(f'Area ratio must be of type float or int, received type(AR) = {type(AR)}')
-    elif (AR < 1.0):
+    if AR < 1.0:
         raise Exception(f'Area ratio must be greater than 1')
 
     suproot = None

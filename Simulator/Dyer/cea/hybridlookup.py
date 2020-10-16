@@ -32,7 +32,7 @@ class HybridCEALookup():
             pressure_units='Pa', 
             temperature_units='K', 
             sonic_velocity_units='m/s', 
-            enthalpy_units='kJ/kg', 
+            enthalpy_units='J/kg', 
             density_units='kg/m^3', 
             specific_heat_units='J/kg-K', 
             viscosity_units='poise',
@@ -49,7 +49,7 @@ class HybridCEALookup():
             k       :   specific heat ratio\n
             MW      :   molecular weight (g / mol)\n
             Pr      :   Prandtl number\n
-            Cp      :   specific heat capacity (kJ/kg-K)\n
+            Cp      :   specific heat capacity (J/kg-K)\n
             mu      :   viscocity (poise)\n
             cstar   :   characteristic velocity (m/s)\n
             isp     :   isp (s)

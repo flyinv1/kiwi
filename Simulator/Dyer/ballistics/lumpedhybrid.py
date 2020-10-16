@@ -2,7 +2,7 @@ import numpy as np
 
 class LumpedHybrid():
 
-    def __init__(self, rp=0.002, L=0.15, nports=1, rt=0.005, rho_f=1224, cp_f=1655, hv=2.3e6, Ta=298.15, mode='whitmore'):
+    def __init__(self, rp=0.002, L=0.15, nports=1, rt=0.005, rho_f=1224, cp_f=1655, hv=2.3e6, Ta=298.15, Vpc=3.2e-7, mode='whitmore'):
         """
             Instantiates a LumpedHybrid model\n
 
@@ -27,8 +27,7 @@ class LumpedHybrid():
         self.At = np.pi * pow(rt, 2)
         self.cp_f = cp_f
         self.R = 287.058 # Universal gas constant (J/kg-K)
-        self.of_initial = 0
-        self.pc_initial = 0
+        self.Vpc = Vpc
 
         if mode in ['whitmore', 'sutton']:
             self.mode = mode
@@ -50,7 +49,8 @@ class LumpedHybrid():
             "mdot_f": 0,
             "OF": 0,
             "cstar": 0,
-            "dPc": 0
+            "dPc": 0,
+            "k": 0,
         }
 
     def initialize(self, Pc, OF):
@@ -64,7 +64,7 @@ class LumpedHybrid():
         self.x["Pc"] = Pc
         self.x["dPc"] = 0
         self.x["OF"] = OF
-
+        
     def step(self, cea_func, mdot_ox=0.05, rho_ox=0.7, dt=0.001):
         """
             Advance regression simulation by dt
@@ -95,21 +95,26 @@ class LumpedHybrid():
             8 cstar   :   characteristic velocity\n
             9 isp     :   isp (s)
         """
+
         cea = cea_func(self.x["Pc"], self.x["OF"])
         cea[7] /= 10 # Factor viscosity by 10 to convert to Ns/m2
 
         self.x["Tc"] = cea[2]
+        self.x["k"] = cea[3]
         _, B = self.boundaryLayer(cea[2], cea[6])
 
         self.x["mdot_ox"] = mdot_ox # Oxidizer mass flow rate
         self.x["Gox"] = mdot_ox / self.x["Ap"] # Oxidizer mass flux
+
         # Regression rate correlation
         if self.mode == 'sutton':
             self.x["rdot"] = self.suttonRegression(self.x["Gox"], cea[7], B)
         elif self.mode == 'whitmore':
             self.x["rdot"] = self.whitmoreRegressionRate(self.x["Gox"], cea[7], cea[5], B)
+            
         self.x["mdot_f"] = self.x["rdot"] * self.rho_f * self.x["Ab"] # Fuel mass flow
         self.x["OF"] = mdot_ox / self.x["mdot_f"] # OF ratio
+
         self.x["Vc"] = np.pi * pow(self.rp + self.x["w"], 2) * self.L
         # self.x["Pc"] = (self.x["mdot_f"] + mdot_ox) * cea[8] / (self.At) # Resultant chamber pressure
         self.x["cstar"] = cea[8]
@@ -135,7 +140,7 @@ class LumpedHybrid():
         return Ab * rdot / Vc * (self.rho_f * self.R * Tc - Pc) - Pc * (self.At / Vc * np.sqrt(k * self.R * Tc * pow(2 / (k + 1), (k + 1) / (k - 1)))) + self.R * Tc / Vc * mdot_ox
 
     def boundaryLayer(self, Tc, Cp):
-        dh = Cp * (Tc - self.Ta)
+        dh = self.cp_f * (Tc - self.Ta)
         B = dh / self.hv
         return dh, B
 

@@ -1,1 +1,1 @@
-{"pcmin": 101325, "pcmax": 6800000.0, "pcint": 50000, "ofmin": 0.1, "ofmax": 30, "ofint": 0.1, "pcnum": 135, "ofnum": 300, "depth": 10}
+{"pcmin": 101325, "pcmax": 6800000.0, "pcint": 25000, "ofmin": 1, "ofmax": 20, "ofint": 0.05, "pcnum": 269, "ofnum": 381, "depth": 10}
