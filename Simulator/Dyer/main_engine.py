@@ -13,17 +13,17 @@ cea_lookup = lambda Pc, OF : table.get(Pc, OF)
 
 # Oxidizer feed initial conditions
 rho_ox = 749 # density kg/m3
-Pox = 5.178e6 # feed pressure (Pa)
-Pci = 3.34e6 # chamber pressure (Pa)
+Pox = 4.323e6 # feed pressure (Pa)
+Pci = 3.44e6 # chamber pressure (Pa)
 OF = 4 # OF ratio
-Cd = 0.4 # injector discharge coefficient
+Cd = 0.26 # injector discharge coefficient
 Ainj = np.pi * pow(0.00075, 2) # injector area (m2)
 rp = 0.002
 L = 0.089
 rt = 0.002
 rho_f = 1224
 At = np.pi * pow(rt, 2)
-Ar = 3.4
+Ar = 9
 Ae = Ar * At
 
 model = LumpedHybrid(rp=rp, L=L, rt=rt, rho_f=rho_f, mode='whitmore', Vpc=6e-6)
@@ -34,7 +34,7 @@ mdot_ox = f_mdot_ox(Pox, Pci)
 
 # Set initial conditions for integration
 dt = 0.00001
-tf = 100000
+tf = 600000
 
 output = np.zeros(shape=(tf, 10))
 
@@ -59,7 +59,7 @@ for i in range(0, tf):
         f
     ]
     
-np.save('temp/out.npy', output, allow_pickle=True)
+np.save('temp/out_low.npy', output, allow_pickle=True)
 
 model.logState()
 

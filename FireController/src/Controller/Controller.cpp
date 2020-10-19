@@ -487,7 +487,7 @@ void Controller::setIgniterOutputVoltage(uint32_t _voltage)
 void Controller::shutdownIgniter(void)
 {
     igniterActive = false;
-    digitalWrite(pin_igniter_ctr, 0);
+    // digitalWrite(pin_igniter_ctr, 0);
     digitalWrite(pin_igniter_out, LOW);
 }
 
