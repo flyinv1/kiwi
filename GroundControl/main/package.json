@@ -4,7 +4,7 @@
     "electron": "^10.0.0",
     "electron-is-dev": "^1.2.0",
     "electron-rebuild": "^2.0.1",
-    "nanoid": "^3.1.12",
+    "nanoid": "^3.1.31",
     "nodemon": "^2.0.4"
   },
   "scripts": {
