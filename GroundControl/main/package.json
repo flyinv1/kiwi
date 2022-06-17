@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "async-mqtt": "^2.6.1",
-    "electron": "^10.0.0",
+    "electron": "^15.5.5",
     "electron-is-dev": "^1.2.0",
     "electron-rebuild": "^2.0.1",
     "nanoid": "^3.1.12",
